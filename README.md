@@ -2,7 +2,7 @@
 
 A student productivity web application that turns class schedules, course syllabi, and deadlines into an explainable study plan—then helps students follow that plan with a Pomodoro Focus Room and study analytics.
 
-> **Project status:** Initial project setup. The repository is being prepared as a monorepo; application features and local run scripts are not available yet.
+> **Project status:** Week 1 foundation. Database schema and seed (WBS 1.1), monorepo scaffold, JWT auth, theme, CI and the empty app shell (WBS 1.2) are in place; feature pages are placeholders.
 
 ## Project Overview
 
@@ -81,7 +81,25 @@ The planned local development environment requires:
 
 ### Setup
 
-The application has not been scaffolded yet, so installation and run commands are not available at this stage. Once the `api/` and `client/` applications are in place, their setup instructions, environment variables, database migration commands, and development scripts will be documented here.
+```bash
+# API — http://localhost:4000
+cd api
+npm install
+cp .env.example .env          # set DATABASE_URL, JWT_SECRET
+npm run db:up                 # MySQL 8 via Docker (optional)
+npm run db:deploy && npm run db:seed
+npm run dev
+
+# Client — http://localhost:5173
+cd client
+npm install
+cp .env.example .env          # VITE_API_URL=http://localhost:4000
+npm run dev
+```
+
+Demo login after seeding: `student@sfsh.dev` / `Password123!`. Database details are in [api/README.md](api/README.md), deployment steps in [DEPLOY.md](DEPLOY.md) and the branch/PR workflow in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Both apps run `npm run lint` and `npm test`; CI runs them on every pull request.
 
 Do not commit real credentials or `.env` files. Use the committed `.env.example` files as templates when they are added.
 

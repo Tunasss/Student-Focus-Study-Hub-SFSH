@@ -1,0 +1,51 @@
+@import 'tailwindcss';
+
+/* Dark mode is driven by the `.dark` class on <html> (see ThemeProvider). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Theme tokens: change colors here, components use the semantic names (bg-surface, text-muted, ...). */
+:root {
+  --sfsh-bg: #f6f7fb;
+  --sfsh-surface: #ffffff;
+  --sfsh-surface-2: #eef0f6;
+  --sfsh-border: #dfe2ec;
+  --sfsh-text: #1b1e2b;
+  --sfsh-muted: #5f667a;
+  --sfsh-primary: #4f46e5;
+  --sfsh-primary-fg: #ffffff;
+  --sfsh-danger: #dc2626;
+  --sfsh-success: #16a34a;
+  color-scheme: light;
+}
+
+.dark {
+  --sfsh-bg: #0f1117;
+  --sfsh-surface: #171a23;
+  --sfsh-surface-2: #20242f;
+  --sfsh-border: #2c3140;
+  --sfsh-text: #e8eaf1;
+  --sfsh-muted: #9aa1b5;
+  --sfsh-primary: #818cf8;
+  --sfsh-primary-fg: #0f1117;
+  --sfsh-danger: #f87171;
+  --sfsh-success: #4ade80;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--sfsh-bg);
+  --color-surface: var(--sfsh-surface);
+  --color-surface-2: var(--sfsh-surface-2);
+  --color-border: var(--sfsh-border);
+  --color-text: var(--sfsh-text);
+  --color-muted: var(--sfsh-muted);
+  --color-primary: var(--sfsh-primary);
+  --color-primary-fg: var(--sfsh-primary-fg);
+  --color-danger: var(--sfsh-danger);
+  --color-success: var(--sfsh-success);
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  @apply bg-bg text-text antialiased;
+}

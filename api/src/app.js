@@ -3,6 +3,8 @@ const cors = require('cors');
 const { config } = require('./config');
 const { errorHandler, notFound } = require('./errors');
 const { authRouter } = require('./routes/auth');
+const { coursesRouter } = require('./routes/courses');
+const { scheduleRouter } = require('./routes/schedule');
 
 // prisma is injected so tests can pass a fake client.
 function createApp({ prisma }) {
@@ -17,6 +19,8 @@ function createApp({ prisma }) {
   });
 
   app.use('/api/auth', authRouter({ prisma }));
+  app.use('/api/courses', coursesRouter({ prisma }));
+  app.use('/api/schedule', scheduleRouter({ prisma }));
 
   app.use(notFound);
   app.use(errorHandler);

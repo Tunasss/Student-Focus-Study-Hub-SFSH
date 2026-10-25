@@ -46,10 +46,13 @@ model User {
 }
 
 model Course {
-  id     Int     @id @default(autoincrement())
-  userId Int     @map("user_id")
-  code   String? @db.VarChar(32)
-  name   String  @db.VarChar(255)
+  id        Int     @id @default(autoincrement())
+  userId    Int     @map("user_id")
+  code      String? @db.VarChar(32)
+  name      String  @db.VarChar(255)
+  // Normalized ICS SUMMARY (trimmed, collapsed spaces, lower-case). Re-importing
+  // the same timetable upserts on (user_id, course_key). Null for manual courses.
+  courseKey String? @map("course_key") @db.VarChar(255)
 
   user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   schedules Schedule[]
@@ -57,10 +60,14 @@ model Course {
   tasks     Task[]
   sessions  StudySession[]
 
+  @@unique([userId, courseKey])
   @@index([userId])
   @@map("courses")
 }
 
+// One weekly slot of a course. Wall-clock fields (day_of_week, start_time,
+// end_time, recurrence_until) are in the original timezone `tz`; the first
+// occurrence is also stored in UTC (starts_at_utc / ends_at_utc).
 model Schedule {
   id              Int       @id @default(autoincrement())
   courseId        Int       @map("course_id")
@@ -71,7 +78,16 @@ model Schedule {
   location        String?   @db.VarChar(255)
   // IANA timezone name, e.g. "Asia/Ho_Chi_Minh"
   tz              String    @default("Asia/Ho_Chi_Minh") @db.VarChar(64)
+  // Last occurrence date (local, in tz). Null = no end.
   recurrenceUntil DateTime? @map("recurrence_until") @db.Date
+  // RRULE INTERVAL for WEEKLY rules (2 = every other week).
+  intervalWeeks   Int       @default(1) @map("interval_weeks") @db.TinyInt
+  startsAtUtc     DateTime? @map("starts_at_utc")
+  endsAtUtc       DateTime? @map("ends_at_utc")
+  // EXDATE occurrences to skip, as ISO-8601 UTC strings.
+  exdates         Json?
+  // VEVENT UID this slot was imported from. Null for manual schedules.
+  icsUid          String?   @map("ics_uid") @db.VarChar(255)
 
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 

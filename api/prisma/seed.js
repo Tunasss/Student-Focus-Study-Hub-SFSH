@@ -1,7 +1,8 @@
 // Base seed for development / demo (WBS 1.1).
 //
 // Creates one demo student with:
-//   - 4 courses + weekly schedules (as if imported from an ICS timetable)
+//   - 4 courses + weekly schedules, imported from an .ics timetable through the
+//     real ICS ingestion code (prisma/fixtures/demoTimetable.js)
 //   - 1 course with a 5-chapter syllabus
 //   - 2 upcoming deadlines (one within 24h, one within 5 days)
 //   - 1 OVERDUE task
@@ -11,50 +12,17 @@
 
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
+const { parseTimetable } = require('../src/ics/parseTimetable');
+const { importTimetable } = require('../src/ics/importTimetable');
+const { buildDemoIcs } = require('./fixtures/demoTimetable');
 
 const prisma = new PrismaClient();
 
 const EMAIL = process.env.SEED_USER_EMAIL || 'student@sfsh.dev';
 const PASSWORD = process.env.SEED_USER_PASSWORD || 'Password123!';
-const TZ = 'Asia/Ho_Chi_Minh';
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
-
-// Prisma maps @db.Time to a DateTime on 1970-01-01 (UTC).
-function time(hhmm) {
-  return new Date(`1970-01-01T${hhmm}:00.000Z`);
-}
-
-// Courses as they would come out of the ICS import.
-const COURSES = [
-  {
-    code: 'CS101',
-    name: 'Introduction to Programming',
-    schedules: [
-      { dayOfWeek: 1, start: '07:30', end: '09:30', location: 'Room A101' },
-      { dayOfWeek: 3, start: '07:30', end: '09:30', location: 'Lab B204' },
-    ],
-  },
-  {
-    code: 'MATH201',
-    name: 'Calculus II',
-    schedules: [
-      { dayOfWeek: 2, start: '09:45', end: '11:45', location: 'Room C302' },
-      { dayOfWeek: 4, start: '09:45', end: '11:45', location: 'Room C302' },
-    ],
-  },
-  {
-    code: 'PHY110',
-    name: 'General Physics I',
-    schedules: [{ dayOfWeek: 2, start: '13:00', end: '15:30', location: 'Room D105' }],
-  },
-  {
-    code: 'ENG102',
-    name: 'Academic English',
-    schedules: [{ dayOfWeek: 5, start: '15:45', end: '17:45', location: 'Room E201' }],
-  },
-];
 
 // Syllabus for CS101, read into a chapter list.
 const CS101_SYLLABUS = [
@@ -67,8 +35,6 @@ const CS101_SYLLABUS = [
 
 async function main() {
   const now = new Date();
-  // Semester end: ~15 weeks from now.
-  const recurrenceUntil = new Date(now.getTime() + 15 * 7 * DAY);
 
   await prisma.user.deleteMany({ where: { email: EMAIL } });
 
@@ -76,26 +42,10 @@ async function main() {
     data: { email: EMAIL, passwordHash: await bcrypt.hash(PASSWORD, 10) },
   });
 
-  const courses = {};
-  for (const c of COURSES) {
-    courses[c.code] = await prisma.course.create({
-      data: {
-        userId: user.id,
-        code: c.code,
-        name: c.name,
-        schedules: {
-          create: c.schedules.map((s) => ({
-            dayOfWeek: s.dayOfWeek,
-            startTime: time(s.start),
-            endTime: time(s.end),
-            location: s.location,
-            tz: TZ,
-            recurrenceUntil,
-          })),
-        },
-      },
-    });
-  }
+  await importTimetable(prisma, user.id, parseTimetable(buildDemoIcs(now)));
+  const courses = Object.fromEntries(
+    (await prisma.course.findMany({ where: { userId: user.id } })).map((c) => [c.code, c]),
+  );
 
   const cs101 = courses.CS101;
   await prisma.topic.createMany({

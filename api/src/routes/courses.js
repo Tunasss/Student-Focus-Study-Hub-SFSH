@@ -1,6 +1,7 @@
 const express = require('express');
 const { requireAuth } = require('../middleware/auth');
 const { byUser } = require('../db/scope');
+const { ok } = require('../envelope');
 const { timeFromDb, dateFromDb } = require('../ics/time');
 
 function serializeSchedule(s) {
@@ -32,14 +33,16 @@ function coursesRouter({ prisma }) {
       orderBy: [{ code: 'asc' }, { name: 'asc' }],
     });
 
-    res.json({
-      courses: courses.map((c) => ({
-        id: c.id,
-        code: c.code,
-        name: c.name,
-        schedules: c.schedules.map(serializeSchedule),
-      })),
-    });
+    res.json(
+      ok({
+        courses: courses.map((c) => ({
+          id: c.id,
+          code: c.code,
+          name: c.name,
+          schedules: c.schedules.map(serializeSchedule),
+        })),
+      }),
+    );
   });
 
   return router;

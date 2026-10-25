@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const { ApiError } = require('../errors');
+const { ok } = require('../envelope');
 const { requireAuth } = require('../middleware/auth');
 const { byCourseOwner } = require('../db/scope');
 const { ICS_LIMITS, readIcsUpload, parseTimetable } = require('../ics/parseTimetable');
@@ -74,14 +75,16 @@ function scheduleRouter({ prisma }) {
     }
 
     const result = await importTimetable(prisma, req.userId, parsed);
-    res.status(201).json({
-      eventsRead: parsed.eventCount,
-      coursesCreated: result.coursesCreated,
-      coursesUpdated: result.coursesUpdated,
-      schedulesImported: result.schedulesImported,
-      courses: result.courses,
-      skipped: parsed.skipped,
-    });
+    res.status(201).json(
+      ok({
+        eventsRead: parsed.eventCount,
+        coursesCreated: result.coursesCreated,
+        coursesUpdated: result.coursesUpdated,
+        schedulesImported: result.schedulesImported,
+        courses: result.courses,
+        skipped: parsed.skipped,
+      }),
+    );
   });
 
   // GET /api/schedule?from=YYYY-MM-DD&to=YYYY-MM-DD&tz=Asia/Ho_Chi_Minh
@@ -94,12 +97,14 @@ function scheduleRouter({ prisma }) {
       include: { course: { select: { id: true, code: true, name: true } } },
     });
 
-    res.json({
-      tz,
-      from: range.fromDate.toString(),
-      to: range.toDate.toString(),
-      events: expandSchedules(schedules, range.from, range.to, tz),
-    });
+    res.json(
+      ok({
+        tz,
+        from: range.fromDate.toString(),
+        to: range.toDate.toString(),
+        events: expandSchedules(schedules, range.from, range.to, tz),
+      }),
+    );
   });
 
   return router;

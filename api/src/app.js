@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const { config } = require('./config');
 const { errorHandler, notFound } = require('./errors');
+const { ok } = require('./envelope');
+const { docsRouter } = require('./docs');
 const { authRouter } = require('./routes/auth');
 const { coursesRouter } = require('./routes/courses');
 const { scheduleRouter } = require('./routes/schedule');
@@ -15,8 +17,10 @@ function createApp({ prisma }) {
   app.use(express.json({ limit: '1mb' }));
 
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', time: new Date().toISOString() });
+    res.json(ok({ status: 'ok' }));
   });
+
+  app.use('/api-docs', docsRouter());
 
   app.use('/api/auth', authRouter({ prisma }));
   app.use('/api/courses', coursesRouter({ prisma }));

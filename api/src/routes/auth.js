@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const { config } = require('../config');
 const { ApiError } = require('../errors');
+const { ok } = require('../envelope');
 const { signToken, requireAuth } = require('../middleware/auth');
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -37,19 +38,19 @@ function authRouter({ prisma }) {
     const passwordHash = await bcrypt.hash(password, config.bcryptRounds);
     const user = await prisma.user.create({ data: { email, passwordHash } });
 
-    res.status(201).json({ token: signToken(user), user: publicUser(user) });
+    res.status(201).json(ok({ token: signToken(user), user: publicUser(user) }));
   });
 
   router.post('/login', async (req, res) => {
     const { email, password } = readCredentials(req.body);
 
     const user = email ? await prisma.user.findUnique({ where: { email } }) : null;
-    const ok = user && (await bcrypt.compare(password, user.passwordHash));
-    if (!ok) {
+    const valid = user && (await bcrypt.compare(password, user.passwordHash));
+    if (!valid) {
       throw new ApiError(401, 'INVALID_CREDENTIALS', 'Email or password is incorrect');
     }
 
-    res.json({ token: signToken(user), user: publicUser(user) });
+    res.json(ok({ token: signToken(user), user: publicUser(user) }));
   });
 
   router.get('/me', requireAuth, async (req, res) => {
@@ -57,7 +58,7 @@ function authRouter({ prisma }) {
     if (!user) {
       throw new ApiError(401, 'UNAUTHORIZED', 'User no longer exists');
     }
-    res.json({ user: publicUser(user) });
+    res.json(ok({ user: publicUser(user) }));
   });
 
   return router;

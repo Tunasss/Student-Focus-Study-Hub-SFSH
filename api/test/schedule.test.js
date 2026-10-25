@@ -30,13 +30,13 @@ describe('POST /api/schedule/import', () => {
     const res = await importIcs();
 
     assert.equal(res.status, 201);
-    assert.equal(res.body.eventsRead, 6);
-    assert.equal(res.body.coursesCreated, 5);
-    assert.equal(res.body.coursesUpdated, 0);
-    assert.equal(res.body.schedulesImported, 6);
-    assert.equal(res.body.skipped.length, 1);
+    assert.equal(res.body.data.eventsRead, 6);
+    assert.equal(res.body.data.coursesCreated, 5);
+    assert.equal(res.body.data.coursesUpdated, 0);
+    assert.equal(res.body.data.schedulesImported, 6);
+    assert.equal(res.body.data.skipped.length, 1);
     assert.deepEqual(
-      res.body.courses.map((c) => c.code),
+      res.body.data.courses.map((c) => c.code),
       ['CS101', 'MATH201', 'PHY110', 'ENG102', null],
     );
   });
@@ -46,8 +46,8 @@ describe('POST /api/schedule/import', () => {
     const again = await importIcs();
 
     assert.equal(again.status, 201);
-    assert.equal(again.body.coursesCreated, 0);
-    assert.equal(again.body.coursesUpdated, 5);
+    assert.equal(again.body.data.coursesCreated, 0);
+    assert.equal(again.body.data.coursesUpdated, 5);
     assert.equal(prisma.courses.length, 5);
     assert.equal(prisma.schedules.length, 6);
   });
@@ -68,7 +68,7 @@ describe('POST /api/schedule/import', () => {
     await importIcs();
     const res = await importIcs(SAMPLE, 'sample-timetable.ics', otherToken);
 
-    assert.equal(res.body.coursesCreated, 5);
+    assert.equal(res.body.data.coursesCreated, 5);
     assert.equal(prisma.courses.length, 10);
   });
 
@@ -120,8 +120,8 @@ describe('GET /api/schedule', () => {
       .set('Authorization', `Bearer ${token}`);
 
     assert.equal(res.status, 200);
-    assert.equal(res.body.tz, 'Asia/Ho_Chi_Minh');
-    const summary = res.body.events.map((e) => `${e.start} ${e.courseCode ?? e.courseName}`);
+    assert.equal(res.body.data.tz, 'Asia/Ho_Chi_Minh');
+    const summary = res.body.data.events.map((e) => `${e.start} ${e.courseCode ?? e.courseName}`);
     assert.deepEqual(summary, [
       '2026-11-09T07:30 CS101',
       '2026-11-10T09:45 MATH201',
@@ -137,7 +137,7 @@ describe('GET /api/schedule', () => {
       .get('/api/schedule?from=2026-11-16&to=2026-11-23')
       .set('Authorization', `Bearer ${token}`);
 
-    const phy = res.body.events.filter((e) => e.courseCode === 'PHY110');
+    const phy = res.body.data.events.filter((e) => e.courseCode === 'PHY110');
     assert.deepEqual(phy.map((e) => e.start), ['2026-11-17T13:00']); // 06:00 UTC = 13:00 Hanoi
   });
 
@@ -147,7 +147,7 @@ describe('GET /api/schedule', () => {
       .get('/api/schedule?from=2026-11-09&to=2026-11-10&tz=UTC')
       .set('Authorization', `Bearer ${token}`);
     assert.deepEqual(
-      res.body.events.map((e) => e.start),
+      res.body.data.events.map((e) => e.start),
       ['2026-11-09T00:30'],
     );
   });
@@ -157,7 +157,7 @@ describe('GET /api/schedule', () => {
     const res = await request(app)
       .get('/api/schedule?from=2026-11-09&to=2026-11-16')
       .set('Authorization', `Bearer ${otherToken}`);
-    assert.deepEqual(res.body.events, []);
+    assert.deepEqual(res.body.data.events, []);
   });
 
   test('validates tz and the date range', async () => {
@@ -175,7 +175,7 @@ describe('GET /api/courses', () => {
     const res = await request(app).get('/api/courses').set('Authorization', `Bearer ${token}`);
 
     assert.equal(res.status, 200);
-    const eng = res.body.courses.find((c) => c.code === 'ENG102');
+    const eng = res.body.data.courses.find((c) => c.code === 'ENG102');
     assert.equal(eng.schedules[0].tz, 'Asia/Bangkok');
     assert.equal(eng.schedules[0].startTime, '15:45:00');
     assert.equal(eng.schedules[0].source, 'ics');

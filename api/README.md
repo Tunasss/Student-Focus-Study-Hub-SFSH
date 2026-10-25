@@ -18,6 +18,22 @@ During development, after changing `prisma/schema.prisma`, run `npm run db:migra
 
 Demo account: `student@sfsh.dev` / `Password123!` (override with `SEED_USER_EMAIL` / `SEED_USER_PASSWORD`).
 
+## API docs (WBS 1.4)
+
+The OpenAPI 3.1 spec is `openapi.yaml`, and it documents every endpoint. With the API running:
+
+- Swagger UI: `http://localhost:4000/api-docs` (public). Log in with `POST /api/auth/login`, copy `data.token`, then click **Authorize**.
+- Raw spec: `http://localhost:4000/api-docs/openapi.yaml`
+
+Every response uses the Rule 02 envelope (`src/envelope.js`):
+
+```json
+{ "success": true,  "data": { },  "error": null, "timestamp": "2026-10-25T00:00:00.000Z" }
+{ "success": false, "data": null, "error": { "code": "VALIDATION_ERROR", "message": "..." }, "timestamp": "..." }
+```
+
+Send success bodies with `res.json(ok(payload))`, and throw `ApiError` for errors. `test/openapi.test.js` fails in two cases: when a route is added without being documented in `openapi.yaml`, or when a response doesn't match its documented schema.
+
 ## Tables
 
 | Table | Key columns |

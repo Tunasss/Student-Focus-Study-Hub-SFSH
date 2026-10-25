@@ -23,12 +23,12 @@ describe('POST /api/auth/register', () => {
     const res = await register('Student@SFSH.dev');
 
     assert.equal(res.status, 201);
-    assert.equal(res.body.user.email, 'student@sfsh.dev');
-    assert.equal(res.body.user.passwordHash, undefined);
+    assert.equal(res.body.data.user.email, 'student@sfsh.dev');
+    assert.equal(res.body.data.user.passwordHash, undefined);
     assert.notEqual(prisma.users[0].passwordHash, 'Password123!');
     assert.match(prisma.users[0].passwordHash, /^\$2[aby]\$/);
 
-    const payload = jwt.verify(res.body.token, config.jwtSecret);
+    const payload = jwt.verify(res.body.data.token, config.jwtSecret);
     assert.equal(payload.exp - payload.iat, 24 * 60 * 60);
   });
 
@@ -57,7 +57,7 @@ describe('POST /api/auth/login', () => {
     await register();
     const res = await request(app).post('/api/auth/login').send({ email: 'student@sfsh.dev', password: 'Password123!' });
     assert.equal(res.status, 200);
-    assert.ok(res.body.token);
+    assert.ok(res.body.data.token);
   });
 
   test('rejects a wrong password', async () => {
@@ -77,9 +77,9 @@ describe('POST /api/auth/login', () => {
 describe('requireAuth middleware (GET /api/auth/me)', () => {
   test('returns the current user with a valid token', async () => {
     const { body } = await register();
-    const res = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${body.token}`);
+    const res = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${body.data.token}`);
     assert.equal(res.status, 200);
-    assert.equal(res.body.user.email, 'student@sfsh.dev');
+    assert.equal(res.body.data.user.email, 'student@sfsh.dev');
   });
 
   test('401 UNAUTHORIZED without a token', async () => {
@@ -107,5 +107,5 @@ describe('requireAuth middleware (GET /api/auth/me)', () => {
 test('GET /api/health is public', async () => {
   const res = await request(app).get('/api/health');
   assert.equal(res.status, 200);
-  assert.equal(res.body.status, 'ok');
+  assert.equal(res.body.data.status, 'ok');
 });

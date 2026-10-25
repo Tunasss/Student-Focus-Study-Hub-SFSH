@@ -29,10 +29,14 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.5.0",
     "node-ical": "^0.27.3",
-    "temporal-polyfill": "^1.0.6"
+    "swagger-ui-express": "^5.0.1",
+    "temporal-polyfill": "^1.0.6",
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "eslint": "^10.13.0",
     "globals": "^17.13.0",
     "prisma": "^5.22.0",

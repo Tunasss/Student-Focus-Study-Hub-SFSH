@@ -17,6 +17,15 @@ export function renderApp(route = '/') {
   );
 }
 
+// Rule 02 envelopes, as the API sends them.
+export function ok(data) {
+  return { success: true, data, error: null, timestamp: new Date().toISOString() };
+}
+
+export function fail(code, message) {
+  return { success: false, data: null, error: { code, message }, timestamp: new Date().toISOString() };
+}
+
 // Stub global fetch with a handler: (url, init) => [status, body]
 export function mockFetch(handler) {
   const fn = vi.fn(async (url, init) => {

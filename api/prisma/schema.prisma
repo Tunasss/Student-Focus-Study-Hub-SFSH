@@ -1,0 +1,142 @@
+// Student Focus & Study Hub - WBS 1.1 core schema
+// MySQL 8, utf8mb4. Table/column names are snake_case via @@map / @map.
+//
+// Rule 06: every query MUST be scoped by user_id. Tables without a direct
+// user_id (schedules, topics) are scoped through their parent course
+// (course.user_id). See src/db/scope.js.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum TopicStatus {
+  TODO
+  DOING
+  DONE
+}
+
+enum TaskStatus {
+  TODO
+  DOING
+  DONE
+  OVERDUE
+}
+
+enum SessionStatus {
+  COMPLETED
+  ABANDONED
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  courses  Course[]
+  tasks    Task[]
+  sessions StudySession[]
+
+  @@map("users")
+}
+
+model Course {
+  id     Int     @id @default(autoincrement())
+  userId Int     @map("user_id")
+  code   String? @db.VarChar(32)
+  name   String  @db.VarChar(255)
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedules Schedule[]
+  topics    Topic[]
+  tasks     Task[]
+  sessions  StudySession[]
+
+  @@index([userId])
+  @@map("courses")
+}
+
+model Schedule {
+  id              Int       @id @default(autoincrement())
+  courseId        Int       @map("course_id")
+  // ISO-8601 weekday: 1 = Monday ... 7 = Sunday
+  dayOfWeek       Int       @map("day_of_week") @db.TinyInt
+  startTime       DateTime  @map("start_time") @db.Time(0)
+  endTime         DateTime  @map("end_time") @db.Time(0)
+  location        String?   @db.VarChar(255)
+  // IANA timezone name, e.g. "Asia/Ho_Chi_Minh"
+  tz              String    @default("Asia/Ho_Chi_Minh") @db.VarChar(64)
+  recurrenceUntil DateTime? @map("recurrence_until") @db.Date
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@map("schedules")
+}
+
+model Topic {
+  id          Int         @id @default(autoincrement())
+  courseId    Int         @map("course_id")
+  // Named sort_order to avoid the MySQL reserved word ORDER.
+  sortOrder   Int         @map("sort_order")
+  title       String      @db.VarChar(255)
+  description String?     @db.Text
+  status      TopicStatus @default(TODO)
+
+  course   Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  tasks    Task[]
+  sessions StudySession[]
+
+  @@unique([courseId, sortOrder])
+  @@map("topics")
+}
+
+model Task {
+  id        Int        @id @default(autoincrement())
+  userId    Int        @map("user_id")
+  courseId  Int        @map("course_id")
+  topicId   Int?       @map("topic_id")
+  title     String     @db.VarChar(255)
+  dueAt     DateTime   @map("due_at")
+  status    TaskStatus @default(TODO)
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course   Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  topic    Topic?         @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  sessions StudySession[]
+
+  @@index([userId, dueAt])
+  @@index([dueAt])
+  @@index([topicId])
+  @@index([courseId])
+  @@map("tasks")
+}
+
+// Pomodoro focus session. Mapped to table `sessions`.
+model StudySession {
+  id        Int           @id @default(autoincrement())
+  userId    Int           @map("user_id")
+  courseId  Int?          @map("course_id")
+  topicId   Int?          @map("topic_id")
+  taskId    Int?          @map("task_id")
+  startedAt DateTime      @map("started_at")
+  minutes   Int           @db.SmallInt
+  status    SessionStatus
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  topic  Topic?  @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  task   Task?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([userId, startedAt])
+  @@index([topicId])
+  @@index([courseId])
+  @@index([taskId])
+  @@map("sessions")
+}

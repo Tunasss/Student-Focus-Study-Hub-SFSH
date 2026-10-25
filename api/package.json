@@ -1,0 +1,29 @@
+{
+  "name": "sfsh-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Student Focus & Study Hub - API (Prisma + MySQL 8)",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.js\"",
+    "db:up": "docker compose up -d mysql",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:reset": "prisma migrate reset --force",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
+  }
+}

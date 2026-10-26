@@ -31,7 +31,9 @@ Then set in the dashboard: `DATABASE_URL`, `CORS_ORIGINS` (your Vercel URL).
 
 Option B — Railway: New → GitHub repo → set **Root Directory** = `api`. `api/railway.json` configures build, `prisma migrate deploy` (pre-deploy) and start. Add variables `DATABASE_URL` (reference the MySQL service), `JWT_SECRET`, `CORS_ORIGINS`, `NODE_ENV=production`.
 
-Check: `curl https://<api-host>/api/health` → `{"status":"ok",...}`.
+Check: `curl https://<api-host>/api/health` → `{"success":true,"data":{"status":"ok"},...}`.
+
+Public API docs (Swagger UI): `https://<api-host>/api-docs` — log in via `POST /api/auth/login`, then paste `data.token` into **Authorize**.
 
 ## 3. Frontend — Vercel (root `client`)
 

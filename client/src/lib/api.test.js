@@ -1,12 +1,12 @@
 import { describe, expect, test, vi } from 'vitest';
 import { apiFetch, UNAUTHORIZED_EVENT } from './api';
 import { setToken } from './tokenStorage';
-import { mockFetch } from '../test/utils';
+import { fail, mockFetch, ok } from '../test/utils';
 
 describe('apiFetch', () => {
   test('sends the stored JWT as a bearer token', async () => {
     setToken('abc.def.ghi');
-    const fetchMock = mockFetch(() => [200, { ok: true }]);
+    const fetchMock = mockFetch(() => [200, ok({})]);
 
     await apiFetch('/api/auth/me');
 
@@ -16,15 +16,20 @@ describe('apiFetch', () => {
 
   test('omits the token when auth is false', async () => {
     setToken('abc.def.ghi');
-    const fetchMock = mockFetch(() => [200, {}]);
+    const fetchMock = mockFetch(() => [200, ok({})]);
 
     await apiFetch('/api/auth/login', { method: 'POST', body: {}, auth: false });
 
     expect(fetchMock.mock.calls[0][1].headers.Authorization).toBeUndefined();
   });
 
+  test('unwraps data from the response envelope', async () => {
+    mockFetch(() => [200, ok({ user: { id: 1 } })]);
+    await expect(apiFetch('/api/auth/me')).resolves.toEqual({ user: { id: 1 } });
+  });
+
   test('throws ApiError with the server error code', async () => {
-    mockFetch(() => [409, { error: { code: 'EMAIL_TAKEN', message: 'taken' } }]);
+    mockFetch(() => [409, fail('EMAIL_TAKEN', 'taken')]);
     await expect(apiFetch('/api/auth/register', { method: 'POST', body: {}, auth: false })).rejects.toMatchObject({
       status: 409,
       code: 'EMAIL_TAKEN',
@@ -33,7 +38,7 @@ describe('apiFetch', () => {
 
   test('dispatches an unauthorized event on TOKEN_EXPIRED', async () => {
     setToken('expired');
-    mockFetch(() => [401, { error: { code: 'TOKEN_EXPIRED', message: 'expired' } }]);
+    mockFetch(() => [401, fail('TOKEN_EXPIRED', 'expired')]);
     const listener = vi.fn();
     window.addEventListener(UNAUTHORIZED_EVENT, listener);
 

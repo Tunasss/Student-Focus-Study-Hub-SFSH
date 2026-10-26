@@ -1,0 +1,636 @@
+openapi: 3.1.0
+info:
+  title: Student Focus & Study Hub (SFSH) API
+  version: 0.1.0
+  description: |
+    REST API for SFSH: authentication, ICS timetable import, courses and the weekly class schedule.
+
+    ## Response envelope (Rule 02)
+    Every response, success or error, uses the same envelope:
+
+    ```json
+    { "success": true,  "data": { }, "error": null, "timestamp": "2026-10-25T00:00:00.000Z" }
+    { "success": false, "data": null, "error": { "code": "VALIDATION_ERROR", "message": "..." }, "timestamp": "..." }
+    ```
+
+    ## Trying protected endpoints
+    1. Call `POST /api/auth/login` (demo account `student@sfsh.dev` / `Password123!`) or `POST /api/auth/register`.
+    2. Copy `data.token` from the response.
+    3. Click **Authorize** at the top of this page and paste the token (without the `Bearer ` prefix).
+
+    Tokens are JWTs valid for 24 hours. Every protected query is scoped to the token's user (Rule 06).
+
+    ## Error codes
+    | Code | HTTP | Meaning |
+    |---|---|---|
+    | `VALIDATION_ERROR` | 400 | A body or query parameter is invalid |
+    | `INVALID_JSON` | 400 | The request body is not valid JSON |
+    | `INVALID_ICS_FORMAT` | 400 | The uploaded timetable is not a usable .ics file |
+    | `UNAUTHORIZED` | 401 | Missing, malformed or invalid bearer token |
+    | `TOKEN_EXPIRED` | 401 | The bearer token has expired; log in again |
+    | `INVALID_CREDENTIALS` | 401 | Wrong email or password |
+    | `NOT_FOUND` | 404 | No such route |
+    | `EMAIL_TAKEN` | 409 | An account with this email already exists |
+    | `INTERNAL_ERROR` | 500 | Unexpected server error |
+servers:
+  - url: /
+    description: This server
+tags:
+  - name: System
+  - name: Auth
+    description: Register, log in and read the current user.
+  - name: Schedule
+    description: Import an .ics timetable and read class occurrences.
+  - name: Courses
+    description: The user's courses and their weekly slots.
+
+paths:
+  /api/health:
+    get:
+      tags: [System]
+      summary: Health check
+      description: Public liveness probe used by the hosting platform.
+      operationId: getHealth
+      security: []
+      responses:
+        '200':
+          description: The API is up.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        type: object
+                        additionalProperties: false
+                        required: [status]
+                        properties:
+                          status:
+                            const: ok
+
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Create an account
+      description: Creates a student account and returns a JWT so the client is logged in immediately.
+      operationId: register
+      security: []
+      requestBody:
+        $ref: '#/components/requestBodies/Credentials'
+      responses:
+        '201':
+          description: Account created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: '`VALIDATION_ERROR` (invalid email, or password shorter than 8 characters) or `INVALID_JSON`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                data: null
+                error:
+                  code: VALIDATION_ERROR
+                  message: Password must be at least 8 characters
+                timestamp: '2026-10-25T00:00:00.000Z'
+        '409':
+          description: '`EMAIL_TAKEN`: an account with this email already exists.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in
+      description: Exchanges email + password for a JWT (valid 24h). The email is case-insensitive.
+      operationId: login
+      security: []
+      requestBody:
+        $ref: '#/components/requestBodies/Credentials'
+      responses:
+        '200':
+          description: Logged in.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/InvalidJson'
+        '401':
+          description: '`INVALID_CREDENTIALS`: wrong email or password.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Current user
+      description: Returns the user that owns the bearer token.
+      operationId: getMe
+      responses:
+        '200':
+          description: The current user.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        type: object
+                        additionalProperties: false
+                        required: [user]
+                        properties:
+                          user:
+                            $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/schedule/import:
+    post:
+      tags: [Schedule]
+      summary: Import an .ics timetable
+      description: |
+        Uploads a timetable exported from Google Calendar, Outlook or the school portal and stores it as courses
+        and weekly schedule slots.
+
+        - Accepted: `.ics` extension, at most 2 MB, starts with `BEGIN:VCALENDAR`, 1–500 `VEVENT`s.
+        - Supported: single events, `RRULE FREQ=WEEKLY` (`UNTIL`, `COUNT`, `INTERVAL`, `BYDAY`), `EXDATE`,
+          `TZID` (IANA or Windows zone names), UTC and floating times (read in `X-WR-TIMEZONE`, default `Asia/Ho_Chi_Minh`).
+        - Course recognition: a `SUMMARY` starting with a code like `CS101` or `MATH 201` is split into `code` + `name`;
+          events with the same `SUMMARY` belong to the same course.
+        - Re-uploading is safe: courses are upserted on the normalized `SUMMARY`, and their previously imported slots
+          are replaced. Manually created courses and slots are not touched.
+        - Events that cannot become a weekly class (all-day, non-weekly `RRULE`, no duration) are reported in `skipped`.
+      operationId: importSchedule
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The .ics file.
+      responses:
+        '201':
+          description: Timetable imported.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ImportResult'
+        '400':
+          description: |
+            `INVALID_ICS_FORMAT`: missing file, wrong extension, larger than 2 MB, no `BEGIN:VCALENDAR` header,
+            no or more than 500 `VEVENT`s, unparseable content, or no importable class events.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                data: null
+                error:
+                  code: INVALID_ICS_FORMAT
+                  message: File is larger than 2 MB
+                timestamp: '2026-10-25T00:00:00.000Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/schedule:
+    get:
+      tags: [Schedule]
+      summary: Class occurrences in a date range
+      description: |
+        Expands the user's weekly slots into concrete classes in `[from, to)`, honouring `recurrenceUntil`,
+        `intervalWeeks` and `exdates`, and converts them to `tz`. Sorted by start time.
+      operationId: getSchedule
+      parameters:
+        - name: from
+          in: query
+          description: First day (inclusive), local to `tz`. Defaults to Monday of the current week.
+          schema:
+            type: string
+            format: date
+          example: '2026-11-09'
+        - name: to
+          in: query
+          description: Last day (exclusive), local to `tz`. Defaults to `from` + 7 days. The range is at most 62 days.
+          schema:
+            type: string
+            format: date
+          example: '2026-11-16'
+        - name: tz
+          in: query
+          description: IANA timezone to display times in.
+          schema:
+            type: string
+            default: Asia/Ho_Chi_Minh
+      responses:
+        '200':
+          description: Class occurrences in the range.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ScheduleRange'
+        '400':
+          description: '`VALIDATION_ERROR`: bad `tz`, bad date, `to` not after `from`, or range longer than 62 days.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/courses:
+    get:
+      tags: [Courses]
+      summary: List courses
+      description: The user's courses, ordered by code then name, each with its weekly slots (ordered by weekday, start time).
+      operationId: listCourses
+      responses:
+        '200':
+          description: The user's courses.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        type: object
+                        additionalProperties: false
+                        required: [courses]
+                        properties:
+                          courses:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Course'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT from `POST /api/auth/login` or `POST /api/auth/register` (`data.token`).
+
+  requestBodies:
+    Credentials:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, password]
+            properties:
+              email:
+                type: string
+                format: email
+                example: student@sfsh.dev
+              password:
+                type: string
+                minLength: 8
+                example: Password123!
+
+  responses:
+    Unauthorized:
+      description: '`UNAUTHORIZED` (missing or invalid bearer token) or `TOKEN_EXPIRED`.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            data: null
+            error:
+              code: UNAUTHORIZED
+              message: Missing bearer token
+            timestamp: '2026-10-25T00:00:00.000Z'
+    InvalidJson:
+      description: '`INVALID_JSON`: the request body is not valid JSON.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
+  schemas:
+    SuccessEnvelope:
+      type: object
+      description: Rule 02 envelope for a successful response. `data` holds the payload.
+      required: [success, data, error, timestamp]
+      properties:
+        success:
+          const: true
+        data: {}
+        error:
+          type: 'null'
+        timestamp:
+          type: string
+          format: date-time
+          example: '2026-10-25T00:00:00.000Z'
+
+    ErrorEnvelope:
+      type: object
+      description: Rule 02 envelope for a failed response.
+      additionalProperties: false
+      required: [success, data, error, timestamp]
+      properties:
+        success:
+          const: false
+        data:
+          type: 'null'
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum:
+                - VALIDATION_ERROR
+                - INVALID_JSON
+                - INVALID_ICS_FORMAT
+                - UNAUTHORIZED
+                - TOKEN_EXPIRED
+                - INVALID_CREDENTIALS
+                - NOT_FOUND
+                - EMAIL_TAKEN
+                - INTERNAL_ERROR
+            message:
+              type: string
+              description: Human-readable explanation.
+        timestamp:
+          type: string
+          format: date-time
+
+    User:
+      type: object
+      additionalProperties: false
+      required: [id, email, createdAt]
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          example: student@sfsh.dev
+        createdAt:
+          type: string
+          format: date-time
+
+    AuthResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - properties:
+            data:
+              type: object
+              additionalProperties: false
+              required: [token, user]
+              properties:
+                token:
+                  type: string
+                  description: JWT, valid for 24 hours. Send as `Authorization Bearer <token>`.
+                user:
+                  $ref: '#/components/schemas/User'
+
+    ImportResult:
+      type: object
+      additionalProperties: false
+      required: [eventsRead, coursesCreated, coursesUpdated, schedulesImported, courses, skipped]
+      properties:
+        eventsRead:
+          type: integer
+          description: Number of VEVENTs in the file.
+          example: 6
+        coursesCreated:
+          type: integer
+          example: 5
+        coursesUpdated:
+          type: integer
+          description: Courses that already existed (same normalized SUMMARY) and were refreshed.
+          example: 0
+        schedulesImported:
+          type: integer
+          description: Weekly slots written (one per VEVENT and weekday).
+          example: 6
+        courses:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, code, name, schedules, status]
+            properties:
+              id:
+                type: integer
+              code:
+                type: [string, 'null']
+                example: CS101
+              name:
+                type: string
+                example: Introduction to Programming
+              schedules:
+                type: integer
+                description: Number of weekly slots imported for this course.
+              status:
+                type: string
+                enum: [created, updated]
+        skipped:
+          type: array
+          description: Events that were not imported, with the reason.
+          items:
+            type: object
+            additionalProperties: false
+            required: [uid, summary, reason]
+            properties:
+              uid:
+                type: [string, 'null']
+              summary:
+                type: [string, 'null']
+              reason:
+                type: string
+                example: All-day events are not class sessions
+
+    Course:
+      type: object
+      additionalProperties: false
+      required: [id, code, name, schedules]
+      properties:
+        id:
+          type: integer
+        code:
+          type: [string, 'null']
+          description: Course code split from the SUMMARY, or null if none was found.
+          example: CS101
+        name:
+          type: string
+          example: Introduction to Programming
+        schedules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScheduleSlot'
+
+    ScheduleSlot:
+      type: object
+      description: One weekly slot. Wall-clock fields are in the slot's original timezone `tz`.
+      additionalProperties: false
+      required:
+        - id
+        - dayOfWeek
+        - startTime
+        - endTime
+        - location
+        - tz
+        - recurrenceUntil
+        - intervalWeeks
+        - startsAtUtc
+        - endsAtUtc
+        - exdates
+        - source
+      properties:
+        id:
+          type: integer
+        dayOfWeek:
+          type: integer
+          minimum: 1
+          maximum: 7
+          description: ISO weekday, 1 = Monday … 7 = Sunday.
+        startTime:
+          type: string
+          pattern: '^\d{2}:\d{2}:\d{2}$'
+          example: '07:30:00'
+        endTime:
+          type: string
+          pattern: '^\d{2}:\d{2}:\d{2}$'
+          example: '09:30:00'
+        location:
+          type: [string, 'null']
+          example: Room A101
+        tz:
+          type: string
+          description: IANA timezone the slot was defined in.
+          example: Asia/Ho_Chi_Minh
+        recurrenceUntil:
+          type: [string, 'null']
+          format: date
+          description: Last class date (local), or null when the series has no end.
+        intervalWeeks:
+          type: integer
+          minimum: 1
+          description: 1 = every week, 2 = every other week, …
+        startsAtUtc:
+          type: [string, 'null']
+          format: date-time
+          description: First occurrence start in UTC (null for manual slots).
+        endsAtUtc:
+          type: [string, 'null']
+          format: date-time
+        exdates:
+          type: array
+          description: Cancelled occurrence starts (UTC).
+          items:
+            type: string
+            format: date-time
+        source:
+          type: string
+          enum: [ics, manual]
+
+    ScheduleRange:
+      type: object
+      additionalProperties: false
+      required: [tz, from, to, events]
+      properties:
+        tz:
+          type: string
+          example: Asia/Ho_Chi_Minh
+        from:
+          type: string
+          format: date
+          example: '2026-11-09'
+        to:
+          type: string
+          format: date
+          example: '2026-11-16'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClassOccurrence'
+
+    ClassOccurrence:
+      type: object
+      additionalProperties: false
+      required:
+        - scheduleId
+        - courseId
+        - courseCode
+        - courseName
+        - location
+        - startUtc
+        - endUtc
+        - start
+        - end
+        - dayOfWeek
+        - sourceTz
+      properties:
+        scheduleId:
+          type: integer
+        courseId:
+          type: integer
+        courseCode:
+          type: [string, 'null']
+          example: CS101
+        courseName:
+          type: [string, 'null']
+          example: Introduction to Programming
+        location:
+          type: [string, 'null']
+          example: Room A101
+        startUtc:
+          type: string
+          format: date-time
+          example: '2026-11-09T00:30:00.000Z'
+        endUtc:
+          type: string
+          format: date-time
+        start:
+          type: string
+          description: Local start in the requested `tz` (YYYY-MM-DDTHH:mm).
+          example: '2026-11-09T07:30'
+        end:
+          type: string
+          example: '2026-11-09T09:30'
+        dayOfWeek:
+          type: integer
+          minimum: 1
+          maximum: 7
+          description: ISO weekday in the requested `tz`.
+        sourceTz:
+          type: string
+          description: Timezone the slot was defined in.
+          example: Asia/Ho_Chi_Minh
+
+security:
+  - bearerAuth: []

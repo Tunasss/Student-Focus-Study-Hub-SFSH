@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { mockFetch, renderApp } from './test/utils';
+import { fail, mockFetch, ok, renderApp } from './test/utils';
 import { getToken, setToken } from './lib/tokenStorage';
 
 const USER = { id: 1, email: 'student@sfsh.dev', createdAt: '2026-10-25T00:00:00.000Z' };
@@ -14,7 +14,7 @@ describe('auth flow', () => {
 
   test('logs in, stores the token and shows the app shell', async () => {
     const fetchMock = mockFetch((url) =>
-      url.endsWith('/api/auth/login') ? [200, { token: 'jwt-token', user: USER }] : [404, {}],
+      url.endsWith('/api/auth/login') ? [200, ok({ token: 'jwt-token', user: USER })] : [404, {}],
     );
     renderApp('/login');
 
@@ -41,7 +41,7 @@ describe('auth flow', () => {
 
   test('restores the session from a stored token', async () => {
     setToken('stored-token');
-    mockFetch((url) => (url.endsWith('/api/auth/me') ? [200, { user: USER }] : [404, {}]));
+    mockFetch((url) => (url.endsWith('/api/auth/me') ? [200, ok({ user: USER })] : [404, {}]));
     renderApp('/');
 
     expect(await screen.findByText(USER.email)).toBeInTheDocument();
@@ -49,7 +49,7 @@ describe('auth flow', () => {
 
   test('logs out and shows a notice when the stored token has expired', async () => {
     setToken('expired-token');
-    mockFetch(() => [401, { error: { code: 'TOKEN_EXPIRED', message: 'expired' } }]);
+    mockFetch(() => [401, fail('TOKEN_EXPIRED', 'expired')]);
     renderApp('/');
 
     expect(await screen.findByText(/Phiên đăng nhập đã hết hạn/)).toBeInTheDocument();
@@ -58,7 +58,7 @@ describe('auth flow', () => {
 
   test('logout clears the token', async () => {
     setToken('stored-token');
-    mockFetch(() => [200, { user: USER }]);
+    mockFetch(() => [200, ok({ user: USER })]);
     renderApp('/');
 
     await userEvent.click(await screen.findByRole('button', { name: 'Đăng xuất' }));

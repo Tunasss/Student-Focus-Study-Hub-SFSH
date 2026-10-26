@@ -31,16 +31,17 @@ export async function apiFetch(path, { method = 'GET', body, auth = true } = {})
     throw new ApiError(0, 'NETWORK_ERROR', 'Không kết nối được tới máy chủ');
   }
 
-  const data = res.status === 204 ? null : await res.json().catch(() => null);
+  // Every API response is the Rule 02 envelope: { success, data, error, timestamp }.
+  const envelope = res.status === 204 ? null : await res.json().catch(() => null);
 
-  if (!res.ok) {
-    const code = data?.error?.code || 'HTTP_ERROR';
-    const message = data?.error?.message || `Request failed (${res.status})`;
+  if (!res.ok || envelope?.success === false) {
+    const code = envelope?.error?.code || 'HTTP_ERROR';
+    const message = envelope?.error?.message || `Request failed (${res.status})`;
     if (res.status === 401 && token && (code === 'UNAUTHORIZED' || code === 'TOKEN_EXPIRED')) {
       window.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT, { detail: { code } }));
     }
     throw new ApiError(res.status, code, message);
   }
 
-  return data;
+  return envelope?.data ?? null;
 }

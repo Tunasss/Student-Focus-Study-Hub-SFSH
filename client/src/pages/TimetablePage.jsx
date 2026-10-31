@@ -131,6 +131,7 @@ export function TimetablePage() {
   function handleToday() {
     setLoading(true);
     setPivotDate(new Date());
+    setRefreshKey((k) => k + 1);
   }
 
   function handleRetry() {

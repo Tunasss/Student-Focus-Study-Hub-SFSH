@@ -87,12 +87,17 @@ export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="upload-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/40 dark:bg-black/60 transition-opacity"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !loading) handleClose();
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
     >
-      <div className="relative w-full max-w-lg rounded-3xl border border-border bg-surface p-6 sm:p-8 shadow-2xl transition-all">
+      {/* Backdrop */}
+      <div
+        data-testid="modal-backdrop"
+        className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm transition-opacity"
+        onClick={() => !loading && handleClose()}
+      />
+
+      {/* Modal Dialog Card */}
+      <div className="relative z-10 w-full max-w-lg rounded-3xl border border-border bg-surface p-6 sm:p-8 shadow-2xl transition-all">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -149,9 +154,11 @@ export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
           >
             <input
               ref={inputRef}
+              data-testid="ics-file-input"
               type="file"
               accept=".ics,text/calendar"
               className="hidden"
+              onClick={(e) => e.stopPropagation()}
               onChange={(e) => validateAndSetFile(e.target.files?.[0])}
             />
 

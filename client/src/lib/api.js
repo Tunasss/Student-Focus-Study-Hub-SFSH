@@ -57,10 +57,12 @@ export const scheduleApi = {
     return apiFetch(`/api/schedule${query ? `?${query}` : ''}`);
   },
   getCourses: () => apiFetch('/api/courses'),
-  importIcs: (file) => {
+  importIcs: (file, replace = false) => {
     const formData = new FormData();
     formData.append('file', file);
-    return apiFetch('/api/schedule/import', {
+    if (replace) formData.append('replace', 'true');
+    const query = replace ? '?replace=true' : '';
+    return apiFetch(`/api/schedule/import${query}`, {
       method: 'POST',
       body: formData,
     });

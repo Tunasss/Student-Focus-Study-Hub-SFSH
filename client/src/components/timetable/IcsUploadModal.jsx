@@ -3,6 +3,7 @@ import { scheduleApi } from '../../lib/api';
 
 export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
   const [file, setFile] = useState(null);
+  const [replaceExisting, setReplaceExisting] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -69,7 +70,7 @@ export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
     setError(null);
 
     try {
-      const result = await scheduleApi.importIcs(file);
+      const result = await scheduleApi.importIcs(file, replaceExisting);
       onSuccess?.(result);
       handleClose();
     } catch (err) {
@@ -191,6 +192,20 @@ export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
               </div>
             )}
           </div>
+
+          {/* Replace option */}
+          <label className="flex items-center gap-2.5 pt-1 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              data-testid="replace-existing-checkbox"
+              checked={replaceExisting}
+              onChange={(e) => setReplaceExisting(e.target.checked)}
+              className="h-4 w-4 rounded border-border text-primary focus:ring-primary/20 accent-primary cursor-pointer"
+            />
+            <span className="text-xs text-muted">
+              Xóa các lịch học trước đó (chỉ giữ thời khóa biểu trong file mới)
+            </span>
+          </label>
 
           {/* Action buttons */}
           <div className="flex items-center justify-end gap-3 pt-2">

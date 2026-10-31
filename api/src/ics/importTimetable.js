@@ -3,9 +3,16 @@ const { timeToDb, dateToDb } = require('./time');
 // Upserts parsed courses for one user on (user_id, course_key).
 // For every course in the file, its previously imported (ics_uid not null)
 // schedule slots are replaced, so re-uploading the same file never duplicates.
+// If options.replace is true, all existing schedules for this user are cleared first.
 // Courses that are not in the file are left untouched.
-async function importTimetable(prisma, userId, parsed) {
+async function importTimetable(prisma, userId, parsed, options = {}) {
   return prisma.$transaction(async (tx) => {
+    if (options.replace) {
+      await tx.schedule.deleteMany({
+        where: { course: { userId } },
+      });
+    }
+
     const summary = { coursesCreated: 0, coursesUpdated: 0, schedulesImported: 0, courses: [] };
 
     for (const course of parsed.courses) {

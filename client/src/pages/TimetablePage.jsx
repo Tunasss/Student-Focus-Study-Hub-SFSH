@@ -26,12 +26,15 @@ export function TimetablePage() {
   const coursesLegend = useMemo(() => {
     const map = new Map();
     for (const ev of events) {
-      const key = ev.courseCode || ev.courseName || String(ev.courseId);
+      const parenMatch = !ev.courseCode ? ev.courseName?.match(/\(([^()]+)\)$/) : null;
+      const code = ev.courseCode || parenMatch?.[1];
+      const name = parenMatch ? ev.courseName.replace(/\s*\([^()]+\)$/, '') : ev.courseName;
+      const key = code || name || String(ev.courseId);
       if (!map.has(key)) {
         map.set(key, {
           key,
-          code: ev.courseCode,
-          name: ev.courseName,
+          code,
+          name,
           palette: getCoursePalette(key),
         });
       }
@@ -76,20 +79,20 @@ export function TimetablePage() {
       tl.fromTo(
         '.timetable-header',
         { y: -12, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.4, clearProps: 'all' },
+        { y: 0, opacity: 1, duration: 0.4, clearProps: 'opacity,transform' },
       );
 
       tl.fromTo(
         '.timetable-toolbar',
         { y: -8, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.35, clearProps: 'all' },
+        { y: 0, opacity: 1, duration: 0.35, clearProps: 'opacity,transform' },
         '-=0.2',
       );
 
       tl.fromTo(
         '[data-testid^="day-header-"]',
         { y: -10, opacity: 0 },
-        { y: 0, opacity: 1, stagger: 0.03, duration: 0.3, clearProps: 'all' },
+        { y: 0, opacity: 1, stagger: 0.03, duration: 0.3, clearProps: 'opacity,transform' },
         '-=0.15',
       );
 
@@ -105,7 +108,7 @@ export function TimetablePage() {
             stagger: 0.02,
             duration: 0.35,
             ease: 'back.out(1.2)',
-            clearProps: 'all',
+            clearProps: 'opacity,transform',
           },
           '-=0.1',
         );

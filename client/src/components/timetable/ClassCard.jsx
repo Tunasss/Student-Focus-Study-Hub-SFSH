@@ -12,6 +12,12 @@ export function ClassCard({ event }) {
     palette,
   } = event;
 
+  const parenMatch = !courseCode ? courseName?.match(/\(([^()]+)\)$/) : null;
+  const displayCode = courseCode || parenMatch?.[1];
+  const displayName = parenMatch
+    ? courseName.replace(/\s*\([^()]+\)$/, '')
+    : courseName;
+
   const timeRange = `${start?.split('T')[1]?.slice(0, 5) || start || ''} – ${end?.split('T')[1]?.slice(0, 5) || end || ''}`;
   const isCompact = height < 54;
 
@@ -25,18 +31,18 @@ export function ClassCard({ event }) {
         left: `calc(${leftPercent}% + 2px)`,
         width: `calc(${widthPercent}% - 4px)`,
       }}
-      title={`${courseCode ? `${courseCode}: ` : ''}${courseName} (${timeRange})${location ? ` - ${location}` : ''}`}
+      title={`${displayCode ? `${displayCode}: ` : ''}${displayName} (${timeRange})${location ? ` - ${location}` : ''}`}
     >
       <div className="flex h-full flex-col justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
-            {courseCode && (
+            {displayCode && (
               <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[11px] font-semibold leading-none ${palette.badge}`}>
-                {courseCode}
+                {displayCode}
               </span>
             )}
             <span className="truncate text-xs font-semibold leading-tight">
-              {courseName}
+              {displayName}
             </span>
           </div>
 

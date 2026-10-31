@@ -64,6 +64,17 @@ describe('POST /api/schedule/import', () => {
     assert.ok(prisma.courses.some((c) => c.id === 998));
   });
 
+  test('import with replace=true clears existing user schedules', async () => {
+    await importIcs();
+    assert.equal(prisma.schedules.length, 6);
+    const res = await request(app)
+      .post('/api/schedule/import?replace=true')
+      .set('Authorization', 'Bearer ' + token)
+      .attach('file', SAMPLE, 'sample-timetable.ics');
+    assert.equal(res.status, 201);
+    assert.equal(prisma.schedules.length, 6);
+  });
+
   test('each user gets their own courses (Rule 06)', async () => {
     await importIcs();
     const res = await importIcs(SAMPLE, 'sample-timetable.ics', otherToken);

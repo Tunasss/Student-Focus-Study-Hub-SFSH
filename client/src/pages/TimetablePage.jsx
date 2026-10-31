@@ -66,56 +66,52 @@ export function TimetablePage() {
     };
   }, [range.from, range.to, refreshKey]);
 
-  // GSAP Animations
+  // GSAP Animations (using fromTo to prevent React StrictMode opacity: 0 lock)
   useGSAP(
     () => {
       if (loading) return;
 
       const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
 
-      tl.from('.timetable-header', {
-        y: -12,
-        opacity: 0,
-        duration: 0.45,
-      });
-
-      tl.from(
-        '.timetable-toolbar',
-        {
-          y: -8,
-          opacity: 0,
-          duration: 0.35,
-        },
-        '-=0.25',
+      tl.fromTo(
+        '.timetable-header',
+        { y: -12, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, clearProps: 'all' },
       );
 
-      tl.from(
-        '[data-testid^="day-header-"]',
-        {
-          y: -10,
-          opacity: 0,
-          stagger: 0.03,
-          duration: 0.3,
-        },
+      tl.fromTo(
+        '.timetable-toolbar',
+        { y: -8, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, clearProps: 'all' },
         '-=0.2',
       );
 
-      if (events.length > 0) {
-        tl.from(
-          '[data-testid="class-card"]',
+      tl.fromTo(
+        '[data-testid^="day-header-"]',
+        { y: -10, opacity: 0 },
+        { y: 0, opacity: 1, stagger: 0.03, duration: 0.3, clearProps: 'all' },
+        '-=0.15',
+      );
+
+      const cards = containerRef.current?.querySelectorAll('[data-testid="class-card"]');
+      if (cards && cards.length > 0) {
+        tl.fromTo(
+          cards,
+          { scale: 0.94, opacity: 0, y: 8 },
           {
-            scale: 0.94,
-            opacity: 0,
-            y: 8,
+            scale: 1,
+            opacity: 1,
+            y: 0,
             stagger: 0.02,
             duration: 0.35,
             ease: 'back.out(1.2)',
+            clearProps: 'all',
           },
-          '-=0.15',
+          '-=0.1',
         );
       }
     },
-    { scope: containerRef, dependencies: [loading, events, range.from] },
+    { scope: containerRef, dependencies: [loading, events], revertOnUpdate: true },
   );
 
   function handlePrevWeek() {

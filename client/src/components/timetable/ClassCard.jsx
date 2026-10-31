@@ -35,13 +35,13 @@ export function ClassCard({ event }) {
                 {courseCode}
               </span>
             )}
-            <span className="truncate text-xs font-medium leading-tight opacity-90">
+            <span className="truncate text-xs font-semibold leading-tight">
               {courseName}
             </span>
           </div>
 
           {!isCompact && (
-            <div className="mt-1 flex items-center gap-1 text-[11px] opacity-75">
+            <div className="mt-1 flex items-center gap-1 text-[11px] font-medium opacity-85">
               <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -51,7 +51,7 @@ export function ClassCard({ event }) {
         </div>
 
         {!isCompact && location && (
-          <div className="mt-auto flex items-center gap-1 text-[11px] opacity-75 truncate">
+          <div className="mt-auto flex items-center gap-1 text-[11px] font-medium opacity-85 truncate">
             <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />

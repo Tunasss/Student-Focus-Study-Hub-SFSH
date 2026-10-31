@@ -98,7 +98,7 @@ export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
       />
 
       {/* Modal Dialog Card */}
-      <div className="relative z-10 w-full max-w-lg rounded-3xl border border-border bg-surface p-6 sm:p-8 shadow-2xl transition-all">
+      <div className="relative z-10 w-full max-w-lg rounded-3xl border border-border/80 bg-surface/90 backdrop-blur-2xl p-6 sm:p-8 shadow-2xl luma-glow-sm transition-all">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -220,7 +220,7 @@ export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
             <button
               type="submit"
               disabled={!file || loading}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-fg shadow-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-fg shadow-sm luma-glow-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading && (
                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">

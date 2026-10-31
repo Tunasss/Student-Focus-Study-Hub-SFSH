@@ -10,7 +10,11 @@ export function ThemeToggle() {
   const { preference, setPreference } = useTheme();
 
   return (
-    <div role="radiogroup" aria-label="Giao diện" className="inline-flex rounded-lg border border-border bg-surface-2 p-0.5">
+    <div
+      role="radiogroup"
+      aria-label="Giao diện"
+      className="inline-flex rounded-xl border border-border bg-surface-2/70 p-0.5 backdrop-blur-md shadow-2xs"
+    >
       {OPTIONS.map((o) => (
         <button
           key={o.value}
@@ -19,8 +23,10 @@ export function ThemeToggle() {
           aria-checked={preference === o.value}
           title={o.label}
           onClick={() => setPreference(o.value)}
-          className={`rounded-md px-2.5 py-1 text-sm transition-colors ${
-            preference === o.value ? 'bg-surface text-text shadow-sm' : 'text-muted hover:text-text'
+          className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all ${
+            preference === o.value
+              ? 'bg-surface text-text shadow-xs border border-border/40'
+              : 'text-muted hover:text-text'
           }`}
         >
           <span aria-hidden="true">{o.icon}</span>

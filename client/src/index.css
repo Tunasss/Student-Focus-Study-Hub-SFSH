@@ -3,32 +3,34 @@
 /* Dark mode is driven by the `.dark` class on <html> (see ThemeProvider). */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Theme tokens: change colors here, components use the semantic names (bg-surface, text-muted, ...). */
+/* Luma AI-Wellness Theme tokens */
 :root {
-  --sfsh-bg: #f6f7fb;
+  --sfsh-bg: #f8faf8;
   --sfsh-surface: #ffffff;
-  --sfsh-surface-2: #eef0f6;
-  --sfsh-border: #dfe2ec;
-  --sfsh-text: #1b1e2b;
-  --sfsh-muted: #5f667a;
-  --sfsh-primary: #4f46e5;
-  --sfsh-primary-fg: #ffffff;
-  --sfsh-danger: #dc2626;
-  --sfsh-success: #16a34a;
+  --sfsh-surface-2: #f0f4ee;
+  --sfsh-border: #e2e8df;
+  --sfsh-text: #131a12;
+  --sfsh-muted: #626e5f;
+  --sfsh-primary: #84cc16;
+  --sfsh-primary-fg: #0a1107;
+  --sfsh-danger: #ef4444;
+  --sfsh-success: #22c55e;
+  --sfsh-accent-lime: #b6f246;
   color-scheme: light;
 }
 
 .dark {
-  --sfsh-bg: #0f1117;
-  --sfsh-surface: #171a23;
-  --sfsh-surface-2: #20242f;
-  --sfsh-border: #2c3140;
-  --sfsh-text: #e8eaf1;
-  --sfsh-muted: #9aa1b5;
-  --sfsh-primary: #818cf8;
-  --sfsh-primary-fg: #0f1117;
+  --sfsh-bg: #070907;
+  --sfsh-surface: #0e130e;
+  --sfsh-surface-2: #141b14;
+  --sfsh-border: rgba(255, 255, 255, 0.08);
+  --sfsh-text: #f3f6f1;
+  --sfsh-muted: #8b9987;
+  --sfsh-primary: #b6f246;
+  --sfsh-primary-fg: #070907;
   --sfsh-danger: #f87171;
   --sfsh-success: #4ade80;
+  --sfsh-accent-lime: #b6f246;
   color-scheme: dark;
 }
 
@@ -43,9 +45,75 @@
   --color-primary-fg: var(--sfsh-primary-fg);
   --color-danger: var(--sfsh-danger);
   --color-success: var(--sfsh-success);
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --color-lime-accent: var(--sfsh-accent-lime);
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 body {
-  @apply bg-bg text-text antialiased;
+  @apply bg-bg text-text antialiased selection:bg-primary/30 selection:text-text;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/* Luma Ambient Glows & Glassmorphic Utilities */
+.luma-glow {
+  box-shadow: 0 0 35px -5px rgba(182, 242, 70, 0.28);
+}
+
+.luma-glow-sm {
+  box-shadow: 0 0 18px -4px rgba(182, 242, 70, 0.22);
+}
+
+.luma-glow-lg {
+  box-shadow: 0 0 70px -10px rgba(182, 242, 70, 0.38);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--sfsh-border);
+}
+
+.dark .glass-panel {
+  background: rgba(14, 19, 14, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--sfsh-border);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .glass-card {
+  background: rgba(17, 24, 17, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(182, 242, 70, 0.35);
+  box-shadow: 0 12px 30px -10px rgba(182, 242, 70, 0.15);
+}
+
+/* Custom smooth dark scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 153, 135, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(182, 242, 70, 0.45);
 }

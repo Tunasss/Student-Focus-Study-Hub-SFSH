@@ -1,10 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useLanguage } from '../i18n/languageContext';
 import { LanguageToggle } from '../i18n/LanguageToggle';
 import { ThemeToggle } from '../theme/ThemeToggle';
+import { LotusIcon } from '../components/AppShell';
 
 if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
   gsap.registerPlugin(ScrollTrigger);
@@ -13,207 +14,165 @@ if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
 const HOME_COPY = {
   en: {
     nav: {
-      demo: 'Live Demo',
-      botanical: 'Bio-Rhythm',
-      ecosystem: 'Ecosystem',
+      studio: 'Studio',
+      program: 'Program',
+      timetable: 'Timetable',
       login: 'Sign In',
       register: 'Get Started',
     },
     hero: {
-      tag: 'LUMA GREEN • BIO-STUDY OS',
+      tag: 'LUMA · GREEN SCHEDULE & FOCUS STUDIO',
       titleLine1: 'One experience.',
       titleLine2: 'Built around you.',
-      subtitle: 'Visual timetable sync. Botanical focus studio. Circadian AI.',
-      ctaPrimary: 'Enter Study Hub',
-      ctaSecondary: 'Create Account',
-      watchBadge: 'Apple Watch • Bio-Sync',
-      watchStatus: '98% Optimal Rhythm',
-      streakBadge: '7-Day Deep Work',
-    },
-    demos: {
-      sectionTag: 'INTERACTIVE MINI STUDIO',
-      sectionTitle: 'Touch the workflow.',
-      // Demo 1: Botanical Focus Orb
-      orbTag: 'BOTANICAL POMODORO',
-      orbTitle: 'Breathe. Focus. Flow.',
-      orbStart: 'Start Live Demo',
-      orbPause: 'Pause Session',
-      orbReset: 'Reset',
-      modes: ['🌱 Forest Rain', '🍃 Matcha Alpha', '🌿 Night Lotus'],
-      // Demo 2: Interactive ICS Sync
-      icsTag: 'INSTANT .ICS ENGINE',
-      icsTitle: 'One tap. Full week synced.',
-      icsBtnSync: '⚡ Simulate .ics Drop',
-      icsBtnReset: '↺ Replay Sync',
-      icsSyncedBadge: '11 Classes Placed • Zero Overlap',
-      days: ['MON', 'WED', 'THU', 'FRI', 'SAT'],
+      subtitle:
+        'Design your daily study routine around general active timeframes with full custom slot control. Integrated timetable and deep focus sessions.',
+      ctaPrimary: 'Sign In to Workspace',
+      ctaSecondary: 'Create Free Account',
     },
     showcase: {
-      sectionTag: 'GREEN WELLNESS ECOSYSTEM',
-      sectionTitle: 'Your rhythm. Your practice.',
-      card1Tag: 'MIND & BODY',
-      card1Title: 'Circadian Energy Wave',
-      card1Stat: '08:30 – 10:30 AM Peak',
-      card2Tag: 'WEARABLE SYNC',
-      card2Title: 'Mindful Break Alerts',
-      card2Stat: '62 BPM Calm State',
-      card3Tag: 'SMART SYLLABUS',
-      card3Title: 'Visual Chapter Mastery',
-      card3Stat: '88% Semester Pace',
+      tabStudio: 'Deep Focus Studio',
+      tabProgram: 'Program & Schedule Grid',
+      focusTitle: 'Deep Focus',
+      focusSubtitle: '01 · Reset & Ground',
+      focusActiveTag: 'Active Session · 20 min',
+      programTitle: 'Schedule Mix',
+      programSubtitle: 'Automated + Custom Slots',
+      stat1: 'Active Timeframe',
+      stat1Val: '08:00 – 17:00',
+      stat2: 'Custom Slots',
+      stat2Val: '100% Configurable',
+      stat3: 'Timetable Sync',
+      stat3Val: 'Zero Overlap',
+    },
+    features: {
+      headerTag: 'SMART SCHEDULE ARCHITECTURE',
+      headerTitle: 'A clean workflow for university life.',
+      card1Title: 'Active Timeframe Structuring',
+      card1Desc:
+        'Organize lecture periods, lab hours, and deep work intervals around your peak daily activity hours.',
+      card2Title: '1-Tap .ICS Timetable Sync',
+      card2Desc:
+        'Upload your university or Google Calendar file. Automatically formats class codes, locations, and timings with zero duplicates.',
+      card3Title: 'Distraction-Free Focus Studio',
+      card3Desc:
+        'A dedicated deep focus player with ambient soundscapes and visual cues for optimal productivity.',
     },
     finale: {
-      title: 'Ready for your best semester?',
+      title: 'Ready to elevate your study routine?',
+      subtitle: 'Experience the clean green interface designed for focus and seamless scheduling.',
       ctaLogin: 'Sign In',
       ctaRegister: 'Start Free',
     },
   },
   vi: {
     nav: {
-      demo: 'Demo Trực tiếp',
-      botanical: 'Nhịp Sinh Học',
-      ecosystem: 'Hệ Sinh Thái',
+      studio: 'Không gian',
+      program: 'Chương trình',
+      timetable: 'Thời khóa biểu',
       login: 'Đăng nhập',
       register: 'Bắt đầu',
     },
     hero: {
-      tag: 'LUMA GREEN • HỆ ĐIỀU HÀNH HỌC TẬP',
+      tag: 'LUMA · KHÔNG GIAN LỊCH TRÌNH & TẬP TRUNG',
       titleLine1: 'Một trải nghiệm.',
       titleLine2: 'Xoay quanh nhịp của bạn.',
-      subtitle: 'Đồng bộ lịch .ics trực quan. Phòng tập trung sinh thái. AI nhịp sinh học.',
+      subtitle:
+        'Thiết kế lịch trình học tập theo khung giờ hoạt động chung và linh hoạt tùy biến riêng. Tích hợp thời khóa biểu và phòng tập trung sâu.',
       ctaPrimary: 'Đăng nhập Không gian',
-      ctaSecondary: 'Tạo tài khoản',
-      watchBadge: 'Đồng bộ Nhịp Sinh Học',
-      watchStatus: '98% Năng lượng Đỉnh',
-      streakBadge: 'Chuỗi 7 Ngày Deep Work',
-    },
-    demos: {
-      sectionTag: 'TRẢI NGHIỆM TƯƠNG TÁC TRỰC TIẾP',
-      sectionTitle: 'Chạm thử tính năng ngay trên trang.',
-      orbTag: 'POMODORO SINH THÁI',
-      orbTitle: 'Hít thở. Tập trung. Thăng hoa.',
-      orbStart: 'Chạy thử Pomodoro',
-      orbPause: 'Tạm dừng',
-      orbReset: 'Đặt lại',
-      modes: ['🌱 Mưa Rừng Xanh', '🍃 Sóng Alpha Trà Xanh', '🌿 Sen Đêm Tĩnh Lặng'],
-      icsTag: 'ĐỒNG BỘ LỊCH .ICS TỨC THÌ',
-      icsTitle: 'Một chạm. Lên lịch cả tuần.',
-      icsBtnSync: '⚡ Thử thả file .ics',
-      icsBtnReset: '↺ Chạy lại hiệu ứng',
-      icsSyncedBadge: 'Đã xếp 11 ca học • Không trùng giờ',
-      days: ['T2', 'T4', 'T5', 'T6', 'T7'],
+      ctaSecondary: 'Tạo tài khoản miễn phí',
     },
     showcase: {
-      sectionTag: 'HỆ SINH THÁI WELLNESS XANH',
-      sectionTitle: 'Nhịp điệu của bạn. Không gian của bạn.',
-      card1Tag: 'TÂM TRÍ & NĂNG LƯỢNG',
-      card1Title: 'Sóng Năng Lượng Sinh Học',
-      card1Stat: 'Đỉnh 08:30 – 10:30 Sáng',
-      card2Tag: 'ĐỒNG HỒ THÔNG MINH',
-      card2Title: 'Nhắc Nghỉ Phục Hồi Thị Giác',
-      card2Stat: '62 BPM Trạng Thái Tĩnh',
-      card3Tag: 'ĐỀ CƯƠNG TRỰC QUAN',
-      card3Title: 'Theo Dõi Tiến Độ Chương',
-      card3Stat: '88% Tiến Độ Học Kỳ',
+      tabStudio: 'Không gian Tập trung Sâu',
+      tabProgram: 'Khung Lịch trình & Chương trình',
+      focusTitle: 'Tập trung sâu',
+      focusSubtitle: '01 · Tái tạo & Nền tảng',
+      focusActiveTag: 'Phiên đang chạy · 20 phút',
+      programTitle: 'Bộ khung Thời gian',
+      programSubtitle: 'Tự động + Tùy biến riêng',
+      stat1: 'Khung giờ hoạt động',
+      stat1Val: '08:00 – 17:00',
+      stat2: 'Tùy chỉnh riêng',
+      stat2Val: 'Linh hoạt 100%',
+      stat3: 'Đồng bộ Thời khóa biểu',
+      stat3Val: 'Không trùng giờ',
+    },
+    features: {
+      headerTag: 'KIẾN TRÚC LỊCH TRÌNH TINH GỌN',
+      headerTitle: 'Quy trình học tập khoa học cho sinh viên.',
+      card1Title: 'Quy hoạch Khung giờ Hoạt động',
+      card1Desc:
+        'Sắp xếp ca học trên giảng đường, giờ làm đồ án và khung tập trung dựa trên thói quen hoạt động thực tế trong ngày.',
+      card2Title: 'Đồng bộ .ICS Trong 1 Chạm',
+      card2Desc:
+        'Kéo thả file lịch từ Google Calendar hoặc cổng đào tạo. Tự động bóc tách mã môn, phòng học mà không bị trùng lắp.',
+      card3Title: 'Không gian Tập trung Tĩnh lặng',
+      card3Desc:
+        'Đồng hồ tập trung tối giản với âm thanh nền tự nhiên giúp bạn duy trì trạng thái Deep Work hiệu quả.',
     },
     finale: {
-      title: 'Sẵn sàng cho học kỳ rực rỡ nhất?',
+      title: 'Sẵn sàng nâng tầm lịch trình học tập?',
+      subtitle: 'Trải nghiệm giao diện Green tinh giản, hiện đại và chuẩn mực.',
       ctaLogin: 'Đăng nhập',
-      ctaRegister: 'Đăng ký miễn phí',
+      ctaRegister: 'Bắt đầu miễn phí',
     },
   },
 };
-
-const DEMO_TIMETABLE_BLOCKS = [
-  { dayIdx: 0, code: 'PE231', room: 'Field A', top: '12%', height: '32%', color: 'bg-emerald-500/25 border-emerald-400/50 text-emerald-200' },
-  { dayIdx: 1, code: 'MSIS207', room: 'C206', top: '42%', height: '42%', color: 'bg-primary/25 border-primary/60 text-primary' },
-  { dayIdx: 2, code: 'CS5433', room: 'B5.04', top: '38%', height: '46%', color: 'bg-teal-500/25 border-teal-400/50 text-teal-200' },
-  { dayIdx: 3, code: 'MSIS4263', room: 'C211', top: '18%', height: '36%', color: 'bg-lime-500/25 border-lime-400/50 text-lime-200' },
-  { dayIdx: 4, code: 'STAT3013', room: 'B5.04', top: '15%', height: '48%', color: 'bg-emerald-400/25 border-emerald-300/60 text-emerald-100' },
-];
 
 export function HomePage() {
   const { lang } = useLanguage();
   const t = HOME_COPY[lang] || HOME_COPY.en;
 
   const rootRef = useRef(null);
-  const icsGridRef = useRef(null);
+  const [activeTab, setActiveTab] = useState('studio');
 
-  // Interactive Mini Demo 1: Botanical Focus Orb state
-  const [timerRunning, setTimerRunning] = useState(true);
-  const [secondsLeft, setSecondsLeft] = useState(25 * 60);
-  const [soundMode, setSoundMode] = useState(0);
-
-  // Interactive Mini Demo 2: ICS Sync state
-  const [icsSyncKey, setIcsSyncKey] = useState(1);
-
-  // Countdown tick for interactive Pomodoro mini-demo
-  useEffect(() => {
-    if (!timerRunning) return undefined;
-    const id = window.setInterval(() => {
-      setSecondsLeft((prev) => (prev > 0 ? prev - 1 : 25 * 60));
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [timerRunning]);
-
-  const formattedTimer = `${String(Math.floor(secondsLeft / 60)).padStart(2, '0')}:${String(
-    secondsLeft % 60
-  ).padStart(2, '0')}`;
-
-  // Master 60fps GSAP animations (transform + autoAlpha only)
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
       tl.fromTo(
-        '.apple-hero-item',
-        { y: 24, autoAlpha: 0 },
-        { y: 0, autoAlpha: 1, duration: 0.55, stagger: 0.08, clearProps: 'opacity,visibility,transform' }
-      ).fromTo(
-        '.apple-stage-visual',
-        { y: 32, scale: 0.96, autoAlpha: 0 },
-        { y: 0, scale: 1, autoAlpha: 1, duration: 0.7, clearProps: 'opacity,visibility,transform' },
-        '-=0.35'
-      );
+        '.home-hero-badge',
+        { y: 16, autoAlpha: 0 },
+        { y: 0, autoAlpha: 1, duration: 0.45, clearProps: 'opacity,visibility,transform' }
+      )
+        .fromTo(
+          '.home-hero-title',
+          { y: 26, autoAlpha: 0 },
+          { y: 0, autoAlpha: 1, duration: 0.6, clearProps: 'opacity,visibility,transform' },
+          '-=0.25'
+        )
+        .fromTo(
+          '.home-hero-desc',
+          { y: 20, autoAlpha: 0 },
+          { y: 0, autoAlpha: 1, duration: 0.5, clearProps: 'opacity,visibility,transform' },
+          '-=0.35'
+        )
+        .fromTo(
+          '.home-hero-cta',
+          { y: 16, autoAlpha: 0 },
+          { y: 0, autoAlpha: 1, duration: 0.45, clearProps: 'opacity,visibility,transform' },
+          '-=0.3'
+        )
+        .fromTo(
+          '.home-showcase-stage',
+          { scale: 0.95, y: 32, autoAlpha: 0 },
+          { scale: 1, y: 0, autoAlpha: 1, duration: 0.75, ease: 'power2.out', clearProps: 'opacity,visibility,transform' },
+          '-=0.3'
+        );
 
-      // Continuous organic breathing for Green Botanical Lotus Sculpture
-      gsap.to('.botanical-lotus-core', {
-        scale: 1.07,
-        rotation: 8,
-        duration: 4.2,
+      // Continuous breathing animation for glowing centerpiece
+      gsap.to('.hero-glowing-lotus', {
+        scale: 1.06,
+        rotation: 4,
+        duration: 4.5,
         repeat: -1,
         yoyo: true,
         ease: 'sine.inOut',
-      });
-      gsap.to('.botanical-lotus-outer', {
-        scale: 0.94,
-        rotation: -6,
-        duration: 5.4,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      });
-
-      // Floating hardware pills
-      gsap.to('.float-pill-1', {
-        y: -8,
-        duration: 3.2,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      });
-      gsap.to('.float-pill-2', {
-        y: 8,
-        duration: 3.8,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-        delay: 0.4,
       });
 
-      // Scroll-triggered section reveals
-      gsap.utils.toArray('.apple-scroll-section').forEach((sec) => {
+      // Scroll reveals
+      gsap.utils.toArray('.home-scroll-reveal').forEach((el) => {
         gsap.fromTo(
-          sec,
+          el,
           { y: 30, autoAlpha: 0 },
           {
             y: 0,
@@ -222,7 +181,7 @@ export function HomePage() {
             ease: 'power2.out',
             clearProps: 'opacity,visibility,transform',
             scrollTrigger: {
-              trigger: sec,
+              trigger: el,
               start: 'top 86%',
               toggleActions: 'play none none none',
             },
@@ -234,523 +193,322 @@ export function HomePage() {
     return () => ctx.revert();
   }, []);
 
-  // Triggered animation when user clicks "Simulate .ics Drop"
-  useLayoutEffect(() => {
-    if (!icsGridRef.current) return undefined;
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        '.demo-ics-block',
-        { y: -18, scale: 0.88, autoAlpha: 0 },
-        {
-          y: 0,
-          scale: 1,
-          autoAlpha: 1,
-          duration: 0.4,
-          stagger: 0.07,
-          ease: 'back.out(1.4)',
-          clearProps: 'opacity,visibility,transform',
-        }
-      );
-    }, icsGridRef);
-    return () => ctx.revert();
-  }, [icsSyncKey]);
-
   return (
-    <div ref={rootRef} className="min-h-screen bg-bg text-text selection:bg-primary selection:text-primary-fg overflow-x-hidden">
-      {/* Sticky Minimal Apple + Luma Top Navigation */}
-      <header className="sticky top-0 z-50 border-b border-border/60 bg-bg/90">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-fg shadow-xs">
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C9.5 6 7 9.5 7 13a5 5 0 0010 0c0-3.5-2.5-7-5-11zm0 15a3 3 0 01-3-3c0-2 1.5-4.5 3-7 1.5 2.5 3 5 3 7a3 3 0 01-3 3z" />
-              </svg>
-            </div>
-            <span className="text-sm font-extrabold tracking-tight text-text">Luma</span>
-            <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold text-primary">
-              SFSH
-            </span>
-          </Link>
-
-          <nav aria-label="Home navigation" className="hidden md:flex items-center gap-7 text-xs font-semibold text-muted">
-            <a href="#live-demos" className="hover:text-text transition-colors">
-              {t.nav.demo}
-            </a>
-            <a href="#green-ecosystem" className="hover:text-text transition-colors">
-              {t.nav.botanical}
-            </a>
-          </nav>
-
-          <div className="flex items-center gap-2">
-            <LanguageToggle />
-            <ThemeToggle />
-            <Link
-              to="/login"
-              className="rounded-full border border-border bg-surface-2 px-4 py-1.5 text-xs font-semibold text-text hover:border-primary/50 transition-colors"
-            >
-              {t.nav.login}
-            </Link>
-            <Link
-              to="/register"
-              className="hidden sm:inline-flex rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-fg shadow-xs luma-glow-sm hover:opacity-95 transition-opacity"
-            >
-              {t.nav.register}
-            </Link>
+    <div ref={rootRef} className="min-h-screen bg-black text-text selection:bg-primary selection:text-black overflow-x-hidden font-sans">
+      {/* Top Navbar matching Image 1 & 4 */}
+      <header className="sticky top-0 z-50 w-full px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-white/5 bg-black/85 backdrop-blur-xl">
+        <Link to="/" className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white/10 text-white">
+            <LotusIcon className="h-5 w-5" />
           </div>
+          <span className="text-sm font-extrabold tracking-tight text-white">Luma</span>
+        </Link>
+
+        {/* Center Floating Pill Navigation */}
+        <nav className="floating-pill-nav hidden sm:flex items-center rounded-full px-2 py-1 gap-1">
+          <a href="#showcase" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-muted hover:text-white transition-colors">
+            {t.nav.studio}
+          </a>
+          <a href="#features" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-muted hover:text-white transition-colors">
+            {t.nav.program}
+          </a>
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <LanguageToggle />
+          <ThemeToggle />
+          <Link
+            to="/login"
+            className="rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-semibold text-white hover:border-primary/50 transition-colors"
+          >
+            {t.nav.login}
+          </Link>
+          <Link
+            to="/register"
+            className="rounded-full bg-white px-4 py-1.5 text-xs font-extrabold text-black hover:bg-primary transition-colors"
+          >
+            {t.nav.register}
+          </Link>
         </div>
       </header>
 
-      <main className="space-y-20 sm:space-y-28 pb-24">
-        {/* SECTION 1: VISUAL-FIRST APPLE + LUMA GREEN BOTANICAL HERO */}
-        <section className="mx-auto max-w-6xl px-4 pt-10 sm:px-6 sm:pt-14 text-center">
-          <div className="apple-hero-item inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-[11px] font-bold tracking-wider text-primary">
-            <span className="h-2 w-2 rounded-full bg-primary" />
+      <main className="space-y-24 sm:space-y-32 pb-24">
+        {/* HERO SECTION: Urbanist Typography & Glowing Accent 01 */}
+        <section className="mx-auto max-w-6xl px-4 pt-12 sm:px-8 sm:pt-20 text-center">
+          <div className="home-hero-badge inline-flex items-center gap-2 rounded-full border border-primary/30 bg-accent-deep/60 px-4 py-1 text-xs font-bold text-primary">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
             <span>{t.hero.tag}</span>
           </div>
 
-          <h1 className="apple-hero-item mx-auto mt-5 max-w-4xl text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-text leading-[1.04]">
+          <h1 className="home-hero-title mx-auto mt-6 max-w-4xl text-4xl sm:text-6xl lg:text-[68px] font-extrabold tracking-tight text-white leading-[1.04]">
             {t.hero.titleLine1}{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-emerald-300 to-lime-300">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-deep via-primary to-white">
               {t.hero.titleLine2}
             </span>
           </h1>
 
-          <p className="apple-hero-item mx-auto mt-4 max-w-xl text-sm sm:text-base font-medium text-muted">
+          <p className="home-hero-desc mx-auto mt-6 max-w-2xl text-base sm:text-[18px] text-muted leading-relaxed">
             {t.hero.subtitle}
           </p>
 
-          <div className="apple-hero-item mt-7 flex flex-wrap items-center justify-center gap-3">
+          <div className="home-hero-cta mt-8 flex flex-wrap items-center justify-center gap-3.5">
             <Link
               to="/login"
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3 text-sm font-bold text-primary-fg shadow-md luma-glow hover:opacity-95 transition-opacity"
+              className="rounded-full bg-white px-8 py-3.5 text-sm font-extrabold text-black shadow-lg hover:bg-primary transition-colors"
             >
-              <span>{t.hero.ctaPrimary}</span>
-              <span>→</span>
+              {t.hero.ctaPrimary} →
             </Link>
             <Link
               to="/register"
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-6 py-3 text-sm font-semibold text-text hover:border-primary/50 transition-colors"
+              className="rounded-full border border-white/15 bg-white/5 px-8 py-3.5 text-sm font-semibold text-white hover:border-primary/50 transition-colors"
             >
-              <span>{t.hero.ctaSecondary}</span>
+              {t.hero.ctaSecondary}
             </Link>
           </div>
 
-          {/* CENTERPIECE VISUAL STAGE: Glowing Luma Green Botanical Lotus + Multi-Device Showcase */}
-          <div className="apple-stage-visual relative mx-auto mt-12 max-w-5xl">
-            {/* Floating Left Pill: Apple Watch Bio-Sync */}
-            <div className="float-pill-1 will-change-transform hidden lg:flex items-center gap-3 glass-card rounded-2xl px-4 py-3 text-left absolute -left-4 top-12 z-20 shadow-xl border border-primary/30">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 text-primary">
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C9.5 6 7 9.5 7 13a5 5 0 0010 0c0-3.5-2.5-7-5-11z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-primary">{t.hero.watchBadge}</p>
-                <p className="text-xs font-extrabold text-text">{t.hero.watchStatus}</p>
-              </div>
-            </div>
-
-            {/* Floating Right Pill: 7-Day Streak */}
-            <div className="float-pill-2 will-change-transform hidden lg:flex items-center gap-3 glass-card rounded-2xl px-4 py-3 text-left absolute -right-4 bottom-12 z-20 shadow-xl border border-emerald-400/30">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-300 text-lg">
-                🌿
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">BIO-STREAK</p>
-                <p className="text-xs font-extrabold text-text">{t.hero.streakBadge}</p>
-              </div>
-            </div>
-
-            {/* Visual Stage Frame (Matches Luma Behance Green Lotus + Device Mockups) */}
-            <div className="glass-card rounded-[2.25rem] border border-primary/25 p-5 sm:p-8 shadow-2xl overflow-hidden relative">
-              <div
-                className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center rounded-[1.75rem] p-6 sm:p-8 border border-white/10"
-                style={{
-                  background:
-                    'radial-gradient(circle at 30% 50%, rgba(163, 230, 53, 0.22), rgba(16, 185, 129, 0.08) 45%, rgba(10, 14, 10, 0.95) 85%)',
-                }}
+          {/* MAIN SHOWCASE STAGE: Direct Faithful Mockup of Images 1, 3 & 4 */}
+          <div id="showcase" className="home-showcase-stage relative mx-auto mt-14 max-w-5xl">
+            {/* Top Showcase Switcher Tabs */}
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => setActiveTab('studio')}
+                className={`rounded-full px-5 py-2 text-xs font-bold transition-all ${
+                  activeTab === 'studio'
+                    ? 'bg-white text-black shadow-md'
+                    : 'border border-white/10 bg-white/5 text-muted hover:text-white'
+                }`}
               >
-                {/* Left Visual: Glowing Botanical Lotus Sculpture */}
-                <div className="lg:col-span-5 flex flex-col items-center justify-center py-4">
-                  <div className="relative flex h-52 w-52 items-center justify-center">
-                    {/* Outer Botanical Petal Aura */}
-                    <svg
-                      className="botanical-lotus-outer will-change-transform absolute inset-0 h-full w-full text-emerald-400/30"
-                      viewBox="0 0 200 200"
-                      fill="currentColor"
-                    >
-                      <path d="M100 10 C125 45, 155 65, 155 105 C155 140, 130 165, 100 180 C70 165, 45 140, 45 105 C45 65, 75 45, 100 10 Z" />
-                      <path
-                        d="M100 25 C140 50, 175 80, 165 125 C155 155, 125 170, 100 180 C75 170, 45 155, 35 125 C25 80, 60 50, 100 25 Z"
-                        opacity="0.55"
-                      />
-                    </svg>
-
-                    {/* Inner Glowing Lime Lotus Core */}
-                    <svg
-                      className="botanical-lotus-core will-change-transform relative z-10 h-36 w-36 text-primary drop-shadow-[0_0_24px_rgba(163,230,53,0.55)]"
-                      viewBox="0 0 200 200"
-                      fill="currentColor"
-                    >
-                      <path d="M100 22 C120 58, 142 82, 142 114 C142 142, 123 162, 100 172 C77 162, 58 142, 58 114 C58 82, 80 58, 100 22 Z" />
-                      <circle cx="100" cy="115" r="24" className="fill-bg/80" />
-                      <circle cx="100" cy="115" r="10" className="fill-primary" />
-                    </svg>
-
-                    {/* Center Bio Percentage */}
-                    <div className="absolute bottom-2 rounded-full border border-primary/40 bg-bg/90 px-3.5 py-1 text-xs font-black text-primary">
-                      98% BIO-FLOW
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Visual: Sleek Hardware UI Preview (Zero Long Paragraphs) */}
-                <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
-                  {/* Visual Card A: Today's Rhythm Ring */}
-                  <div className="rounded-3xl border border-white/10 bg-black/55 p-5 flex flex-col justify-between">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-primary">FOCUS RING</span>
-                      <span className="h-2 w-2 rounded-full bg-primary" />
-                    </div>
-                    <div className="my-4 flex items-center gap-4">
-                      <div className="relative flex h-20 w-20 shrink-0 items-center justify-center">
-                        <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
-                          <circle cx="50" cy="50" r="38" className="stroke-white/10" strokeWidth="9" fill="transparent" />
-                          <circle
-                            cx="50"
-                            cy="50"
-                            r="38"
-                            className="stroke-primary"
-                            strokeWidth="9"
-                            strokeDasharray="238.7"
-                            strokeDashoffset="35.8"
-                            strokeLinecap="round"
-                            fill="transparent"
-                          />
-                        </svg>
-                        <span className="absolute text-base font-black text-white">85%</span>
-                      </div>
-                      <div>
-                        <p className="text-xl font-black text-white">3.5 hrs</p>
-                        <p className="text-xs text-emerald-300/80">7 Pomodoros Done</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-1.5">
-                      {[65, 85, 95, 75, 90, 100, 80].map((v, idx) => (
-                        <div key={idx} className="h-1.5 flex-1 rounded-full bg-white/10 overflow-hidden">
-                          <div className="h-full bg-primary rounded-full" style={{ width: `${v}%` }} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Visual Card B: Live Class Card */}
-                  <div className="rounded-3xl border border-white/10 bg-black/55 p-5 flex flex-col justify-between">
-                    <div className="flex items-center justify-between">
-                      <span className="rounded-lg bg-primary/20 px-2.5 py-0.5 text-[10px] font-bold text-primary">
-                        MSIS207.R11
-                      </span>
-                      <span className="text-[11px] font-semibold text-emerald-300">13:00 – 16:15</span>
-                    </div>
-                    <div className="my-4">
-                      <p className="text-base font-bold text-white">Web App Development</p>
-                      <p className="mt-1 text-xs text-white/60">📍 Room C206 • Synced via .ics</p>
-                    </div>
-                    <div className="flex items-center justify-between pt-2 border-t border-white/10 text-[11px]">
-                      <span className="text-emerald-300 font-semibold">● Bio-Peak Match</span>
-                      <span className="text-white/70 font-bold">GMT+7</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* SECTION 2: INTERACTIVE MINI DEMOS (POMODORO ORB + 1-TAP ICS TIMETABLE) */}
-        <section id="live-demos" className="apple-scroll-section mx-auto max-w-6xl px-4 sm:px-6 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-primary">{t.demos.sectionTag}</span>
-              <h2 className="mt-1 text-2xl sm:text-4xl font-extrabold tracking-tight text-text">
-                {t.demos.sectionTitle}
-              </h2>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* MINI DEMO 1: Interactive Botanical Pomodoro & Soundscape Orb */}
-            <div className="lg:col-span-5 glass-card rounded-[2rem] p-6 sm:p-7 flex flex-col justify-between border border-primary/25">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-primary">{t.demos.orbTag}</span>
-                <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[10px] font-bold text-primary">
-                  Interactive
-                </span>
-              </div>
-
-              <h3 className="mt-2 text-xl font-extrabold text-text">{t.demos.orbTitle}</h3>
-
-              {/* Interactive Glowing Timer Ring */}
-              <div className="my-6 flex flex-col items-center">
-                <div
-                  onClick={() => setTimerRunning((r) => !r)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && setTimerRunning((r) => !r)}
-                  className="cursor-pointer group relative flex h-44 w-44 items-center justify-center rounded-full border border-primary/30 bg-surface-2/80 shadow-inner transition-transform hover:scale-105"
-                >
-                  <svg className="absolute inset-0 h-full w-full -rotate-90 p-2" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="44" className="stroke-border" strokeWidth="4" fill="transparent" />
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="44"
-                      className="stroke-primary"
-                      strokeWidth="5"
-                      strokeDasharray="276.4"
-                      strokeDashoffset={276.4 * (1 - secondsLeft / (25 * 60))}
-                      strokeLinecap="round"
-                      fill="transparent"
-                    />
-                  </svg>
-                  <div className="text-center">
-                    <span className="text-xs font-bold text-primary block">🌱</span>
-                    <span className="text-3xl font-black tracking-tight text-text">{formattedTimer}</span>
-                    <span className="mt-1 block text-[10px] font-bold uppercase tracking-wider text-muted">
-                      {timerRunning ? '● FLOWING' : '❚❚ PAUSED'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Soundscape Selector Pills */}
-                <div className="mt-5 flex flex-wrap justify-center gap-1.5">
-                  {t.demos.modes.map((label, idx) => (
-                    <button
-                      key={label}
-                      type="button"
-                      onClick={() => setSoundMode(idx)}
-                      className={`rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${
-                        soundMode === idx
-                          ? 'bg-primary text-primary-fg'
-                          : 'border border-border bg-surface-2 text-muted hover:text-text'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setTimerRunning((r) => !r)}
-                  className="flex-1 rounded-2xl bg-primary py-2.5 text-xs font-bold text-primary-fg shadow-xs hover:opacity-95 transition-opacity"
-                >
-                  {timerRunning ? t.demos.orbPause : t.demos.orbStart}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSecondsLeft(25 * 60);
-                    setTimerRunning(true);
-                  }}
-                  className="rounded-2xl border border-border bg-surface-2 px-4 py-2.5 text-xs font-semibold text-muted hover:text-text transition-colors"
-                >
-                  {t.demos.orbReset}
-                </button>
-              </div>
-            </div>
-
-            {/* MINI DEMO 2: Interactive 1-Tap .ICS Visual Timetable Grid */}
-            <div className="lg:col-span-7 glass-card rounded-[2rem] p-6 sm:p-7 flex flex-col justify-between border border-primary/25">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-primary">{t.demos.icsTag}</span>
-                  <h3 className="mt-1 text-xl font-extrabold text-text">{t.demos.icsTitle}</h3>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setIcsSyncKey((k) => k + 1)}
-                  className="rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-fg shadow-xs luma-glow-sm hover:opacity-95 transition-opacity"
-                >
-                  {icsSyncKey === 1 ? t.demos.icsBtnSync : t.demos.icsBtnReset}
-                </button>
-              </div>
-
-              {/* Visual Mini Timetable Canvas */}
-              <div
-                ref={icsGridRef}
-                className="my-5 rounded-2xl border border-border bg-surface-2/70 p-3.5 overflow-hidden"
+                {t.showcase.tabStudio}
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('program')}
+                className={`rounded-full px-5 py-2 text-xs font-bold transition-all ${
+                  activeTab === 'program'
+                    ? 'bg-white text-black shadow-md'
+                    : 'border border-white/10 bg-white/5 text-muted hover:text-white'
+                }`}
               >
-                <div className="grid grid-cols-5 gap-2 border-b border-border/60 pb-2 text-center">
-                  {t.demos.days.map((day) => (
-                    <span key={day} className="text-[11px] font-bold text-muted">
-                      {day}
-                    </span>
-                  ))}
-                </div>
+                {t.showcase.tabProgram}
+              </button>
+            </div>
 
-                <div className="relative mt-2 grid grid-cols-5 gap-2 h-48">
-                  {[0, 1, 2, 3, 4].map((colIdx) => {
-                    const block = DEMO_TIMETABLE_BLOCKS.find((b) => b.dayIdx === colIdx);
-                    return (
-                      <div key={colIdx} className="relative rounded-xl bg-surface/60 border border-border/40 p-1">
-                        {block && (
-                          <div
-                            className={`demo-ics-block will-change-transform absolute inset-x-1 rounded-xl border p-2 flex flex-col justify-between ${block.color}`}
-                            style={{ top: block.top, height: block.height }}
-                          >
-                            <span className="text-[10px] font-black">{block.code}</span>
-                            <span className="text-[10px] opacity-85">📍 {block.room}</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+            {/* Laptop Display Mockup Window */}
+            <div className="relative rounded-[2.5rem] border border-white/15 bg-[#0a0d0a] p-3 sm:p-6 shadow-2xl luma-radiant-glow overflow-hidden">
+              {/* Window Header */}
+              <div className="flex items-center justify-between border-b border-white/10 px-4 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-white/20" />
+                  <span className="h-3 w-3 rounded-full bg-white/20" />
+                  <span className="h-3 w-3 rounded-full bg-white/20" />
+                  <span className="ml-2 text-xs font-semibold text-muted">luma.studio · Urbanist Design</span>
                 </div>
-              </div>
-
-              <div className="flex items-center justify-between text-xs">
-                <span className="inline-flex items-center gap-1.5 font-semibold text-primary">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
                   <span className="h-2 w-2 rounded-full bg-primary" />
-                  {t.demos.icsSyncedBadge}
-                </span>
-                <Link to="/login" className="font-bold text-text hover:text-primary transition-colors">
-                  TKB_HK1.ics →
-                </Link>
+                  <span>Interactive Preview</span>
+                </div>
               </div>
+
+              {/* Tab 1 Content: Deep Focus Stage (Images 1 & 3) */}
+              {activeTab === 'studio' ? (
+                <div className="p-4 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                  {/* Left mini widget */}
+                  <div className="lg:col-span-3 space-y-3 text-left">
+                    <div className="rounded-2xl border border-white/10 bg-black/60 p-3">
+                      <span className="text-xl">🧘</span>
+                      <p className="text-xs font-bold text-white mt-1">Focus Posture</p>
+                      <p className="text-[10px] text-muted">20m Grounding</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-black/60 p-3">
+                      <p className="text-[10px] text-muted uppercase">Pace</p>
+                      <p className="text-xl font-black text-white">58 bpm</p>
+                    </div>
+                  </div>
+
+                  {/* Center glowing lotus */}
+                  <div className="lg:col-span-6 flex flex-col items-center justify-center text-center py-4">
+                    <div className="relative flex h-48 w-48 items-center justify-center">
+                      <div className="absolute inset-0 rounded-full bg-primary/25 blur-3xl scale-125" />
+                      <svg
+                        className="hero-glowing-lotus w-40 h-40 text-primary drop-shadow-[0_0_40px_rgba(219,239,144,0.6)]"
+                        viewBox="0 0 200 200"
+                        fill="currentColor"
+                      >
+                        <path d="M100 20 L138 68 L185 85 L165 145 L100 178 L35 145 L15 85 L62 68 Z" />
+                        <circle cx="100" cy="112" r="28" className="fill-black/40" />
+                        <circle cx="100" cy="112" r="12" className="fill-primary" />
+                      </svg>
+                    </div>
+
+                    <h2 className="text-3xl font-black text-white mt-2">{t.showcase.focusTitle}</h2>
+                    <p className="text-xs font-semibold text-muted">{t.showcase.focusSubtitle}</p>
+
+                    {/* Scrubber */}
+                    <div className="w-56 mt-4 space-y-1">
+                      <div className="h-1 w-full bg-white/20 rounded-full overflow-hidden">
+                        <div className="h-full bg-white w-2/5 rounded-full" />
+                      </div>
+                      <div className="flex justify-between text-[10px] text-muted">
+                        <span>02:13</span>
+                        <span>20:00</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right sessions list */}
+                  <div className="lg:col-span-3 space-y-2 text-left">
+                    <p className="text-xs font-bold text-white mb-2">Your Practice</p>
+                    <div className="rounded-xl border border-primary/50 bg-accent-deep/70 p-2.5 flex items-center justify-between text-xs">
+                      <div>
+                        <p className="font-bold text-white">01 · Reset</p>
+                        <p className="text-[10px] text-primary">20 min</p>
+                      </div>
+                      <span className="text-[10px] font-mono text-primary font-bold">01 : : :</span>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-black/40 p-2.5 flex items-center justify-between text-xs text-muted">
+                      <div>
+                        <p className="font-bold text-text">02 · Breath</p>
+                        <p className="text-[10px]">15 min</p>
+                      </div>
+                      <span className="text-[10px] font-mono">02</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Tab 2 Content: Program Grid (Image 4) */
+                <div className="p-4 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start text-left">
+                  {/* Left Column Mix */}
+                  <div className="lg:col-span-4 rounded-2xl border border-white/10 bg-black/60 p-4 space-y-3">
+                    <p className="text-xs font-bold text-white uppercase tracking-wider">{t.showcase.programTitle}</p>
+                    <div className="grid grid-cols-2 gap-1.5 text-xs">
+                      <span className="rounded-lg bg-white text-black py-1 px-2 text-center font-bold">Study</span>
+                      <span className="rounded-lg border border-white/10 bg-white/5 py-1 px-2 text-center text-muted">Lab</span>
+                      <span className="rounded-lg border border-white/10 bg-white/5 py-1 px-2 text-center text-muted">Lecture</span>
+                      <span className="rounded-lg border border-white/10 bg-white/5 py-1 px-2 text-center text-muted">Revision</span>
+                    </div>
+                    <div className="pt-2 border-t border-white/10 text-[11px] space-y-1.5 text-muted">
+                      <div className="flex justify-between"><span>Session</span><span className="text-white font-bold">25 min</span></div>
+                      <div className="flex justify-between"><span>Ratio</span><span className="text-white font-bold">70 / 30</span></div>
+                    </div>
+                  </div>
+
+                  {/* Middle Column Active Cards */}
+                  <div className="lg:col-span-5 space-y-2.5">
+                    <div className="flex justify-between text-xs font-bold text-muted">
+                      <span>01 · Reset & Ground</span>
+                      <span className="text-primary">Active now</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className="rounded-2xl border border-primary/40 bg-accent-deep/60 p-3 aspect-square flex flex-col justify-between">
+                        <span className="text-xs font-bold text-white">Morning Reset</span>
+                        <span className="text-2xl text-center">🌱</span>
+                        <span className="text-[10px] font-mono font-bold text-primary">2 / 5</span>
+                      </div>
+                      <div className="rounded-2xl border border-primary/40 bg-accent-deep/60 p-3 aspect-square flex flex-col justify-between">
+                        <span className="text-xs font-bold text-white">Deep Focus</span>
+                        <span className="text-2xl text-center">✨</span>
+                        <span className="text-[10px] font-mono font-bold text-primary">0 / 5</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column Weekly Gauge */}
+                  <div className="lg:col-span-3 rounded-2xl border border-white/10 bg-black/60 p-4 text-center">
+                    <p className="text-[11px] font-bold text-muted uppercase">Weekly Practice</p>
+                    <p className="text-2xl font-black text-white mt-2">3.8 / week</p>
+                    <div className="mt-4 pt-3 border-t border-white/10">
+                      <Link to="/login" className="inline-block rounded-full bg-white text-black py-1.5 px-4 text-xs font-bold hover:bg-primary transition-colors">
+                        Explore Full →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </section>
 
-        {/* SECTION 3: VISUAL GREEN WELLNESS BENTO CARDS (HIGH VISUALS, MINIMAL TEXT) */}
-        <section id="green-ecosystem" className="apple-scroll-section mx-auto max-w-6xl px-4 sm:px-6 space-y-6">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-primary">{t.showcase.sectionTag}</span>
-            <h2 className="mt-1 text-2xl sm:text-4xl font-extrabold tracking-tight text-text">
-              {t.showcase.sectionTitle}
+        {/* SECTION 2: 3 PILLARS ARCHITECTURE (ZERO BIO/APPLE JARGON) */}
+        <section id="features" className="home-scroll-reveal mx-auto max-w-6xl px-4 sm:px-8 space-y-8">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-primary">
+              {t.features.headerTag}
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
+              {t.features.headerTitle}
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* Visual Card 1: Green Bio-Wave Graphic */}
-            <div className="glass-card rounded-3xl p-6 flex flex-col justify-between overflow-hidden relative">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="rounded-3xl border border-white/10 bg-[#0d120d] p-7 flex flex-col justify-between">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-primary">{t.showcase.card1Tag}</span>
-                <h3 className="mt-1 text-lg font-extrabold text-text">{t.showcase.card1Title}</h3>
+                <span className="text-3xl">⏱️</span>
+                <h3 className="text-lg font-bold text-white mt-4">{t.features.card1Title}</h3>
+                <p className="text-xs sm:text-sm text-muted mt-2 leading-relaxed">{t.features.card1Desc}</p>
               </div>
-
-              {/* Visual Wave Bars */}
-              <div className="my-6 flex items-end justify-between gap-2 h-28 px-2">
-                {[45, 70, 95, 85, 60, 90, 50].map((h, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
-                    <div
-                      className={`w-full rounded-xl ${
-                        i === 2 || i === 5 ? 'bg-primary luma-glow-sm' : 'bg-emerald-500/40'
-                      }`}
-                      style={{ height: `${h}%` }}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex items-center justify-between pt-3 border-t border-border/50 text-xs">
-                <span className="font-bold text-primary">{t.showcase.card1Stat}</span>
-                <span>🌱</span>
+              <div className="pt-4 border-t border-white/10 mt-6 flex justify-between text-xs text-primary font-bold">
+                <span>08:00 – 17:00</span>
+                <span>Active Window</span>
               </div>
             </div>
 
-            {/* Visual Card 2: Apple Watch Botanical Face Graphic */}
-            <div className="glass-card rounded-3xl p-6 flex flex-col justify-between overflow-hidden relative">
+            <div className="rounded-3xl border border-white/10 bg-[#0d120d] p-7 flex flex-col justify-between">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
-                  {t.showcase.card2Tag}
-                </span>
-                <h3 className="mt-1 text-lg font-extrabold text-text">{t.showcase.card2Title}</h3>
+                <span className="text-3xl">📅</span>
+                <h3 className="text-lg font-bold text-white mt-4">{t.features.card2Title}</h3>
+                <p className="text-xs sm:text-sm text-muted mt-2 leading-relaxed">{t.features.card2Desc}</p>
               </div>
-
-              {/* Apple Watch Squircle Visual */}
-              <div className="my-5 flex justify-center">
-                <div
-                  className="flex h-32 w-28 flex-col items-center justify-center rounded-[2rem] border-2 border-primary/40 p-3 shadow-lg"
-                  style={{
-                    background: 'radial-gradient(circle, rgba(163, 230, 53, 0.25), rgba(10, 16, 10, 0.95))',
-                  }}
-                >
-                  <span className="text-2xl">🍃</span>
-                  <span className="mt-1 text-xs font-black text-white">BREATHE</span>
-                  <span className="text-[10px] font-bold text-primary">4-7-8 Calm</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-3 border-t border-border/50 text-xs">
-                <span className="font-bold text-emerald-400">{t.showcase.card2Stat}</span>
-                <span>⌚</span>
+              <div className="pt-4 border-t border-white/10 mt-6 flex justify-between text-xs text-primary font-bold">
+                <span>.ICS Calendar Format</span>
+                <span>Auto-Parse</span>
               </div>
             </div>
 
-            {/* Visual Card 3: Visual Syllabus Mastery Ring & Pills */}
-            <div className="glass-card rounded-3xl p-6 flex flex-col justify-between overflow-hidden relative">
+            <div className="rounded-3xl border border-white/10 bg-[#0d120d] p-7 flex flex-col justify-between">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-lime-400">
-                  {t.showcase.card3Tag}
-                </span>
-                <h3 className="mt-1 text-lg font-extrabold text-text">{t.showcase.card3Title}</h3>
+                <span className="text-3xl">🌱</span>
+                <h3 className="text-lg font-bold text-white mt-4">{t.features.card3Title}</h3>
+                <p className="text-xs sm:text-sm text-muted mt-2 leading-relaxed">{t.features.card3Desc}</p>
               </div>
-
-              <div className="my-5 space-y-2.5">
-                {[
-                  { code: 'MSIS207', pct: '88%' },
-                  { code: 'STAT3013', pct: '82%' },
-                  { code: 'CS5433', pct: '76%' },
-                ].map((c) => (
-                  <div key={c.code} className="rounded-xl border border-border bg-surface-2/70 p-2.5">
-                    <div className="flex justify-between text-xs font-bold mb-1">
-                      <span className="text-text">{c.code}</span>
-                      <span className="text-primary">{c.pct}</span>
-                    </div>
-                    <div className="h-1.5 w-full rounded-full bg-border overflow-hidden">
-                      <div className="h-full bg-primary rounded-full" style={{ width: c.pct }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex items-center justify-between pt-3 border-t border-border/50 text-xs">
-                <span className="font-bold text-lime-400">{t.showcase.card3Stat}</span>
-                <span>✨</span>
+              <div className="pt-4 border-t border-white/10 mt-6 flex justify-between text-xs text-primary font-bold">
+                <span>Full Focus Studio</span>
+                <span>Urbanist UI</span>
               </div>
             </div>
           </div>
         </section>
 
-        {/* SECTION 4: MINIMAL APPLE FINALE CTA */}
-        <section className="apple-scroll-section mx-auto max-w-4xl px-4 sm:px-6">
+        {/* SECTION 3: FINALE CTA */}
+        <section className="home-scroll-reveal mx-auto max-w-4xl px-4 sm:px-8">
           <div
-            className="glass-card rounded-[2.25rem] p-8 sm:p-12 text-center space-y-6 border border-primary/35 luma-glow"
+            className="rounded-[2.5rem] p-8 sm:p-14 text-center space-y-6 border border-primary/30"
             style={{
-              background:
-                'radial-gradient(circle at 50% 0%, rgba(163, 230, 53, 0.2), rgba(15, 22, 15, 0.95) 75%)',
+              background: 'radial-gradient(circle at 50% 0%, rgba(219, 239, 144, 0.25) 0%, rgba(13, 18, 13, 0.98) 75%)',
             }}
           >
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-fg text-xl shadow-md">
-              🌱
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-black text-xl shadow-lg">
+              <LotusIcon className="h-6 w-6" />
             </div>
-            <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-text">
+
+            <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white max-w-xl mx-auto">
               {t.finale.title}
             </h2>
-            <div className="flex flex-wrap items-center justify-center gap-3.5">
+
+            <p className="text-sm sm:text-base text-muted max-w-lg mx-auto">
+              {t.finale.subtitle}
+            </p>
+
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-3.5">
               <Link
                 to="/login"
-                className="rounded-full bg-primary px-8 py-3.5 text-sm font-bold text-primary-fg shadow-md hover:opacity-95 transition-opacity"
+                className="rounded-full bg-white px-8 py-3.5 text-sm font-extrabold text-black shadow-lg hover:bg-primary transition-colors"
               >
                 {t.finale.ctaLogin} →
               </Link>
               <Link
                 to="/register"
-                className="rounded-full border border-border bg-surface-2 px-8 py-3.5 text-sm font-semibold text-text hover:border-primary/50 transition-colors"
+                className="rounded-full border border-white/15 bg-white/5 px-8 py-3.5 text-sm font-semibold text-white hover:border-primary/50 transition-colors"
               >
                 {t.finale.ctaRegister}
               </Link>

@@ -7,7 +7,7 @@ import { getToken, setToken } from './lib/tokenStorage';
 const USER = { id: 1, email: 'student@sfsh.dev', createdAt: '2026-10-25T00:00:00.000Z' };
 
 describe('auth flow & bilingual home', () => {
-  test('shows Apple-style Home page in English by default, switches to Vietnamese, and navigates to /login', async () => {
+  test('shows Home page in English by default, switches to Vietnamese, and navigates to /login', async () => {
     renderApp('/');
     expect(await screen.findByRole('heading', { name: /One experience/i })).toBeInTheDocument();
 
@@ -38,7 +38,7 @@ describe('auth flow & bilingual home', () => {
     await userEvent.type(screen.getByLabelText(/Password|Mật khẩu/i), 'Password123!');
     await userEvent.click(screen.getByRole('button', { name: /Sign In|Đăng nhập/i }));
 
-    expect(await screen.findByRole('heading', { name: /Overview|Tổng quan/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Deep Focus|Overview|Program|Tập trung sâu|Tổng quan/i })).toBeInTheDocument();
     expect(getToken()).toBe('jwt-token');
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ email: USER.email, password: 'Password123!' });
   });
@@ -72,14 +72,15 @@ describe('auth flow & bilingual home', () => {
     await waitFor(() => expect(getToken()).toBeNull());
   });
 
-  test('logout clears the token', async () => {
+  test('logout clears the token and returns to home page', async () => {
     setToken('stored-token');
     mockFetch(() => [200, ok({ user: USER })]);
     renderApp('/');
 
     await userEvent.click(await screen.findByRole('button', { name: /Sign Out|Đăng xuất/i }));
 
-    expect(await screen.findByRole('heading', { name: /Sign In|Đăng nhập/i })).toBeInTheDocument();
+    // Verifies redirect directly to Home page
+    expect(await screen.findByRole('heading', { name: /One experience|Một trải nghiệm/i })).toBeInTheDocument();
     expect(getToken()).toBeNull();
   });
 });

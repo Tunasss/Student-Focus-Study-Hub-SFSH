@@ -5,6 +5,7 @@ import { useAuth } from '../auth/authContext';
 import { useLanguage } from '../i18n/languageContext';
 import { LanguageToggle } from '../i18n/LanguageToggle';
 import { ThemeToggle } from '../theme/ThemeToggle';
+import { LotusIcon } from '../components/AppShell';
 
 const PASSWORD_MIN_LENGTH = 8;
 
@@ -25,12 +26,13 @@ const AUTH_COPY = {
       badge: 'Sign Up',
     },
     backHome: 'Home',
-    heroBadge: 'AI-POWERED WELLNESS & STUDY HUB',
+    heroBadge: 'SMART SCHEDULE & FOCUS STUDIO',
     heroDesc:
-      'Sync your weekly .ics timetable, track circadian Pomodoro focus rhythm, and master your university courses in one sleek workspace.',
-    pill1Sub: 'Peak cognitive flow state',
-    pill2Sub: 'Schedule & energy aligned',
-    pill3Sub: '11 courses ready to sync',
+      'Sync your weekly .ics timetable, organize daily active timeframes, and master your university courses in one sleek workspace.',
+    pill1Title: 'Active Focus',
+    pill1Sub: 'Dedicated study sessions',
+    pill2Title: 'Timeframe Sync',
+    pill2Sub: 'Schedule & courses aligned',
     welcomeSub: 'Welcome to your intelligent study space.',
     expiredNotice: 'Your session has expired. Please sign in again.',
     emailLabel: 'Email',
@@ -59,12 +61,13 @@ const AUTH_COPY = {
       badge: 'Sign Up',
     },
     backHome: 'Trang chủ',
-    heroBadge: 'AI-POWERED WELLNESS & STUDY HUB',
+    heroBadge: 'KHÔNG GIAN LỊCH TRÌNH & TẬP TRUNG',
     heroDesc:
-      'Đồng bộ thời khóa biểu tuần, nhịp sinh học tập trung Pomodoro và theo dõi tiến độ học tập thông minh chuẩn SaaS cao cấp.',
-    pill1Sub: 'Trạng thái tập trung cao độ',
-    pill2Sub: 'Đồng bộ lịch học & năng lượng',
-    pill3Sub: '11 môn học đã sẵn sàng',
+      'Đồng bộ thời khóa biểu tuần, sắp xếp khung giờ hoạt động hiệu quả và theo dõi tiến độ học tập thông minh.',
+    pill1Title: 'Tập trung sâu',
+    pill1Sub: 'Phiên học tập chuyên biệt',
+    pill2Title: 'Khung giờ hoạt động',
+    pill2Sub: 'Đồng bộ môn học & thời gian',
     welcomeSub: 'Chào mừng bạn đến với không gian học tập thông minh.',
     expiredNotice: 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.',
     emailLabel: 'Email',
@@ -122,22 +125,6 @@ export function AuthPage({ mode }) {
           { y: 0, opacity: 1, duration: 0.45, clearProps: 'opacity,transform' },
           '-=0.3'
         );
-
-      gsap.to('.float-badge-1', {
-        y: -6,
-        duration: 3.2,
-        yoyo: true,
-        repeat: -1,
-        ease: 'sine.inOut',
-      });
-      gsap.to('.float-badge-2', {
-        y: 6,
-        duration: 4.1,
-        yoyo: true,
-        repeat: -1,
-        ease: 'sine.inOut',
-        delay: 0.4,
-      });
     }, containerRef);
 
     return () => ctx.revert();
@@ -162,18 +149,18 @@ export function AuthPage({ mode }) {
   }
 
   const inputClass =
-    'mt-1.5 w-full rounded-2xl border border-border bg-surface-2/70 px-4 py-3 text-sm text-text outline-none transition-colors duration-150 placeholder:text-muted/60 focus:border-primary focus:bg-surface focus:ring-4 focus:ring-primary/20';
+    'mt-1.5 w-full rounded-2xl border border-white/10 bg-[#0d120d] px-4 py-3 text-sm text-white outline-none transition-colors duration-150 placeholder:text-muted/60 focus:border-primary focus:ring-2 focus:ring-primary/20';
 
   return (
     <div
       ref={containerRef}
-      className="relative min-h-screen bg-bg text-text flex items-center justify-center p-4 sm:p-6 lg:p-12 overflow-hidden"
+      className="relative min-h-screen bg-black text-text flex items-center justify-center p-4 sm:p-6 lg:p-12 overflow-hidden font-sans"
     >
-      {/* Back to Apple Home & Language/Theme toggle corners */}
+      {/* Top Corners: Back to Home + Language & Theme */}
       <div className="absolute top-5 left-5 z-20">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-xs font-semibold text-text hover:border-primary/50 transition-colors"
+          className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-white hover:border-primary/50 transition-colors"
         >
           <span>←</span>
           <span>{dict.backHome}</span>
@@ -185,16 +172,16 @@ export function AuthPage({ mode }) {
       </div>
 
       <div className="relative z-10 w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-        {/* Left Hero Area: AI Wellness Branding & Floating Badges */}
+        {/* Left Hero Area: Branding & Badges */}
         <div className="lg:col-span-7 flex flex-col justify-center space-y-6 py-6">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1.5 text-xs font-semibold text-primary w-fit luma-glow-sm">
-            <span className="h-2 w-2 rounded-full bg-primary" />
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-accent-deep/60 px-4 py-1.5 text-xs font-bold text-primary w-fit">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
             <span>{dict.heroBadge}</span>
           </div>
 
-          <h1 className="auth-hero-title text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-text leading-[1.1]">
+          <h1 className="auth-hero-title text-4xl sm:text-5xl lg:text-[54px] font-extrabold tracking-tight text-white leading-[1.08]">
             One experience.{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-deep via-primary to-white">
               Built around you.
             </span>
           </h1>
@@ -204,53 +191,51 @@ export function AuthPage({ mode }) {
           </p>
 
           <div className="pt-2 flex flex-wrap gap-3.5">
-            <div className="auth-badge-pill float-badge-1 glass-card inline-flex items-center gap-2.5 rounded-2xl px-4 py-2.5 shadow-sm">
-              <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/20 text-primary">
+            <div className="auth-badge-pill rounded-2xl border border-white/10 bg-[#0d120d] p-3.5 flex items-center gap-3 shadow-md">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 text-primary">
                 ⚡
               </span>
               <div>
-                <p className="text-[11px] font-semibold text-text">98% Focus Rhythm</p>
+                <p className="text-xs font-bold text-white">{dict.pill1Title}</p>
                 <p className="text-[10px] text-muted">{dict.pill1Sub}</p>
               </div>
             </div>
 
-            <div className="auth-badge-pill float-badge-2 glass-card inline-flex items-center gap-2.5 rounded-2xl px-4 py-2.5 shadow-sm">
-              <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
-                🌱
+            <div className="auth-badge-pill rounded-2xl border border-white/10 bg-[#0d120d] p-3.5 flex items-center gap-3 shadow-md">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-300">
+                🌿
               </span>
               <div>
-                <p className="text-[11px] font-semibold text-text">Bio-Circadian Sync</p>
+                <p className="text-xs font-bold text-white">{dict.pill2Title}</p>
                 <p className="text-[10px] text-muted">{dict.pill2Sub}</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Area: Glassmorphic Auth Form */}
+        {/* Right Area: Form Card matching Image 2 */}
         <div className="lg:col-span-5 flex justify-center">
-          <div className="auth-card-panel glass-card w-full max-w-md rounded-3xl p-7 sm:p-9 shadow-2xl luma-glow-sm">
+          <div className="auth-card-panel w-full max-w-md rounded-3xl border border-white/10 bg-[#0a0d0a] p-7 sm:p-9 shadow-2xl luma-glow">
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-fg shadow-sm">
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-                  </svg>
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-black shadow-sm">
+                  <LotusIcon className="h-5 w-5" />
                 </div>
                 <div>
-                  <span className="text-base font-bold tracking-tight text-text">Student Focus</span>
-                  <p className="text-[10px] text-muted font-medium">Study Hub • SaaS</p>
+                  <span className="text-base font-bold tracking-tight text-white">Student Focus</span>
+                  <p className="text-[10px] text-muted font-medium">Schedule & Focus Studio</p>
                 </div>
               </div>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white/10 text-white">
                 {copy.badge}
               </span>
             </div>
 
-            <h1 className="text-2xl font-bold tracking-tight text-text">{copy.title}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-white">{copy.title}</h1>
             <p className="mt-1 text-xs text-muted">{dict.welcomeSub}</p>
 
             {mode === 'login' && sessionExpired && (
-              <div role="status" className="mt-4 rounded-xl border border-primary/20 bg-primary/10 p-3 text-xs text-primary">
+              <div role="status" className="mt-4 rounded-xl border border-primary/30 bg-primary/10 p-3 text-xs text-primary">
                 {dict.expiredNotice}
               </div>
             )}
@@ -297,7 +282,7 @@ export function AuthPage({ mode }) {
               <button
                 type="submit"
                 disabled={submitting}
-                className="mt-2 w-full rounded-2xl bg-primary py-3.5 px-4 text-sm font-bold text-primary-fg shadow-md luma-glow-sm transition-opacity duration-150 hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="mt-2 w-full rounded-full bg-white py-3.5 px-4 text-sm font-extrabold text-black shadow-md hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? dict.submitting : copy.submit}
               </button>

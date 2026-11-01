@@ -4,6 +4,7 @@ import { GuestRoute, ProtectedRoute } from './auth/ProtectedRoute';
 import { AppShell } from './components/AppShell';
 import { useLanguage } from './i18n/languageContext';
 import { AuthPage } from './pages/AuthPage';
+import { DeepFocusPage } from './pages/DeepFocusPage';
 import { HomePage } from './pages/HomePage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { TimetablePage } from './pages/TimetablePage';
@@ -40,16 +41,21 @@ export function App() {
         <Route path="/register" element={<AuthPage mode="register" />} />
       </Route>
 
-      {/* Root "/" shows Apple-style HomePage for guests, or AppShell + Overview for logged-in users */}
+      {/* Root "/" shows HomePage for guests, or AppShell + Deep Focus Practice Space for logged-in users (Images 1 & 3) */}
       <Route path="/" element={<RootEntryRoute />}>
-        <Route
-          index
-          element={<PlaceholderPage pageKey="overview" title="Overview" description="Next study recommendations and focus rhythm analytics at a glance." />}
-        />
+        <Route index element={<DeepFocusPage />} />
       </Route>
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
+          <Route
+            path="program"
+            element={<PlaceholderPage pageKey="overview" title="Program" description="Structured schedule mix & active focus modules." />}
+          />
+          <Route
+            path="overview"
+            element={<PlaceholderPage pageKey="overview" title="Overview" description="Next study recommendations and focus analytics." />}
+          />
           <Route path="timetable" element={<TimetablePage />} />
           <Route
             path="syllabus"
@@ -61,7 +67,7 @@ export function App() {
           />
           <Route
             path="focus"
-            element={<PlaceholderPage pageKey="focus" title="Focus Room" description="Botanical Pomodoro timer with ambient soundscapes." />}
+            element={<DeepFocusPage />}
           />
         </Route>
       </Route>

@@ -3,34 +3,36 @@
 /* Dark mode is driven by the `.dark` class on <html> (see ThemeProvider). */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Luma AI-Wellness Theme tokens — tuned for high contrast & zero GPU blur lag */
+/* Design tokens matching Image 2 (Urbanist, Pure Black #000000, Accent 01 #243100 -> #DBEF90) */
 :root {
-  --sfsh-bg: #f6f8f5;
+  --sfsh-bg: #f5f6f4;
   --sfsh-surface: #ffffff;
-  --sfsh-surface-2: #edf2eb;
-  --sfsh-border: #dce4d8;
-  --sfsh-text: #111710;
-  --sfsh-muted: #5b6758;
-  --sfsh-primary: #7ccf00;
-  --sfsh-primary-fg: #080c06;
+  --sfsh-surface-2: #e9eee6;
+  --sfsh-border: #d4ded0;
+  --sfsh-text: #0d120a;
+  --sfsh-muted: #566452;
+  --sfsh-primary: #557500;
+  --sfsh-primary-fg: #ffffff;
+  --sfsh-accent-lime: #dbef90;
+  --sfsh-accent-deep: #243100;
   --sfsh-danger: #dc2626;
   --sfsh-success: #16a34a;
-  --sfsh-accent-lime: #b6f246;
   color-scheme: light;
 }
 
 .dark {
-  --sfsh-bg: #060806;
-  --sfsh-surface: #0d120d;
-  --sfsh-surface-2: #141b14;
+  --sfsh-bg: #000000;
+  --sfsh-surface: #0a0d0a;
+  --sfsh-surface-2: #121712;
   --sfsh-border: rgba(255, 255, 255, 0.08);
-  --sfsh-text: #f2f6f0;
-  --sfsh-muted: #8a9986;
-  --sfsh-primary: #b6f246;
-  --sfsh-primary-fg: #060806;
+  --sfsh-text: #f5f5f8;
+  --sfsh-muted: #8e9882;
+  --sfsh-primary: #dbef90;
+  --sfsh-primary-fg: #000000;
+  --sfsh-accent-lime: #dbef90;
+  --sfsh-accent-deep: #243100;
   --sfsh-danger: #f87171;
   --sfsh-success: #4ade80;
-  --sfsh-accent-lime: #b6f246;
   color-scheme: dark;
 }
 
@@ -43,51 +45,53 @@
   --color-muted: var(--sfsh-muted);
   --color-primary: var(--sfsh-primary);
   --color-primary-fg: var(--sfsh-primary-fg);
+  --color-accent-lime: var(--sfsh-accent-lime);
+  --color-accent-deep: var(--sfsh-accent-deep);
   --color-danger: var(--sfsh-danger);
   --color-success: var(--sfsh-success);
-  --color-lime-accent: var(--sfsh-accent-lime);
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Urbanist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 body {
   @apply bg-bg text-text antialiased selection:bg-primary/30 selection:text-text;
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-  /* Lightweight static radial gradients instead of heavy filter:blur() DOM nodes */
+  font-family: 'Urbanist', -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: -0.015em;
+  background-color: var(--sfsh-bg);
+}
+
+.dark body {
+  background-color: #000000;
   background-image:
-    radial-gradient(circle at 80% 10%, rgba(182, 242, 70, 0.08) 0%, transparent 45%),
-    radial-gradient(circle at 15% 85%, rgba(34, 197, 94, 0.06) 0%, transparent 40%);
+    radial-gradient(circle at 50% 20%, rgba(219, 239, 144, 0.07) 0%, transparent 60%),
+    radial-gradient(circle at 10% 80%, rgba(36, 49, 0, 0.4) 0%, transparent 50%);
   background-attachment: fixed;
 }
 
-/* 60fps GPU-friendly glow utilities */
+/* Accent 01 gradient matching Image 2 */
+.bg-accent-gradient {
+  background: linear-gradient(135deg, #243100 0%, #dbef90 100%);
+}
+
+.text-accent-gradient {
+  background: linear-gradient(135deg, #dbef90 0%, #a4db4a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Radiant aura glow from Image 1 & 3 */
+.luma-radiant-glow {
+  box-shadow: 0 0 80px 10px rgba(219, 239, 144, 0.28), 0 0 160px 40px rgba(36, 49, 0, 0.6);
+}
+
 .luma-glow {
-  box-shadow: 0 8px 28px -6px rgba(182, 242, 70, 0.25);
+  box-shadow: 0 8px 32px -4px rgba(219, 239, 144, 0.25);
 }
 
 .luma-glow-sm {
-  box-shadow: 0 4px 16px -3px rgba(182, 242, 70, 0.2);
+  box-shadow: 0 4px 20px -2px rgba(219, 239, 144, 0.18);
 }
 
-.luma-glow-lg {
-  box-shadow: 0 16px 48px -10px rgba(182, 242, 70, 0.32);
-}
-
-/* Reserve backdrop-filter ONLY for sticky bars/modals to prevent GPU overdraw */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--sfsh-border);
-}
-
-.dark .glass-panel {
-  background: rgba(13, 18, 13, 0.86);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* High-FPS surface card: no backdrop-filter per card, no transition:all conflict with GSAP */
+/* Glass cards matching Image 1, 3, 4 */
 .glass-card {
   background: var(--sfsh-surface);
   border: 1px solid var(--sfsh-border);
@@ -95,19 +99,31 @@ body {
 }
 
 .dark .glass-card {
-  background: linear-gradient(180deg, rgba(22, 30, 22, 0.92) 0%, rgba(13, 18, 13, 0.96) 100%);
+  background: #0f140f;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.glass-card:hover {
-  border-color: rgba(182, 242, 70, 0.4);
-  box-shadow: 0 10px 26px -8px rgba(182, 242, 70, 0.14);
+.dark .glass-card-subtle {
+  background: #141a14;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.gpu-layer {
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-  transform: translateZ(0);
+.dark .glass-card:hover {
+  border-color: rgba(219, 239, 144, 0.35);
+  box-shadow: 0 12px 30px -8px rgba(219, 239, 144, 0.15);
+}
+
+/* Floating Top Pill Nav matching Image 1, 3 & 4 */
+.floating-pill-nav {
+  background: rgba(18, 24, 18, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+.light .floating-pill-nav {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.08);
 }
 
 /* Custom smooth scrollbar */
@@ -119,9 +135,9 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(138, 153, 134, 0.28);
+  background: rgba(142, 152, 130, 0.28);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(182, 242, 70, 0.5);
+  background: rgba(219, 239, 144, 0.5);
 }

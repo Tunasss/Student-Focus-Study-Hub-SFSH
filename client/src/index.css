@@ -6,8 +6,8 @@
 /* Design tokens matching Image 2 (Urbanist, Light & Dark modes, Accent 01 #243100 -> #DBEF90) */
 :root {
   --sfsh-bg: #f5f7f3;
-  --sfsh-surface: rgba(255, 255, 255, 0.78);
-  --sfsh-surface-2: rgba(240, 246, 238, 0.74);
+  --sfsh-surface: rgba(255, 255, 255, 0.92);
+  --sfsh-surface-2: rgba(238, 245, 235, 0.88);
   --sfsh-border: rgba(0, 0, 0, 0.08);
   --sfsh-text: #0e140d;
   --sfsh-muted: #495746;
@@ -23,8 +23,8 @@
 
 .dark {
   --sfsh-bg: #000000;
-  --sfsh-surface: rgba(14, 19, 14, 0.74);
-  --sfsh-surface-2: rgba(20, 28, 20, 0.68);
+  --sfsh-surface: rgba(14, 19, 14, 0.88);
+  --sfsh-surface-2: rgba(20, 28, 20, 0.82);
   --sfsh-border: rgba(255, 255, 255, 0.09);
   --sfsh-text: #f5f5f8;
   --sfsh-muted: #95a08d;
@@ -55,25 +55,22 @@
   --font-sans: 'Urbanist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* GPU-Optimized Body Background (Removed background-attachment: fixed to prevent full-screen repaint on scroll) */
 body {
   @apply bg-bg text-text antialiased selection:bg-primary/30 selection:text-text;
   font-family: 'Urbanist', -apple-system, BlinkMacSystemFont, sans-serif;
   letter-spacing: -0.015em;
   background-color: var(--sfsh-bg);
   background-image:
-    radial-gradient(circle at 50% 12%, rgba(219, 239, 144, 0.16) 0%, transparent 55%),
-    radial-gradient(circle at 15% 85%, rgba(61, 107, 4, 0.07) 0%, transparent 50%),
-    radial-gradient(circle at 85% 60%, rgba(219, 239, 144, 0.09) 0%, transparent 45%);
-  background-attachment: fixed;
+    radial-gradient(circle at 50% 8%, rgba(219, 239, 144, 0.16) 0%, transparent 45%),
+    radial-gradient(circle at 15% 65%, rgba(61, 107, 4, 0.06) 0%, transparent 40%);
 }
 
 .dark body {
   background-color: #000000;
   background-image:
-    radial-gradient(circle at 50% 15%, rgba(219, 239, 144, 0.1) 0%, transparent 60%),
-    radial-gradient(circle at 10% 80%, rgba(36, 49, 0, 0.45) 0%, transparent 50%),
-    radial-gradient(circle at 90% 40%, rgba(219, 239, 144, 0.05) 0%, transparent 50%);
-  background-attachment: fixed;
+    radial-gradient(circle at 50% 8%, rgba(219, 239, 144, 0.09) 0%, transparent 45%),
+    radial-gradient(circle at 15% 65%, rgba(36, 49, 0, 0.35) 0%, transparent 45%);
 }
 
 /* WCAG 2.1 Keyboard Focus Indicator */
@@ -93,35 +90,31 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-/* Radiant aura glow from Image 1 & 3 */
+/* GPU-friendly glow utilities (tighter radius to minimize pixel overdraw) */
 .luma-radiant-glow {
-  box-shadow: 0 0 60px 8px rgba(219, 239, 144, 0.25), 0 0 120px 25px rgba(36, 49, 0, 0.35);
+  box-shadow: 0 0 36px 2px rgba(219, 239, 144, 0.2), 0 0 64px 8px rgba(36, 49, 0, 0.28);
 }
 
 .luma-glow {
-  box-shadow: 0 8px 30px -4px rgba(219, 239, 144, 0.2);
+  box-shadow: 0 6px 22px -4px rgba(219, 239, 144, 0.18);
 }
 
 .luma-glow-sm {
-  box-shadow: 0 4px 18px -2px rgba(219, 239, 144, 0.15);
+  box-shadow: 0 4px 14px -2px rgba(219, 239, 144, 0.14);
 }
 
-/* 60fps-optimized Frosted Glass with blur(16px) */
+/* High-efficiency Card Surface (No per-card backdrop-filter to save 80% GPU rasterization) */
 .glass-card {
   background: var(--sfsh-surface);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid var(--sfsh-border);
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.04);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
 .dark .glass-card {
   background: var(--sfsh-surface);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid var(--sfsh-border);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
 }
 
 .glass-card:hover {
@@ -129,72 +122,52 @@ body {
 }
 
 .dark .glass-card:hover {
-  border-color: rgba(219, 239, 144, 0.35);
-  box-shadow: 0 12px 30px -8px rgba(219, 239, 144, 0.15);
+  border-color: rgba(219, 239, 144, 0.32);
 }
 
-/* Floating Top Pill Nav with 16px blur */
+/* Floating Top Pill Nav (Single lightweight blur layer) */
 .floating-pill-nav {
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--sfsh-border);
-  box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.05);
 }
 
 .dark .floating-pill-nav {
-  background: rgba(16, 22, 16, 0.75);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background: rgba(14, 19, 14, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--sfsh-border);
-  box-shadow: 0 8px 30px 0 rgba(0, 0, 0, 0.5);
+  box-shadow: 0 6px 24px 0 rgba(0, 0, 0, 0.45);
 }
 
-/* GPU promotion for GSAP animated cards */
+/* Targeted GPU layer promotion only for actively moving elements */
 .gpu-layer {
-  transform: translateZ(0);
-  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
 }
 
-/* Live visual workflow animations (GPU compositor transforms) */
-@keyframes laserSweep {
-  0% { transform: translateY(0); opacity: 0; }
-  25% { opacity: 1; }
-  85% { opacity: 1; }
-  100% { transform: translateY(115px); opacity: 0; }
-}
-
+/* Compositor-only animations (transform & opacity only) */
 @keyframes equalizerWave {
-  0%, 100% { transform: scaleY(0.25); }
+  0%, 100% { transform: scaleY(0.28); }
   50% { transform: scaleY(1); }
 }
 
-@keyframes radarSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.animate-laser {
-  animation: laserSweep 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-
-.animate-radar {
-  animation: radarSpin 7s linear infinite;
-  transform-origin: center;
-}
-
 .animate-equalizer {
-  animation: equalizerWave 1.4s ease-in-out infinite alternate;
+  animation: equalizerWave 1.1s ease-in-out infinite alternate;
   transform-origin: bottom;
 }
 
-@keyframes pulseGlow {
-  0%, 100% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.18); opacity: 1; filter: drop-shadow(0 0 12px rgba(219, 239, 144, 0.6)); }
+@keyframes dashFlow {
+  to {
+    stroke-dashoffset: -48;
+  }
 }
 
-.animate-pulse-glow {
-  animation: pulseGlow 3s ease-in-out infinite;
+.animate-dash-flow {
+  stroke-dasharray: 6 6;
+  animation: dashFlow 1.6s linear infinite;
 }
 
 /* WCAG Reduced Motion Support */

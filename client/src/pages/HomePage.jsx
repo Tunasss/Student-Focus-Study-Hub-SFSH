@@ -33,8 +33,12 @@ const HOME_COPY = {
         badge: 'Active Semester',
         descLabel: 'Description',
         desc: 'Specialized in university timetable parsing. Resolves lecture halls, laboratory sessions, and study blocks with zero overlap.',
-        coursesLabel: 'Active Courses',
-        courses: ['MSIS207 · Web Dev', 'CS5433 · Distributed DB', 'STAT3013 · Statistics'],
+        coursesLabel: 'Active Courses (Live Sync)',
+        courses: [
+          { code: 'MSIS207 · Web Dev', room: 'Room E32 · Wed 13:00 – 16:15' },
+          { code: 'CS5433 · Distributed DB', room: 'Room C206 · Thu 13:00 – 17:00' },
+          { code: 'STAT3013 · Statistics', room: 'Lab B5.04 · Sat 07:30 – 11:30' },
+        ],
         toolsLabel: 'Connected Modules',
       },
     },
@@ -80,9 +84,9 @@ const HOME_COPY = {
       card2: {
         windowTitle: 'Syllabus & Coursework',
         files: [
-          { name: 'MSIS207_Web_App_Syllabus.pdf', color: 'text-rose-400' },
-          { name: 'CS5433_Distributed_DB_Labs.docx', color: 'text-sky-400' },
-          { name: 'STAT3013_Hypothesis_Testing.pptx', color: 'text-amber-400' },
+          { name: 'MSIS207_Web_App_Syllabus.pdf', status: 'Synced', pct: 100 },
+          { name: 'CS5433_Distributed_DB_Labs.docx', status: 'Indexing', pct: 78 },
+          { name: 'STAT3013_Hypothesis_Testing.pptx', status: 'Verified', pct: 94 },
         ],
         title: 'Structured Course Context',
         desc: 'Align grading rubrics, weekly readings, and project milestones so every study block stays on track.',
@@ -95,7 +99,14 @@ const HOME_COPY = {
         desc: 'Link your live class schedule and upcoming assignment deadlines directly into your daily focus sessions.',
       },
       card4: {
-        tags: ['Morning Lectures', 'Afternoon Labs', 'Active Hours', 'Deep Focus', 'Evening Review', 'Custom Blocks'],
+        tags: [
+          { label: 'Morning Lectures', window: '07:30 – 11:30 · High Alertness' },
+          { label: 'Afternoon Labs', window: '13:00 – 16:15 · Practical Coding' },
+          { label: 'Active Hours', window: '08:00 – 17:00 · Core Schedule' },
+          { label: 'Deep Focus', window: '19:30 – 21:30 · 25/5 Pomodoro' },
+          { label: 'Evening Review', window: '21:30 – 22:30 · Syllabus Recap' },
+          { label: 'Custom Blocks', window: 'Flexible · Personal Rhythm' },
+        ],
         title: 'Adaptive Active Hours',
         desc: 'Capture when you perform best and structure independent study blocks around your natural energy peaks.',
       },
@@ -104,13 +115,27 @@ const HOME_COPY = {
       tag: 'ACADEMIC IMPACT',
       title: 'More Study Done. Less Chaos to Manage.',
       callouts: {
+        topLeftTitle: '⚡ .ICS Auto-Parser',
+        topLeftSub: '0.18s Sync · 11 Classes Mapped',
         topRightVal: '24.5 hrs',
         topRightLabel: 'Focused study time / week.',
+        topRightBadge: '↑ +18% Flow',
+        midLeftTitle: '📅 Active Hours Engine',
+        midLeftSub: '08:00 – 17:00 Protected',
+        midRightTitle: '🎧 432Hz Focus Studio',
+        midRightSub: 'Pomodoro 25/5 Active',
         bottomLeftVal: '3.2x',
         bottomLeftLabel: 'Faster Schedule Organization',
-        leftPill: 'Zero Class Collisions',
-        rightPill: 'Peak Focus Rhythm',
+        bottomLeftBadge: '0 Collisions',
+        bottomRightVal: '94.2%',
+        bottomRightLabel: 'On-Time Submission Pace',
       },
+      telemetryStrip: [
+        { label: 'Room Collision Check', val: '100% Clear', pct: 100 },
+        { label: 'Weekly Focus Quota', val: '92% Achieved', pct: 92 },
+        { label: 'Syllabus Checkpoints', val: '15/15 Indexed', pct: 100 },
+        { label: 'Deadline Early Radar', val: 'Active 24/7', pct: 95 },
+      ],
       pillars: [
         {
           title: 'Less Manual Scheduling',
@@ -291,18 +316,6 @@ const HOME_COPY = {
       ctaPrimary: 'Sign In Now',
       ctaSecondary: 'Create Free Account',
     },
-    footer: {
-      tagline: 'One academic experience. Built around your daily rhythm.',
-      stayConnected: 'Built for university performance.',
-      col1Title: 'Workspace',
-      col1Links: ['Overview Dashboard', 'Weekly Timetable', 'Pomodoro Focus Studio', 'Priority Deadlines', 'Course Syllabi'],
-      col2Title: 'Capabilities',
-      col2Links: ['.ICS Calendar Parser', 'Active Hours Engine', 'Ambient Soundscapes', 'Milestone Radar', 'Bilingual EN / VI'],
-      col3Title: 'Account',
-      col3Links: ['Sign In', 'Create Account', 'Light / Dark Mode', 'Student Guide'],
-      copyright: '© 2026 Luma Academic Studio. All rights reserved.',
-      legal: ['Privacy Policy', 'Terms of Service', 'Cookie Policy'],
-    },
   },
   vi: {
     announcement: {
@@ -325,9 +338,13 @@ const HOME_COPY = {
         badge: 'Học kỳ Đang mở',
         descLabel: 'Mô tả hệ thống',
         desc: 'Chuyên biệt cho việc bóc tách lịch học đại học. Tự động chuẩn hóa giảng đường, phòng Lab và khung giờ tự học không trùng lặp.',
-        coursesLabel: 'Môn học Đang theo dõi',
-        courses: ['MSIS207 · Phát triển Web', 'CS5433 · CSDL Phân tán', 'STAT3013 · Thống kê'],
-        toolsLabel: ' Phân hệ Kết nối',
+        coursesLabel: 'Môn học Đang theo dõi (Trực tiếp)',
+        courses: [
+          { code: 'MSIS207 · Phát triển Web', room: 'Phòng E32 · Thứ 4 13:00 – 16:15' },
+          { code: 'CS5433 · CSDL Phân tán', room: 'Phòng C206 · Thứ 5 13:00 – 17:00' },
+          { code: 'STAT3013 · Thống kê', room: 'Phòng B5.04 · Thứ 7 07:30 – 11:30' },
+        ],
+        toolsLabel: 'Phân hệ Kết nối',
       },
     },
     carouselSection: {
@@ -372,9 +389,9 @@ const HOME_COPY = {
       card2: {
         windowTitle: 'Đề cương & Tài liệu Môn học',
         files: [
-          { name: 'MSIS207_De_Cuong_Web_App.pdf', color: 'text-rose-400' },
-          { name: 'CS5433_Bai_Tap_Thuc_Hanh_DB.docx', color: 'text-sky-400' },
-          { name: 'STAT3013_Kiem_Dinh_Thong_Ke.pptx', color: 'text-amber-400' },
+          { name: 'MSIS207_De_Cuong_Web_App.pdf', status: 'Đã đồng bộ', pct: 100 },
+          { name: 'CS5433_Bai_Tap_Thuc_Hanh_DB.docx', status: 'Đang quét', pct: 78 },
+          { name: 'STAT3013_Kiem_Dinh_Thong_Ke.pptx', status: 'Đã chuẩn hóa', pct: 94 },
         ],
         title: 'Cấu trúc Đề cương Rõ ràng',
         desc: 'Gắn kết tiêu chí chấm điểm, tài liệu đọc và hạn nộp đồ án để mọi buổi học đều đi đúng hướng.',
@@ -387,7 +404,14 @@ const HOME_COPY = {
         desc: 'Kết nối trực tiếp lịch học trên lớp với danh sách deadline để mỗi phiên Pomodoro đều giải quyết đúng việc cần nhất.',
       },
       card4: {
-        tags: ['Ca học Sáng', 'Thực hành Lab', 'Khung giờ Vàng', 'Tập trung Sâu', 'Ôn bài Tối', 'Tùy chỉnh Lịch'],
+        tags: [
+          { label: 'Ca học Sáng', window: '07:30 – 11:30 · Tỉnh táo Cao độ' },
+          { label: 'Thực hành Lab', window: '13:00 – 16:15 · Lập trình Thực chiến' },
+          { label: 'Khung giờ Vàng', window: '08:00 – 17:00 · Lịch trình Chính' },
+          { label: 'Tập trung Sâu', window: '19:30 – 21:30 · Pomodoro 25/5' },
+          { label: 'Ôn bài Tối', window: '21:30 – 22:30 · Hệ thống Đề cương' },
+          { label: 'Tùy chỉnh Lịch', window: 'Linh hoạt · Nhịp Sinh học Riêng' },
+        ],
         title: 'Tùy biến Khung giờ Hoạt động',
         desc: 'Thiết kế lịch trình dựa theo khung giờ hoạt động chung và linh hoạt tùy chỉnh riêng theo nhịp năng lượng của bạn.',
       },
@@ -396,13 +420,27 @@ const HOME_COPY = {
       tag: 'HIỆU QUẢ THỰC TẾ',
       title: 'Học tập Hiệu quả hơn. Giảm thiểu Rối loạn Lịch trình.',
       callouts: {
+        topLeftTitle: '⚡ Bộ Quét .ICS Tự Động',
+        topLeftSub: '0.18s Đồng bộ · 11 Ca học',
         topRightVal: '24.5 giờ',
         topRightLabel: 'Giờ học tập trung / tuần.',
+        topRightBadge: '↑ +18% Hiệu suất',
+        midLeftTitle: '📅 Khung Giờ Hoạt Động',
+        midLeftSub: '08:00 – 17:00 Tối ưu hóa',
+        midRightTitle: '🎧 Sóng Âm 432Hz Focus',
+        midRightSub: 'Pomodoro 25/5 Đang chạy',
         bottomLeftVal: '3.2x',
         bottomLeftLabel: 'Tốc độ Sắp xếp Lịch học',
-        leftPill: 'Không Trùng Ca Học',
-        rightPill: 'Nhịp Tập Trung Bền Bỉ',
+        bottomLeftBadge: '0 Trùng lịch',
+        bottomRightVal: '94.2%',
+        bottomRightLabel: 'Tỷ lệ Nộp bài Đúng hạn',
       },
+      telemetryStrip: [
+        { label: 'Kiểm tra Trùng phòng', val: '100% Chuẩn', pct: 100 },
+        { label: 'Mục tiêu Focus Tuần', val: 'Đạt 92%', pct: 92 },
+        { label: 'Cột mốc Đề cương', val: '15/15 Tuần', pct: 100 },
+        { label: 'Radar Cảnh báo Sớm', val: 'Hoạt động 24/7', pct: 95 },
+      ],
       pillars: [
         {
           title: 'Xóa bỏ Nhập lịch Thủ công',
@@ -583,18 +621,6 @@ const HOME_COPY = {
       ctaPrimary: 'Đăng nhập ngay',
       ctaSecondary: 'Tạo tài khoản miễn phí',
     },
-    footer: {
-      tagline: 'Một trải nghiệm học tập thống nhất. Xoay quanh nhịp độ của bạn.',
-      stayConnected: 'Thiết kế cho hiệu suất đại học.',
-      col1Title: 'Phân hệ',
-      col1Links: ['Tổng quan (Overview)', 'Thời khóa biểu Tuần', 'Phòng Tập trung Focus', 'Hàng đợi Deadline', 'Đề cương Môn học'],
-      col2Title: 'Tính năng',
-      col2Links: ['Bóc tách Lịch .ICS', 'Khung giờ Hoạt động', 'Âm thanh Nền 432Hz', 'Radar Tiến độ', 'Song ngữ Anh / Việt'],
-      col3Title: 'Tài khoản',
-      col3Links: ['Đăng nhập', 'Đăng ký Miễn phí', 'Giao diện Sáng / Tối', 'Hướng dẫn Sử dụng'],
-      copyright: '© 2026 Luma Academic Studio. Bảo lưu mọi quyền.',
-      legal: ['Chính sách Bảo mật', 'Điều khoản Sử dụng', 'Chính sách Cookie'],
-    },
   },
 };
 
@@ -605,6 +631,15 @@ const MARQUEE_PARTNERS = [
   { icon: '📚', name: 'Syllabus Tracker' },
   { icon: '🎯', name: 'Deadline Priority Radar' },
   { icon: '⚡', name: 'Active Hours Engine' },
+];
+
+const MINI_TIMETABLE_SLOTS = [
+  { code: 'MSIS207', room: 'E32', time: '07:30' },
+  { code: 'CS5433', room: 'C206', time: '09:45' },
+  { code: 'STAT3013', room: 'B5.04', time: '13:00' },
+  { code: 'MATH201', room: 'C302', time: '14:30' },
+  { code: 'PE231', room: 'Field', time: '15:25' },
+  { code: 'FOCUS', room: '25m', time: '19:30' },
 ];
 
 function AnimatedWords({ text, className = '' }) {
@@ -625,25 +660,43 @@ export function HomePage() {
   const t = HOME_COPY[lang] || HOME_COPY.en;
   const rootRef = useRef(null);
   const useCaseStageRef = useRef(null);
+  const impactStageRef = useRef(null);
 
-  // Interactive states matching the video interactions
+  // Interactive states
   const [activeCarouselIdx, setActiveCarouselIdx] = useState(1);
   const [activeUseCaseIdx, setActiveUseCaseIdx] = useState(0);
   const [openFaqKey, setOpenFaqKey] = useState('0-0');
 
-  // Re-animate the Use Case Bento Stage whenever the user switches tabs (like 00:13 -> 00:15 in video)
+  // Single unified pulse step (0..5) driving all live micro-simulations cleanly
+  const [pulseStep, setPulseStep] = useState(0);
+  const [pomoSeconds, setPomoSeconds] = useState(24 * 60 + 48);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      setPulseStep((s) => (s + 1) % 6);
+      setPomoSeconds((sec) => (sec > 1200 ? sec - 1 : 25 * 60));
+    }, 1400);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const formattedPomo = `${String(Math.floor(pomoSeconds / 60)).padStart(2, '0')}:${String(
+    pomoSeconds % 60
+  ).padStart(2, '0')}`;
+
+  // Re-animate the Use Case Bento Stage whenever the user switches tabs
   useEffect(() => {
     if (!useCaseStageRef.current) return undefined;
     const ctx = gsap.context(() => {
       gsap.fromTo(
         '.usecase-bento-card',
-        { y: 18, scale: 0.985, autoAlpha: 0 },
+        { y: 16, scale: 0.985, autoAlpha: 0 },
         {
           y: 0,
           scale: 1,
           autoAlpha: 1,
-          duration: 0.42,
-          stagger: 0.06,
+          duration: 0.38,
+          stagger: 0.055,
           ease: 'power3.out',
           clearProps: 'opacity,visibility,transform',
         }
@@ -652,56 +705,56 @@ export function HomePage() {
     return () => ctx.revert();
   }, [activeUseCaseIdx]);
 
-  // Master GSAP Timelines & ScrollTriggers (GPU-accelerated transforms & autoAlpha only)
+  // Master GSAP Timelines & Viewport-Aware ScrollTriggers (GPU-optimized)
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      // 1. Hero Entrance Timeline (00:01 - 00:03 in video)
+      // 1. Hero Entrance Timeline
       const heroTl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
       heroTl
         .fromTo(
           '.hero-eyebrow',
           { y: 12, autoAlpha: 0 },
-          { y: 0, autoAlpha: 1, duration: 0.35, clearProps: 'opacity,visibility,transform' }
+          { y: 0, autoAlpha: 1, duration: 0.32, clearProps: 'opacity,visibility,transform' }
         )
         .fromTo(
           '.hero-title .gsap-word',
           { opacity: 0.18, y: 10 },
-          { opacity: 1, y: 0, duration: 0.45, stagger: 0.055, clearProps: 'opacity,transform' },
+          { opacity: 1, y: 0, duration: 0.42, stagger: 0.05, clearProps: 'opacity,transform' },
           '-=0.15'
         )
         .fromTo(
           '.hero-subtitle',
-          { y: 14, autoAlpha: 0 },
-          { y: 0, autoAlpha: 1, duration: 0.4, clearProps: 'opacity,visibility,transform' },
-          '-=0.25'
+          { y: 12, autoAlpha: 0 },
+          { y: 0, autoAlpha: 1, duration: 0.35, clearProps: 'opacity,visibility,transform' },
+          '-=0.22'
         )
         .fromTo(
           '.hero-cta-group',
           { y: 12, autoAlpha: 0 },
-          { y: 0, autoAlpha: 1, duration: 0.35, clearProps: 'opacity,visibility,transform' },
-          '-=0.25'
+          { y: 0, autoAlpha: 1, duration: 0.32, clearProps: 'opacity,visibility,transform' },
+          '-=0.22'
         )
         .fromTo(
           '.hero-profile-shell',
-          { y: 24, scale: 0.97, autoAlpha: 0 },
-          { y: 0, scale: 1, autoAlpha: 1, duration: 0.5, clearProps: 'opacity,visibility,transform' },
-          '-=0.45'
+          { y: 20, scale: 0.98, autoAlpha: 0 },
+          { y: 0, scale: 1, autoAlpha: 1, duration: 0.45, clearProps: 'opacity,visibility,transform' },
+          '-=0.4'
         )
         .fromTo(
           '.hero-profile-item',
-          { y: 14, autoAlpha: 0 },
-          { y: 0, autoAlpha: 1, duration: 0.35, stagger: 0.07, clearProps: 'opacity,visibility,transform' },
-          '-=0.3'
+          { y: 12, autoAlpha: 0 },
+          { y: 0, autoAlpha: 1, duration: 0.32, stagger: 0.06, clearProps: 'opacity,visibility,transform' },
+          '-=0.28'
         )
         .fromTo(
           '.hero-trusted-bar',
-          { y: 12, autoAlpha: 0 },
-          { y: 0, autoAlpha: 1, duration: 0.4, clearProps: 'opacity,visibility,transform' },
-          '-=0.2'
+          { y: 10, autoAlpha: 0 },
+          { y: 0, autoAlpha: 1, duration: 0.35, clearProps: 'opacity,visibility,transform' },
+          '-=0.18'
         );
 
-      // 2. Section Headings Word-by-Word Scroll Lighting Reveal (00:05, 00:07, 00:11, 00:13, 00:18 in video)
+      // 2. Section Headings Word-by-Word Scroll Lighting Reveal
       gsap.utils.toArray('.section-word-reveal').forEach((heading) => {
         const words = heading.querySelectorAll('.gsap-word');
         if (!words.length) return;
@@ -711,8 +764,8 @@ export function HomePage() {
           {
             opacity: 1,
             y: 0,
-            duration: 0.45,
-            stagger: 0.045,
+            duration: 0.42,
+            stagger: 0.04,
             ease: 'power2.out',
             clearProps: 'opacity,transform',
             scrollTrigger: {
@@ -730,67 +783,101 @@ export function HomePage() {
         if (!items.length) return;
         gsap.fromTo(
           items,
-          { y: 26, autoAlpha: 0 },
+          { y: 24, autoAlpha: 0 },
           {
             y: 0,
             autoAlpha: 1,
-            duration: 0.5,
-            stagger: 0.09,
+            duration: 0.45,
+            stagger: 0.08,
             ease: 'power3.out',
             clearProps: 'opacity,visibility,transform',
             scrollTrigger: {
               trigger: group,
-              start: 'top 84%',
+              start: 'top 85%',
               once: true,
             },
           }
         );
       });
 
-      // 4. Continuous Ambient GPU Animations (Orbital Rings & Floating Callouts at 00:11-00:12)
-      gsap.to('.orbital-ring-spin', {
-        rotation: 360,
-        duration: 38,
-        repeat: -1,
-        ease: 'none',
-      });
+      // 4. Viewport-gated Orbital & Callout Timeline (Automatically PAUSES when off-screen to save GPU!)
+      if (impactStageRef.current) {
+        const impactLoopTl = gsap.timeline({
+          paused: true,
+          scrollTrigger: {
+            trigger: impactStageRef.current,
+            start: 'top bottom',
+            end: 'bottom top',
+            toggleActions: 'play pause resume pause',
+          },
+        });
 
-      gsap.to('.orbital-ring-spin-reverse', {
-        rotation: -360,
-        duration: 46,
-        repeat: -1,
-        ease: 'none',
-      });
-
-      gsap.to('.float-callout-a', {
-        y: -7,
-        duration: 3.2,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      });
-
-      gsap.to('.float-callout-b', {
-        y: 7,
-        duration: 3.8,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      });
+        impactLoopTl
+          .to(
+            '.orbital-ring-spin',
+            {
+              rotation: 360,
+              duration: 36,
+              repeat: -1,
+              ease: 'none',
+            },
+            0
+          )
+          .to(
+            '.orbital-ring-spin-reverse',
+            {
+              rotation: -360,
+              duration: 44,
+              repeat: -1,
+              ease: 'none',
+            },
+            0
+          )
+          .to(
+            '.float-callout-a',
+            {
+              y: -6,
+              duration: 2.8,
+              repeat: -1,
+              yoyo: true,
+              ease: 'sine.inOut',
+              stagger: 0.4,
+            },
+            0
+          )
+          .to(
+            '.float-callout-b',
+            {
+              y: 6,
+              duration: 3.2,
+              repeat: -1,
+              yoyo: true,
+              ease: 'sine.inOut',
+              stagger: 0.5,
+            },
+            0
+          );
+      }
     }, rootRef);
 
     return () => ctx.revert();
   }, []);
 
   const currentUseCase = t.useCaseSection.tabs[activeUseCaseIdx] || t.useCaseSection.tabs[0];
+  const activeCourseIdx = pulseStep % 3;
+  const activeCourseObj =
+    t.hero.profileCard.courses[activeCourseIdx] || t.hero.profileCard.courses[0];
+  const activeTagObj =
+    t.bentoSection.card4.tags[pulseStep % t.bentoSection.card4.tags.length] ||
+    t.bentoSection.card4.tags[0];
 
   return (
     <div
       ref={rootRef}
       className="min-h-screen bg-bg text-text selection:bg-primary/30 selection:text-text overflow-x-hidden font-sans"
     >
-      {/* Top Announcement Bar (From 00:01 in video) */}
-      <div className="w-full border-b border-border bg-surface-2/70 backdrop-blur-md px-4 py-2 text-center">
+      {/* Top Announcement Bar */}
+      <div className="w-full border-b border-border bg-surface-2/80 px-4 py-2 text-center">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-2 text-xs">
           <span className="rounded-md bg-primary/20 border border-primary/40 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-primary">
             {t.announcement.badge}
@@ -806,8 +893,8 @@ export function HomePage() {
         </div>
       </div>
 
-      {/* Top Navbar (Preserved layout as requested) */}
-      <header className="sticky top-0 z-50 w-full px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-border bg-surface/75 backdrop-blur-2xl">
+      {/* Top Navbar (Preserved layout, single lightweight blur layer) */}
+      <header className="sticky top-0 z-50 w-full px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-border floating-pill-nav">
         <Link to="/" className="flex items-center gap-2.5 group">
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/15 text-primary group-hover:scale-105 transition-transform shadow-xs">
             <LotusIcon className="h-5 w-5" />
@@ -836,23 +923,17 @@ export function HomePage() {
 
       <main className="space-y-24 sm:space-y-32 pb-16">
         {/* =====================================================================
-            SECTION 1: 2-COLUMN SPLIT HERO + PROFILE CARD + PARTNER MARQUEE (00:01 - 00:03)
+            SECTION 1: 2-COLUMN SPLIT HERO + LIVE PROFILE ENGINE CARD
            ===================================================================== */}
         <section className="relative mx-auto max-w-6xl px-4 pt-10 sm:px-8 sm:pt-16">
-          {/* Ambient radial glow behind hero */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -top-10 left-1/4 h-96 w-96 -translate-x-1/2 rounded-full bg-primary/12 blur-[110px]"
-          />
-
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-            {/* Left Column: Eyebrow + Word-by-Word Title + Subtitle + CTA */}
+            {/* Left Column */}
             <div className="lg:col-span-6 space-y-6 text-left">
               <div className="hero-eyebrow inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-muted">
                 <span>{t.hero.eyebrowPrefix}</span>
                 <span className="relative font-extrabold text-text pb-0.5">
                   {t.hero.eyebrowHighlight}
-                  <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-gradient-to-r from-primary to-emerald-400 shadow-[0_0_8px_#dbef90]" />
+                  <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-gradient-to-r from-primary to-emerald-400" />
                 </span>
               </div>
 
@@ -880,34 +961,40 @@ export function HomePage() {
                 </Link>
                 <Link
                   to="/register"
-                  className="rounded-xl border border-border bg-surface/80 px-6 py-3.5 text-xs sm:text-sm font-bold text-text hover:border-primary/50 transition-colors"
+                  className="rounded-xl border border-border bg-surface px-6 py-3.5 text-xs sm:text-sm font-bold text-text hover:border-primary/50 transition-colors"
                 >
                   {t.hero.ctaSecondary}
                 </Link>
               </div>
             </div>
 
-            {/* Right Column: Layered Glass Role/Schedule Profile Card (Matches 00:01-00:03 right side) */}
+            {/* Right Column: Dynamic Schedule Profile Card */}
             <div className="lg:col-span-6">
-              <div className="hero-profile-shell rounded-[2rem] border border-border bg-surface/40 p-3 sm:p-4 shadow-2xl backdrop-blur-xl">
-                <div className="glass-card rounded-3xl p-6 sm:p-7 space-y-6 border border-border text-left">
-                  {/* Top Icon + Title + Status Pill */}
-                  <div className="hero-profile-item space-y-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/30 bg-primary/15 text-primary shadow-inner">
-                      <LotusIcon className="h-6 w-6" />
+              <div className="hero-profile-shell rounded-[2rem] border border-border bg-surface-2/50 p-3 sm:p-4 shadow-xl">
+                <div className="glass-card rounded-3xl p-6 sm:p-7 space-y-5 border border-border text-left">
+                  {/* Top Icon + Title + Live Pulse Badge */}
+                  <div className="hero-profile-item flex items-start justify-between gap-4">
+                    <div className="space-y-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/35 bg-primary/15 text-primary">
+                        <LotusIcon className="h-6 w-6" />
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <h2 className="text-xl sm:text-2xl font-extrabold text-text tracking-tight">
+                          {t.hero.profileCard.title}
+                        </h2>
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/35 bg-primary/10 px-3 py-0.5 text-[11px] font-bold text-primary">
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
+                          <span>{t.hero.profileCard.badge}</span>
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2.5">
-                      <h2 className="text-xl sm:text-2xl font-extrabold text-text tracking-tight">
-                        {t.hero.profileCard.title}
-                      </h2>
-                      <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-0.5 text-[11px] font-bold text-primary">
-                        {t.hero.profileCard.badge}
-                      </span>
-                    </div>
+                    <span className="rounded-lg border border-border bg-surface-2 px-2.5 py-1 text-[10px] font-mono font-bold text-emerald-400">
+                      0.18s SYNC
+                    </span>
                   </div>
 
                   {/* Description Block */}
-                  <div className="hero-profile-item space-y-1.5 border-t border-border pt-4">
+                  <div className="hero-profile-item space-y-1 border-t border-border pt-4">
                     <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
                       {t.hero.profileCard.descLabel}
                     </p>
@@ -916,39 +1003,58 @@ export function HomePage() {
                     </p>
                   </div>
 
-                  {/* Active Courses Pills (Matches "Knowledge" pills in video) */}
-                  <div className="hero-profile-item space-y-2 border-t border-border pt-4">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
-                      {t.hero.profileCard.coursesLabel}
-                    </p>
+                  {/* Dynamic Cycling Active Courses Pills + Live Room Readout */}
+                  <div className="hero-profile-item space-y-2.5 border-t border-border pt-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
+                        {t.hero.profileCard.coursesLabel}
+                      </p>
+                      <span className="text-[11px] font-mono font-bold text-primary transition-all">
+                        📍 {activeCourseObj.room}
+                      </span>
+                    </div>
                     <div className="flex flex-wrap gap-2">
-                      {t.hero.profileCard.courses.map((course) => (
-                        <span
-                          key={course}
-                          className="rounded-xl border border-border bg-surface-2/90 px-3 py-1.5 text-xs font-bold text-text shadow-2xs"
-                        >
-                          {course}
-                        </span>
-                      ))}
+                      {t.hero.profileCard.courses.map((course, idx) => {
+                        const isCurrent = idx === activeCourseIdx;
+                        return (
+                          <span
+                            key={course.code}
+                            className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition-all duration-300 ${
+                              isCurrent
+                                ? 'border-primary bg-primary/15 text-primary luma-glow-sm scale-[1.03]'
+                                : 'border-border bg-surface-2 text-muted'
+                            }`}
+                          >
+                            {course.code}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
 
-                  {/* Connected Modules Icons (Matches "Connected Tools" avatars in video) */}
+                  {/* Connected Modules with Active Pulse Ring */}
                   <div className="hero-profile-item space-y-2 border-t border-border pt-4">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
-                      {t.hero.profileCard.toolsLabel}
-                    </p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
+                        {t.hero.profileCard.toolsLabel}
+                      </p>
+                      <span className="text-[10px] font-semibold text-emerald-400">
+                        ● 4/4 Modules Online
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2.5">
                       {[
                         { icon: '📅', label: 'ICS Sync', bg: 'bg-primary/20 border-primary/40 text-primary' },
                         { icon: '⏱️', label: 'Pomodoro', bg: 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' },
                         { icon: '🎯', label: 'Deadlines', bg: 'bg-amber-500/20 border-amber-500/40 text-amber-400' },
                         { icon: '📚', label: 'Syllabus', bg: 'bg-sky-500/20 border-sky-500/40 text-sky-400' },
-                      ].map((tool) => (
+                      ].map((tool, i) => (
                         <span
                           key={tool.label}
                           title={tool.label}
-                          className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm shadow-sm transition-transform hover:scale-110 ${tool.bg}`}
+                          className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm transition-transform duration-300 ${
+                            pulseStep % 4 === i ? 'scale-115 ring-2 ring-primary/50' : ''
+                          } ${tool.bg}`}
                         >
                           {tool.icon}
                         </span>
@@ -960,16 +1066,18 @@ export function HomePage() {
             </div>
           </div>
 
-          {/* Bottom Trusted Ticker Bar (00:02 - 00:03 in video) */}
+          {/* Bottom Trusted Ticker Bar */}
           <div className="hero-trusted-bar mt-14 pt-8 border-t border-border grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
             <p className="md:col-span-4 text-xs font-semibold text-muted text-left">
               {t.hero.trustedLabel}
             </p>
             <div className="md:col-span-8 flex flex-wrap items-center justify-start md:justify-end gap-6 sm:gap-8">
-              {MARQUEE_PARTNERS.map((item) => (
+              {MARQUEE_PARTNERS.map((item, idx) => (
                 <div
                   key={item.name}
-                  className="flex items-center gap-2 text-xs sm:text-sm font-extrabold text-muted/80 hover:text-text transition-colors"
+                  className={`flex items-center gap-2 text-xs sm:text-sm font-extrabold transition-colors duration-300 ${
+                    pulseStep === idx ? 'text-primary' : 'text-muted/80 hover:text-text'
+                  }`}
                 >
                   <span>{item.icon}</span>
                   <span>{item.name}</span>
@@ -980,7 +1088,7 @@ export function HomePage() {
         </section>
 
         {/* =====================================================================
-            SECTION 2: 3-CARD WORKFLOW CAROUSEL WITH FLOATING METRICS (00:04 - 00:06)
+            SECTION 2: 3-CARD WORKFLOW CAROUSEL WITH LIVE DYNAMIC WIDGETS
            ===================================================================== */}
         <section className="mx-auto max-w-6xl px-4 sm:px-8 space-y-10">
           <div className="text-center max-w-2xl mx-auto space-y-3">
@@ -1005,43 +1113,94 @@ export function HomePage() {
                   onClick={() => setActiveCarouselIdx(idx)}
                   className={`gsap-reveal-item glass-card rounded-3xl p-4 sm:p-5 flex flex-col justify-between text-left cursor-pointer transition-all duration-300 ${
                     isSelected
-                      ? 'border-primary/50 luma-glow-sm scale-[1.01]'
+                      ? 'border-primary/55 luma-glow-sm scale-[1.01]'
                       : 'border-border opacity-90 hover:opacity-100'
                   }`}
                 >
-                  {/* Visual Illustration Box + Floating Metric Overlay */}
-                  <div className="relative h-52 w-full rounded-2xl border border-border bg-surface-2/80 overflow-hidden p-4 flex flex-col justify-between">
-                    {/* Background visual pattern per card */}
+                  {/* Live Dynamic Visual Box + Floating Metric Overlay */}
+                  <div className="relative h-56 w-full rounded-2xl border border-border bg-surface-2 overflow-hidden p-4 flex flex-col justify-between">
+                    {/* Card 1 Live Timetable Scanner Simulation */}
                     {idx === 0 && (
-                      <div className="grid grid-cols-3 gap-2 opacity-65">
-                        {['MSIS207 · E32', 'CS5433 · C206', 'STAT3013 · B5.04', 'MATH201 · C302', 'PE231 · Field', 'Active · 08:00'].map((c) => (
-                          <div key={c} className="rounded-lg border border-primary/25 bg-primary/10 px-2 py-2 text-[10px] font-bold text-primary truncate">
-                            {c}
-                          </div>
-                        ))}
+                      <div className="grid grid-cols-3 gap-2">
+                        {MINI_TIMETABLE_SLOTS.map((slot, sIdx) => {
+                          const isScanning = pulseStep === sIdx;
+                          return (
+                            <div
+                              key={slot.code}
+                              className={`rounded-xl border px-2.5 py-2 transition-all duration-300 ${
+                                isScanning
+                                  ? 'border-primary bg-primary/20 text-primary scale-[1.04]'
+                                  : 'border-border bg-bg/70 text-muted'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between text-[9px] font-mono">
+                                <span>{slot.time}</span>
+                                <span className={isScanning ? 'text-primary font-bold' : ''}>●</span>
+                              </div>
+                              <p className="text-[10px] font-extrabold text-text truncate mt-0.5">
+                                {slot.code}
+                              </p>
+                              <p className="text-[9px] opacity-80">📍 {slot.room}</p>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
+
+                    {/* Card 2 Live Ticking Pomodoro + Equalizer Wave */}
                     {idx === 1 && (
-                      <div className="flex items-center justify-center h-full opacity-50">
-                        <div className="h-28 w-28 rounded-full border-4 border-primary/40 flex items-center justify-center luma-radiant-glow">
-                          <span className="text-xl font-black text-primary">25:00</span>
+                      <div className="flex items-center justify-between px-2 pt-1">
+                        <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-4 border-primary/45 bg-bg/80 luma-glow-sm">
+                          <div className="text-center">
+                            <span className="text-base font-black text-text font-mono">
+                              {formattedPomo}
+                            </span>
+                            <span className="block text-[8px] font-bold uppercase text-primary">
+                              LIVE FLOW
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {idx === 2 && (
-                      <div className="space-y-2 opacity-65">
-                        <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-2 text-[10px] font-bold text-rose-400">
-                          CRITICAL · Lab 4 CRUD API (Tonight)
-                        </div>
-                        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2 text-[10px] font-bold text-amber-400">
-                          WARNING · 2PC Protocol (In 2 days)
+                        {/* 8-Bar Live Equalizer */}
+                        <div className="flex items-end gap-1.5 h-16 pr-2">
+                          {['h-8', 'h-14', 'h-10', 'h-16', 'h-9', 'h-12', 'h-15', 'h-7'].map(
+                            (hClass, bIdx) => (
+                              <span
+                                key={bIdx}
+                                className={`w-1.5 rounded-full bg-gradient-to-t from-accent-deep to-primary animate-equalizer ${hClass}`}
+                                style={{ animationDelay: `${bIdx * 0.14}s` }}
+                              />
+                            )
+                          )}
                         </div>
                       </div>
                     )}
 
-                    {/* Floating Glass Overlay Metric Card (Matches 00:05-00:06 in video) */}
-                    <div className="mt-auto self-end w-4/5 rounded-2xl border border-primary/35 bg-bg/90 backdrop-blur-xl p-3.5 shadow-xl">
-                      <p className="text-[10px] font-bold text-muted">{card.metricLabel}</p>
+                    {/* Card 3 Live Priority Deadline Radar */}
+                    {idx === 2 && (
+                      <div className="space-y-2">
+                        {[
+                          { label: 'Lab 4 · Express CRUD API', tag: 'TONIGHT', pct: '92%', col: 'border-rose-500/40 bg-rose-500/10 text-rose-400' },
+                          { label: 'Assign 2 · 2PC Protocol', tag: 'IN 2 DAYS', pct: '64%', col: 'border-amber-500/40 bg-amber-500/10 text-amber-400' },
+                        ].map((d, dIdx) => (
+                          <div
+                            key={d.label}
+                            className={`rounded-xl border px-3 py-2 flex items-center justify-between text-[10px] font-bold transition-transform duration-300 ${
+                              pulseStep % 2 === dIdx ? ' translate-x-1' : ''
+                            } ${d.col}`}
+                          >
+                            <span className="truncate pr-2 text-text">{d.label}</span>
+                            <span className="shrink-0 font-mono">{d.tag} · {d.pct}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Floating Overlay Metric Card */}
+                    <div className="mt-auto self-end w-[86%] rounded-2xl border border-primary/40 bg-bg/95 p-3.5 shadow-lg">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-bold text-muted">{card.metricLabel}</p>
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
+                      </div>
                       {idx === 0 && (
                         <div className="flex items-baseline gap-2 mt-1">
                           <span className="text-2xl font-black text-text">{card.metricValue}</span>
@@ -1051,23 +1210,27 @@ export function HomePage() {
                       {idx === 1 && (
                         <div className="mt-1.5 space-y-1.5">
                           <div className="flex justify-between text-xs font-extrabold">
-                            <span className="text-primary">Flow State</span>
+                            <span className="text-primary">432Hz Resonance</span>
                             <span className="text-text">{card.metricValue}</span>
                           </div>
                           <div className="h-1.5 w-full rounded-full bg-border overflow-hidden">
-                            <div className="h-full w-[94%] rounded-full bg-gradient-to-r from-accent-deep to-primary" />
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-accent-deep to-primary transition-all duration-500"
+                              style={{ width: pulseStep % 2 === 0 ? '94%' : '89%' }}
+                            />
                           </div>
                         </div>
                       )}
                       {idx === 2 && (
                         <div className="mt-1 flex items-end justify-between">
                           <span className="text-xl font-black text-primary">{card.metricValue}</span>
-                          <svg className="h-7 w-20 text-primary" viewBox="0 0 80 28" fill="none">
+                          <svg className="h-7 w-24 text-primary" viewBox="0 0 90 28" fill="none">
                             <path
-                              d="M2 24C18 22 26 10 42 14C56 17 64 4 78 3"
+                              d="M2 24C18 22 26 10 42 14C56 17 68 4 86 3"
                               stroke="currentColor"
                               strokeWidth="2.5"
                               strokeLinecap="round"
+                              className="animate-dash-flow"
                             />
                           </svg>
                         </div>
@@ -1094,7 +1257,7 @@ export function HomePage() {
             })}
           </div>
 
-          {/* Carousel Controls Bar (Prev / Progress Segments / Next from 00:06 in video) */}
+          {/* Carousel Controls Bar */}
           <div className="flex items-center justify-center gap-4 pt-2">
             <button
               type="button"
@@ -1129,7 +1292,7 @@ export function HomePage() {
         </section>
 
         {/* =====================================================================
-            SECTION 3: 2x2 BENTO INTELLIGENCE GRID (00:07 - 00:10 in video)
+            SECTION 3: 2x2 BENTO INTELLIGENCE GRID WITH LIVE ANIMATED DIAGRAMS
            ===================================================================== */}
         <section className="mx-auto max-w-6xl px-4 sm:px-8 space-y-10">
           <div className="text-center max-w-2xl mx-auto space-y-3">
@@ -1145,28 +1308,44 @@ export function HomePage() {
           </div>
 
           <div className="gsap-reveal-group grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Bento 1: Shared Schedule Context (Hub & Spoke Nodes) */}
+            {/* Bento 1: Shared Schedule Context (Live Hub & Spoke Signal Flow) */}
             <div className="gsap-reveal-item glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between text-left border border-border">
-              <div className="relative h-56 w-full rounded-2xl border border-border bg-surface-2/60 overflow-hidden flex flex-col items-center justify-center p-4">
-                {/* Floating background course chips */}
-                <span className="absolute top-4 left-6 rounded-lg border border-border bg-surface px-2.5 py-1 text-[10px] font-bold text-muted">
-                  MSIS207 · E32
-                </span>
-                <span className="absolute top-5 right-6 rounded-lg border border-border bg-surface px-2.5 py-1 text-[10px] font-bold text-muted">
-                  CS5433 · C206
-                </span>
-                <span className="absolute bottom-5 left-8 rounded-lg border border-border bg-surface px-2.5 py-1 text-[10px] font-bold text-muted">
-                  STAT3013 · B5.04
-                </span>
-                <span className="absolute bottom-5 right-8 rounded-lg border border-border bg-surface px-2.5 py-1 text-[10px] font-bold text-muted">
-                  07:30 – 16:15
-                </span>
+              <div className="relative h-56 w-full rounded-2xl border border-border bg-surface-2 overflow-hidden flex flex-col items-center justify-center p-4">
+                {/* Animated SVG Spokes */}
+                <svg className="absolute inset-0 h-full w-full pointer-events-none" viewBox="0 0 400 220" fill="none">
+                  <line x1="200" y1="100" x2="75" y2="42" stroke="currentColor" className="text-primary/35 animate-dash-flow" strokeWidth="1.5" />
+                  <line x1="200" y1="100" x2="325" y2="42" stroke="currentColor" className="text-primary/35 animate-dash-flow" strokeWidth="1.5" />
+                  <line x1="200" y1="100" x2="75" y2="175" stroke="currentColor" className="text-primary/35 animate-dash-flow" strokeWidth="1.5" />
+                  <line x1="200" y1="100" x2="325" y2="175" stroke="currentColor" className="text-primary/35 animate-dash-flow" strokeWidth="1.5" />
+                </svg>
+
+                {/* 4 Corner Nodes lighting up in sequence */}
+                {[
+                  { label: 'MSIS207 · E32', pos: 'top-4 left-5', idx: 0 },
+                  { label: 'CS5433 · C206', pos: 'top-4 right-5', idx: 1 },
+                  { label: 'STAT3013 · B5.04', pos: 'bottom-4 left-5', idx: 2 },
+                  { label: '07:30 – 16:15', pos: 'bottom-4 right-5', idx: 3 },
+                ].map((node) => {
+                  const activeNode = pulseStep % 4 === node.idx;
+                  return (
+                    <span
+                      key={node.label}
+                      className={`absolute ${node.pos} z-10 rounded-xl border px-3 py-1.5 text-[10px] font-extrabold transition-all duration-300 ${
+                        activeNode
+                          ? 'border-primary bg-bg text-primary luma-glow-sm scale-105'
+                          : 'border-border bg-surface text-muted'
+                      }`}
+                    >
+                      {node.label}
+                    </span>
+                  );
+                })}
 
                 {/* Central Hub Icon */}
                 <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/50 bg-bg text-primary shadow-xl luma-glow">
                   <LotusIcon className="h-8 w-8" />
                 </div>
-                <span className="relative z-10 mt-3 rounded-xl border border-primary/40 bg-bg/90 px-4 py-1.5 text-xs font-extrabold text-text shadow-md">
+                <span className="relative z-10 mt-2.5 rounded-xl border border-primary/40 bg-bg px-4 py-1 text-xs font-extrabold text-text shadow-md">
                   {t.bentoSection.card1.hubLabel}
                 </span>
               </div>
@@ -1177,23 +1356,40 @@ export function HomePage() {
               </div>
             </div>
 
-            {/* Bento 2: Structured Course Context (Document Window List) */}
+            {/* Bento 2: Structured Course Context (Live Indexing Syllabus Window) */}
             <div className="gsap-reveal-item glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between text-left border border-border">
-              <div className="relative h-56 w-full rounded-2xl border border-border bg-surface-2/60 overflow-hidden flex items-center justify-center p-4">
-                <div className="w-full max-w-sm rounded-2xl border border-border bg-bg/90 p-4 shadow-xl space-y-2.5">
+              <div className="relative h-56 w-full rounded-2xl border border-border bg-surface-2 overflow-hidden flex items-center justify-center p-4">
+                <div className="w-full max-w-sm rounded-2xl border border-border bg-bg p-4 shadow-lg space-y-2.5">
                   <div className="flex items-center justify-between border-b border-border pb-2 text-xs font-bold text-muted">
                     <span>{t.bentoSection.card2.windowTitle}</span>
-                    <span>•••</span>
+                    <span className="text-[10px] font-mono text-primary">● LIVE INDEX</span>
                   </div>
-                  {t.bentoSection.card2.files.map((file) => (
-                    <div
-                      key={file.name}
-                      className="flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-text"
-                    >
-                      <span className={`text-sm ${file.color}`}>📄</span>
-                      <span className="truncate">{file.name}</span>
-                    </div>
-                  ))}
+                  {t.bentoSection.card2.files.map((file, fIdx) => {
+                    const isScanning = pulseStep % 3 === fIdx;
+                    return (
+                      <div
+                        key={file.name}
+                        className={`rounded-xl border px-3 py-2 transition-all duration-300 ${
+                          isScanning
+                            ? 'border-primary/50 bg-primary/10'
+                            : 'border-border bg-surface'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2 text-xs font-bold">
+                          <span className="truncate text-text">📄 {file.name}</span>
+                          <span className="shrink-0 text-[10px] font-mono text-primary">
+                            {file.status}
+                          </span>
+                        </div>
+                        <div className="mt-1.5 h-1 w-full rounded-full bg-border overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-accent-deep to-primary transition-all duration-500"
+                            style={{ width: isScanning ? '100%' : `${file.pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1203,41 +1399,76 @@ export function HomePage() {
               </div>
             </div>
 
-            {/* Bento 3: Connected Study Data (SVG Bezier Flow Diagram from 00:09-00:10) */}
+            {/* Bento 3: Connected Study Data (Animated SVG Bezier Stream) */}
             <div className="gsap-reveal-item glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between text-left border border-border">
-              <div className="relative h-56 w-full rounded-2xl border border-border bg-surface-2/60 overflow-hidden flex items-center justify-between px-6 sm:px-10">
+              <div className="relative h-56 w-full rounded-2xl border border-border bg-surface-2 overflow-hidden flex items-center justify-between px-6 sm:px-10">
                 {/* Left Source Node */}
-                <div className="relative z-10 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-accent-deep to-primary text-primary-fg font-black shadow-lg luma-glow-sm">
-                  <LotusIcon className="h-7 w-7" />
+                <div className="relative z-10 flex flex-col items-center gap-1.5">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-accent-deep to-primary text-primary-fg font-black shadow-lg luma-glow-sm">
+                    <LotusIcon className="h-7 w-7" />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-primary">
+                    {t.bentoSection.card3.source}
+                  </span>
                 </div>
 
-                {/* SVG Connecting Bezier Curves */}
+                {/* Animated SVG Connecting Bezier Curves */}
                 <svg className="absolute inset-0 h-full w-full pointer-events-none" viewBox="0 0 400 220" fill="none">
                   <path
-                    d="M95 110 C 180 110, 190 65, 260 65"
+                    d="M95 105 C 175 105, 190 65, 255 65"
                     stroke="currentColor"
-                    className="text-primary/45"
+                    className="text-primary/25"
                     strokeWidth="2"
                   />
                   <path
-                    d="M95 110 C 180 110, 190 155, 260 155"
+                    d="M95 105 C 175 105, 190 65, 255 65"
                     stroke="currentColor"
-                    className="text-primary/45"
+                    className="text-primary animate-dash-flow"
+                    strokeWidth="2.5"
+                  />
+                  <path
+                    d="M95 105 C 175 105, 190 155, 255 155"
+                    stroke="currentColor"
+                    className="text-primary/25"
                     strokeWidth="2"
                   />
-                  <circle cx="260" cy="65" r="3.5" className="fill-primary" />
-                  <circle cx="260" cy="155" r="3.5" className="fill-primary" />
+                  <path
+                    d="M95 105 C 175 105, 190 155, 255 155"
+                    stroke="currentColor"
+                    className="text-emerald-400 animate-dash-flow"
+                    strokeWidth="2.5"
+                  />
+                  <circle cx="255" cy="65" r="4" className="fill-primary" />
+                  <circle cx="255" cy="155" r="4" className="fill-emerald-400" />
                 </svg>
 
                 {/* Right Target Pills */}
                 <div className="relative z-10 space-y-6">
-                  <div className="flex items-center gap-2.5 rounded-xl border border-border bg-bg/95 px-4 py-2.5 text-xs font-extrabold text-text shadow-lg">
+                  <div
+                    className={`flex items-center gap-2.5 rounded-xl border px-4 py-2.5 text-xs font-extrabold transition-all duration-300 ${
+                      pulseStep % 2 === 0
+                        ? 'border-primary bg-bg text-primary luma-glow-sm scale-105'
+                        : 'border-border bg-bg text-text'
+                    }`}
+                  >
                     <span>⏱️</span>
                     <span>{t.bentoSection.card3.target1}</span>
+                    <span className="ml-1 rounded bg-primary/20 px-1.5 py-0.5 text-[9px] font-mono text-primary">
+                      25m
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2.5 rounded-xl border border-border bg-bg/95 px-4 py-2.5 text-xs font-extrabold text-text shadow-lg">
+                  <div
+                    className={`flex items-center gap-2.5 rounded-xl border px-4 py-2.5 text-xs font-extrabold transition-all duration-300 ${
+                      pulseStep % 2 === 1
+                        ? 'border-emerald-400 bg-bg text-emerald-400 luma-glow-sm scale-105'
+                        : 'border-border bg-bg text-text'
+                    }`}
+                  >
                     <span>🎯</span>
                     <span>{t.bentoSection.card3.target2}</span>
+                    <span className="ml-1 rounded bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-mono text-emerald-400">
+                      94%
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1248,25 +1479,34 @@ export function HomePage() {
               </div>
             </div>
 
-            {/* Bento 4: Adaptive Active Hours (Floating Schedule Pills + Glowing Badge from 00:10) */}
+            {/* Bento 4: Adaptive Active Hours (Auto-Cycling Interactive Time Blocks) */}
             <div className="gsap-reveal-item glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between text-left border border-border">
-              <div className="relative h-56 w-full rounded-2xl border border-border bg-surface-2/60 overflow-hidden flex flex-col items-center justify-center p-5 gap-3">
-                <div className="flex flex-wrap items-center justify-center gap-2.5 max-w-sm">
-                  {t.bentoSection.card4.tags.map((tag, i) => (
-                    <span
-                      key={tag}
-                      className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
-                        i === 2
-                          ? 'border border-primary/60 bg-bg text-primary shadow-lg luma-glow-sm scale-105'
-                          : 'border border-border bg-surface/70 text-muted'
-                      }`}
-                    >
-                      {tag}
-                    </span>
-                  ))}
+              <div className="relative h-56 w-full rounded-2xl border border-border bg-surface-2 overflow-hidden flex flex-col items-center justify-between p-4">
+                <div className="flex flex-wrap items-center justify-center gap-2 max-w-sm my-auto">
+                  {t.bentoSection.card4.tags.map((tag, i) => {
+                    const isTagActive = pulseStep % t.bentoSection.card4.tags.length === i;
+                    return (
+                      <span
+                        key={tag.label}
+                        className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-all duration-300 ${
+                          isTagActive
+                            ? 'border border-primary bg-bg text-primary shadow-md luma-glow-sm scale-105'
+                            : 'border border-border bg-surface text-muted'
+                        }`}
+                      >
+                        {tag.label}
+                      </span>
+                    );
+                  })}
                 </div>
-                <div className="mt-2 flex h-12 w-12 items-center justify-center rounded-full border border-primary/40 bg-primary/15 text-primary shadow-md">
-                  ⚡
+
+                {/* Live Active Window Readout Bar */}
+                <div className="w-full rounded-xl border border-primary/35 bg-bg px-3.5 py-2 flex items-center justify-between text-[11px]">
+                  <span className="font-extrabold text-primary flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-primary animate-ping" />
+                    <span>{activeTagObj.label}</span>
+                  </span>
+                  <span className="font-mono text-muted">{activeTagObj.window}</span>
                 </div>
               </div>
 
@@ -1279,9 +1519,9 @@ export function HomePage() {
         </section>
 
         {/* =====================================================================
-            SECTION 4: ORBITAL RADAR RINGS & IMPACT METRICS (00:11 - 00:12 in video)
+            SECTION 4: EXPANDED ACADEMIC IMPACT & LIVE TELEMETRY BARS
            ===================================================================== */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-8 space-y-12">
+        <section ref={impactStageRef} className="mx-auto max-w-6xl px-4 sm:px-8 space-y-10">
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <span className="inline-block rounded-lg border border-border bg-surface px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-widest text-primary">
               {t.impactSection.tag}
@@ -1291,46 +1531,119 @@ export function HomePage() {
             </h2>
           </div>
 
-          {/* Orbital Concentric Rings Visual Stage */}
-          <div className="relative mx-auto flex h-[340px] sm:h-[380px] max-w-4xl items-center justify-center overflow-hidden">
+          {/* Orbital Concentric Rings Visual Stage with 6 Floating Telemetry Info Bars */}
+          <div className="relative mx-auto flex h-[390px] sm:h-[430px] max-w-5xl items-center justify-center overflow-hidden">
             {/* Outer Ring */}
-            <div className="orbital-ring-spin pointer-events-none absolute h-[320px] w-[320px] sm:h-[360px] sm:w-[360px] rounded-full border border-border/80">
-              <span className="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full bg-primary shadow-[0_0_12px_#dbef90]" />
+            <div className="orbital-ring-spin gpu-layer pointer-events-none absolute h-[330px] w-[330px] sm:h-[380px] sm:w-[380px] rounded-full border border-border">
+              <span className="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full bg-primary" />
+              <span className="absolute bottom-10 right-6 h-2 w-2 rounded-full bg-emerald-400" />
             </div>
             {/* Middle Ring */}
-            <div className="orbital-ring-spin-reverse pointer-events-none absolute h-[230px] w-[230px] sm:h-[260px] sm:w-[260px] rounded-full border border-primary/25">
+            <div className="orbital-ring-spin-reverse gpu-layer pointer-events-none absolute h-[230px] w-[230px] sm:h-[270px] sm:w-[270px] rounded-full border border-primary/30">
               <span className="absolute -bottom-1 left-1/2 h-2.5 w-2.5 -translate-x-1/2 rounded-full bg-emerald-400" />
             </div>
             {/* Inner Ring */}
-            <div className="pointer-events-none absolute h-[140px] w-[140px] sm:h-[160px] sm:w-[160px] rounded-full border border-primary/40 bg-primary/5" />
+            <div className="pointer-events-none absolute h-[140px] w-[140px] sm:h-[165px] sm:w-[165px] rounded-full border border-primary/45 bg-primary/5" />
 
             {/* Center 3D Squircle Badge */}
             <div className="relative z-20 flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-3xl border border-primary/50 bg-surface shadow-2xl luma-radiant-glow text-primary">
               <LotusIcon className="h-10 w-10 sm:h-12 sm:w-12" />
             </div>
 
-            {/* Floating Callout Top-Right (Matches "40+hrs" card at 00:11-00:12) */}
-            <div className="float-callout-a gpu-layer absolute top-6 right-4 sm:right-16 z-20 glass-card rounded-2xl px-4 py-3 border border-primary/40 text-left shadow-xl">
-              <p className="text-xl sm:text-2xl font-black text-text">{t.impactSection.callouts.topRightVal}</p>
+            {/* 1. Top-Left Floating Info Bar */}
+            <div className="float-callout-a gpu-layer absolute top-4 left-2 sm:left-10 z-20 glass-card rounded-2xl px-4 py-3 border border-primary/35 text-left shadow-lg max-w-[210px]">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-extrabold text-text">{t.impactSection.callouts.topLeftTitle}</p>
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+              </div>
+              <p className="text-[10px] font-semibold text-muted mt-0.5">{t.impactSection.callouts.topLeftSub}</p>
+              <div className="mt-2 h-1 w-full rounded-full bg-border overflow-hidden">
+                <div className="h-full w-full rounded-full bg-gradient-to-r from-accent-deep to-primary" />
+              </div>
+            </div>
+
+            {/* 2. Top-Right Floating Info Bar */}
+            <div className="float-callout-b gpu-layer absolute top-4 right-2 sm:right-10 z-20 glass-card rounded-2xl px-4 py-3 border border-primary/40 text-left shadow-lg">
+              <div className="flex items-baseline gap-2">
+                <p className="text-xl sm:text-2xl font-black text-text">{t.impactSection.callouts.topRightVal}</p>
+                <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                  {t.impactSection.callouts.topRightBadge}
+                </span>
+              </div>
               <p className="text-[11px] font-semibold text-muted">{t.impactSection.callouts.topRightLabel}</p>
             </div>
 
-            {/* Floating Callout Bottom-Left (Matches "3.2x" card at 00:11-00:12) */}
-            <div className="float-callout-b gpu-layer absolute bottom-8 left-4 sm:left-16 z-20 glass-card rounded-2xl px-4 py-3 border border-primary/40 text-left shadow-xl">
-              <p className="text-xl sm:text-2xl font-black text-text">{t.impactSection.callouts.bottomLeftVal}</p>
+            {/* 3. Mid-Left Floating Info Bar */}
+            <div className="float-callout-b gpu-layer hidden md:flex absolute top-1/2 -translate-y-1/2 left-2 lg:left-6 z-20 glass-card rounded-2xl px-4 py-2.5 border border-border items-center gap-3 text-left shadow-md">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/15 text-primary text-xs font-bold">
+                📅
+              </span>
+              <div>
+                <p className="text-xs font-extrabold text-text">{t.impactSection.callouts.midLeftTitle}</p>
+                <p className="text-[10px] font-mono text-primary">{t.impactSection.callouts.midLeftSub}</p>
+              </div>
+            </div>
+
+            {/* 4. Mid-Right Floating Info Bar */}
+            <div className="float-callout-a gpu-layer hidden md:flex absolute top-1/2 -translate-y-1/2 right-2 lg:right-6 z-20 glass-card rounded-2xl px-4 py-2.5 border border-border items-center gap-3 text-left shadow-md">
+              <div className="flex items-end gap-0.5 h-5">
+                {['h-2', 'h-4', 'h-3', 'h-5', 'h-2.5'].map((h, i) => (
+                  <span
+                    key={i}
+                    className={`w-1 rounded-full bg-primary animate-equalizer ${h}`}
+                    style={{ animationDelay: `${i * 0.15}s` }}
+                  />
+                ))}
+              </div>
+              <div>
+                <p className="text-xs font-extrabold text-text">{t.impactSection.callouts.midRightTitle}</p>
+                <p className="text-[10px] font-mono text-emerald-400">{t.impactSection.callouts.midRightSub}</p>
+              </div>
+            </div>
+
+            {/* 5. Bottom-Left Floating Info Bar */}
+            <div className="float-callout-b gpu-layer absolute bottom-4 left-2 sm:left-12 z-20 glass-card rounded-2xl px-4 py-3 border border-primary/40 text-left shadow-lg">
+              <div className="flex items-baseline gap-2">
+                <p className="text-xl sm:text-2xl font-black text-text">{t.impactSection.callouts.bottomLeftVal}</p>
+                <span className="rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400">
+                  {t.impactSection.callouts.bottomLeftBadge}
+                </span>
+              </div>
               <p className="text-[11px] font-semibold text-muted">{t.impactSection.callouts.bottomLeftLabel}</p>
             </div>
 
-            {/* Subtle Side Pills */}
-            <div className="hidden md:block absolute top-1/3 left-4 rounded-xl border border-border bg-surface/60 px-3.5 py-2 text-xs font-semibold text-muted">
-              {t.impactSection.callouts.leftPill}
-            </div>
-            <div className="hidden md:block absolute bottom-1/4 right-4 rounded-xl border border-border bg-surface/60 px-3.5 py-2 text-xs font-semibold text-muted">
-              {t.impactSection.callouts.rightPill}
+            {/* 6. Bottom-Right Floating Info Bar */}
+            <div className="float-callout-a gpu-layer absolute bottom-4 right-2 sm:right-12 z-20 glass-card rounded-2xl px-4 py-3 border border-primary/35 text-left shadow-lg min-w-[190px]">
+              <div className="flex items-baseline justify-between gap-2">
+                <p className="text-xl sm:text-2xl font-black text-primary">{t.impactSection.callouts.bottomRightVal}</p>
+                <span className="text-[10px] font-mono font-bold text-emerald-400">GRADE A</span>
+              </div>
+              <p className="text-[11px] font-semibold text-muted">{t.impactSection.callouts.bottomRightLabel}</p>
             </div>
           </div>
 
-          {/* 3 Impact Pillar Cards (Bottom of 00:12 in video) */}
+          {/* Live 4-Column Academic Telemetry Strip */}
+          <div className="gsap-reveal-group grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {t.impactSection.telemetryStrip.map((bar, idx) => (
+              <div
+                key={bar.label}
+                className="gsap-reveal-item glass-card rounded-2xl p-4 border border-border text-left space-y-2"
+              >
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-muted truncate pr-2">{bar.label}</span>
+                  <span className="font-mono font-extrabold text-primary shrink-0">{bar.val}</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-border overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-accent-deep via-primary to-emerald-400 transition-all duration-500"
+                    style={{ width: pulseStep === idx ? '100%' : `${bar.pct}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 3 Impact Pillar Cards */}
           <div className="gsap-reveal-group grid grid-cols-1 md:grid-cols-3 gap-6">
             {t.impactSection.pillars.map((pillar, i) => (
               <div
@@ -1348,7 +1661,7 @@ export function HomePage() {
         </section>
 
         {/* =====================================================================
-            SECTION 5: INTERACTIVE TABBED USE-CASE BENTO STAGE (00:13 - 00:15 in video)
+            SECTION 5: INTERACTIVE TABBED USE-CASE BENTO STAGE
            ===================================================================== */}
         <section className="mx-auto max-w-6xl px-4 sm:px-8 space-y-8">
           <div className="text-center max-w-2xl mx-auto space-y-3">
@@ -1363,7 +1676,7 @@ export function HomePage() {
             </p>
           </div>
 
-          {/* Interactive Mode Tabs (Matches Finance / Healthcare / Retail / Edutech tabs at 00:13) */}
+          {/* Interactive Mode Tabs */}
           <div className="flex flex-wrap items-center justify-center gap-2.5">
             {t.useCaseSection.tabs.map((tab, idx) => {
               const active = activeUseCaseIdx === idx;
@@ -1375,7 +1688,7 @@ export function HomePage() {
                   className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-extrabold transition-all cursor-pointer ${
                     active
                       ? 'border border-primary/60 bg-surface text-text shadow-md luma-glow-sm'
-                      : 'border border-border bg-surface/40 text-muted hover:text-text'
+                      : 'border border-border bg-surface/50 text-muted hover:text-text'
                   }`}
                 >
                   <span>{tab.icon}</span>
@@ -1385,34 +1698,32 @@ export function HomePage() {
             })}
           </div>
 
-          {/* Multi-Card Asymmetric Bento Container (Matches 00:14-00:15 in video) */}
+          {/* Multi-Card Asymmetric Bento Container */}
           <div
             ref={useCaseStageRef}
-            className="rounded-[2.25rem] border border-border bg-surface/40 p-4 sm:p-6 shadow-2xl backdrop-blur-xl"
+            className="rounded-[2.25rem] border border-border bg-surface-2/60 p-4 sm:p-6 shadow-xl"
           >
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-              {/* Left Tall Dotted-Matrix Status Card (5 cols) */}
+              {/* Left Tall Dotted-Matrix Status Card */}
               <div
-                className="usecase-bento-card lg:col-span-5 rounded-3xl border border-border bg-surface-2/90 p-5 sm:p-6 flex flex-col justify-between space-y-5 text-left"
+                className="usecase-bento-card lg:col-span-5 rounded-3xl border border-border bg-surface p-5 sm:p-6 flex flex-col justify-between space-y-5 text-left"
                 style={{
                   backgroundImage: 'radial-gradient(rgba(219, 239, 144, 0.14) 1px, transparent 1px)',
                   backgroundSize: '14px 14px',
                 }}
               >
-                {/* Top Sub-Card */}
-                <div className="relative rounded-2xl border border-border bg-bg/90 p-4 shadow-md">
+                <div className="relative rounded-2xl border border-border bg-bg p-4 shadow-sm">
                   <p className="text-xs font-bold text-text">{currentUseCase.topStatTitle}</p>
                   <div className="mt-2 flex items-baseline gap-2">
                     <span className="text-2xl sm:text-3xl font-black text-primary">{currentUseCase.topStatNum}</span>
                     <span className="text-xs font-semibold text-muted">{currentUseCase.topStatSub}</span>
                   </div>
-                  <div className="absolute -bottom-3 right-4 flex h-9 w-9 items-center justify-center rounded-xl border border-primary/40 bg-surface text-primary shadow-md">
+                  <div className="absolute -bottom-3 right-4 flex h-9 w-9 items-center justify-center rounded-xl border border-primary/40 bg-surface text-primary shadow-sm">
                     <LotusIcon className="h-5 w-5" />
                   </div>
                 </div>
 
-                {/* Bottom Sub-Card: Active List with Running green dots */}
-                <div className="rounded-2xl border border-border bg-bg/90 p-4 shadow-md space-y-3">
+                <div className="rounded-2xl border border-border bg-bg p-4 shadow-sm space-y-3">
                   <p className="text-xs font-extrabold text-text border-b border-border pb-2">
                     {currentUseCase.listTitle}
                   </p>
@@ -1438,9 +1749,9 @@ export function HomePage() {
                 </div>
               </div>
 
-              {/* Middle Column: Gradient Brand Card + Hours Stat Card (3.5 -> 3 cols) */}
+              {/* Middle Column */}
               <div className="lg:col-span-3 flex flex-col gap-5">
-                <div className="usecase-bento-card flex-1 rounded-3xl p-5 flex flex-col justify-between text-left bg-accent-gradient text-black shadow-lg">
+                <div className="usecase-bento-card flex-1 rounded-3xl p-5 flex flex-col justify-between text-left bg-accent-gradient text-black shadow-md">
                   <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest opacity-80">
                     {currentUseCase.bannerLabel}
                   </span>
@@ -1456,7 +1767,7 @@ export function HomePage() {
                 </div>
               </div>
 
-              {/* Right Column: Percentage Stat Card + Student Testimonial Card (4 cols) */}
+              {/* Right Column */}
               <div className="lg:col-span-4 flex flex-col gap-5">
                 <div className="usecase-bento-card glass-card rounded-3xl p-5 text-left space-y-2 border border-border">
                   <p className="text-2xl sm:text-3xl font-black text-primary">{currentUseCase.metric2Val}</p>
@@ -1464,7 +1775,7 @@ export function HomePage() {
                   <p className="text-[11px] text-muted leading-relaxed">{currentUseCase.metric2Desc}</p>
                 </div>
 
-                <div className="usecase-bento-card flex-1 rounded-3xl border border-primary/30 bg-gradient-to-br from-surface via-surface-2 to-primary/15 p-5 flex flex-col justify-between text-left shadow-lg">
+                <div className="usecase-bento-card flex-1 rounded-3xl border border-primary/30 bg-gradient-to-br from-surface via-surface-2 to-primary/15 p-5 flex flex-col justify-between text-left shadow-md">
                   <p className="text-xs sm:text-sm font-semibold text-text/95 italic leading-relaxed">
                     {currentUseCase.quote}
                   </p>
@@ -1484,7 +1795,7 @@ export function HomePage() {
         </section>
 
         {/* =====================================================================
-            SECTION 6: "All About Luma" CATEGORIZED FAQ ACCORDION (00:16 - 00:17 in video)
+            SECTION 6: "All About Luma" CATEGORIZED FAQ ACCORDION
            ===================================================================== */}
         <section className="mx-auto max-w-3xl px-4 sm:px-8 space-y-10">
           <div className="text-center space-y-3">
@@ -1548,10 +1859,9 @@ export function HomePage() {
         </section>
 
         {/* =====================================================================
-            SECTION 7: GET STARTED CTA + ROUNDED FOOTER + GIANT WATERMARK (00:18 - 00:21)
+            SECTION 7: GET STARTED CTA + GIANT WATERMARK (Footer card removed per user request)
            ===================================================================== */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-8 space-y-14">
-          {/* Centered Get Started CTA Block (00:18) */}
+        <section className="mx-auto max-w-6xl px-4 sm:px-8 space-y-10">
           <div className="text-center max-w-2xl mx-auto space-y-5">
             <span className="inline-block rounded-lg border border-border bg-surface px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-widest text-primary">
               {t.finale.tag}
@@ -1578,89 +1888,7 @@ export function HomePage() {
             </div>
           </div>
 
-          {/* Rounded Multi-Column Footer Card (00:19 - 00:20) */}
-          <footer className="glass-card rounded-[2rem] p-8 sm:p-12 border border-border text-left space-y-10">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-              {/* Brand Column */}
-              <div className="md:col-span-5 space-y-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-                    <LotusIcon className="h-5 w-5" />
-                  </div>
-                  <span className="text-lg font-extrabold tracking-tight text-text">Luma</span>
-                </div>
-                <p className="text-xs sm:text-sm text-muted max-w-xs leading-relaxed">
-                  {t.footer.tagline}
-                </p>
-                <div className="pt-4 space-y-2">
-                  <p className="text-[11px] font-semibold text-muted">{t.footer.stayConnected}</p>
-                  <div className="flex items-center gap-2">
-                    {['📅', '⏱️', '🎯', '📚'].map((ic) => (
-                      <span
-                        key={ic}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-surface-2 text-xs"
-                      >
-                        {ic}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Links Columns */}
-              <div className="md:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-6">
-                <div className="space-y-3">
-                  <p className="text-xs font-extrabold text-text">{t.footer.col1Title}</p>
-                  <ul className="space-y-2 text-xs text-muted">
-                    {t.footer.col1Links.map((item) => (
-                      <li key={item}>
-                        <Link to="/login" className="hover:text-primary transition-colors">
-                          {item}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="space-y-3">
-                  <p className="text-xs font-extrabold text-text">{t.footer.col2Title}</p>
-                  <ul className="space-y-2 text-xs text-muted">
-                    {t.footer.col2Links.map((item) => (
-                      <li key={item} className="hover:text-text transition-colors">
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="space-y-3">
-                  <p className="text-xs font-extrabold text-text">{t.footer.col3Title}</p>
-                  <ul className="space-y-2 text-xs text-muted">
-                    {t.footer.col3Links.map((item) => (
-                      <li key={item}>
-                        <Link to="/login" className="hover:text-primary transition-colors">
-                          {item}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-6 border-t border-border flex flex-wrap items-center justify-between gap-4 text-[11px] text-muted">
-              <span>{t.footer.copyright}</span>
-              <div className="flex items-center gap-5">
-                {t.footer.legal.map((item) => (
-                  <span key={item} className="hover:text-text cursor-pointer transition-colors">
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </footer>
-
-          {/* Giant Faded Watermark Brand Text at Bottom (Matches giant watermark at 00:20 - 00:21) */}
+          {/* Giant Faded Watermark Brand Text at Bottom */}
           <div className="relative pt-4 pb-2 text-center select-none pointer-events-none overflow-hidden">
             <p className="text-[15vw] sm:text-[13vw] font-black tracking-tighter leading-none text-transparent bg-clip-text bg-gradient-to-b from-text/15 via-primary/10 to-transparent">
               Luma Studio

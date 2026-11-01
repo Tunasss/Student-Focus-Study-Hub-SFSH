@@ -300,7 +300,7 @@ export function PlaceholderPage({
   return (
     <div
       ref={containerRef}
-      className="min-h-[calc(100vh-65px)] bg-bg text-text px-4 sm:px-8 py-6 space-y-6 overflow-x-hidden font-sans"
+      className="min-h-[calc(100vh-65px)] bg-bg text-text px-4 sm:px-8 py-6 space-y-6 overflow-x-hidden font-sans max-w-7xl mx-auto w-full"
     >
       {/* 1. TOP METRIC PILLS RAIL (MATCHING THE TOP OF THE SCREENSHOT) */}
       <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1 text-xs font-semibold no-scrollbar">

@@ -145,7 +145,7 @@ export function DeepFocusPage() {
   return (
     <div
       ref={containerRef}
-      className="relative min-h-[calc(100vh-65px)] bg-bg text-text px-4 sm:px-8 py-6 flex flex-col justify-between overflow-hidden"
+      className="relative min-h-[calc(100vh-65px)] bg-bg text-text px-4 sm:px-8 py-6 flex flex-col justify-between overflow-hidden max-w-7xl mx-auto w-full font-sans"
     >
       {/* Top Bar: Back to Overview & Studio Tag */}
       <div className="flex items-center justify-between z-20">

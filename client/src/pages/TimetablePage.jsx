@@ -184,7 +184,7 @@ export function TimetablePage() {
   }
 
   return (
-    <div ref={containerRef} className="space-y-6">
+    <div ref={containerRef} className="min-h-[calc(100vh-65px)] px-4 sm:px-8 lg:px-10 py-6 space-y-6 max-w-7xl mx-auto font-sans w-full">
       {/* Toast Alert */}
       {toastMessage && (
         <div

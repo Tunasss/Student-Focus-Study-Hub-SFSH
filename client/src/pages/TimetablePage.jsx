@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { addDays, subDays } from 'date-fns';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { useLanguage } from '../i18n/languageContext';
 import { scheduleApi } from '../lib/api';
 import { getCoursePalette, getWeekDates, getWeekRangeStrings } from '../utils/timetable';
 import { TimetableGrid } from '../components/timetable/TimetableGrid';
@@ -9,7 +10,41 @@ import { IcsUploadModal } from '../components/timetable/IcsUploadModal';
 
 gsap.registerPlugin(useGSAP);
 
+const TIMETABLE_COPY = {
+  en: {
+    badge: 'WEEKLY TIMETABLE',
+    title: 'Class Schedule & Rooms',
+    subtitle: 'Track classes Monday through Sunday with instant Google Calendar (.ics) sync.',
+    importBtn: 'Import ICS',
+    prevWeek: 'Previous week',
+    today: 'Today',
+    nextWeek: 'Next week',
+    coursesLabel: 'Courses:',
+    retry: 'Retry',
+    loadError: 'Unable to load schedule for this week.',
+    toastSuccess: (count) => `Successfully imported ${count} classes into your timetable!`,
+    daysShort: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+  },
+  vi: {
+    badge: 'THỜI KHÓA BIỂU TUẦN',
+    title: 'Lịch học & Giảng đường',
+    subtitle: 'Theo dõi các ca học từ Thứ 2 đến Chủ Nhật, hỗ trợ đồng bộ file lịch Google Calendar (.ics).',
+    importBtn: 'Nhập lịch ICS',
+    prevWeek: 'Tuần trước',
+    today: 'Hôm nay',
+    nextWeek: 'Tuần sau',
+    coursesLabel: 'Môn học:',
+    retry: 'Thử lại',
+    loadError: 'Không thể tải lịch học cho tuần này.',
+    toastSuccess: (count) => `Đã nhập thành công ${count} lịch học vào thời khóa biểu!`,
+    daysShort: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
+  },
+};
+
 export function TimetablePage() {
+  const { lang } = useLanguage();
+  const t = TIMETABLE_COPY[lang] || TIMETABLE_COPY.en;
+
   const containerRef = useRef(null);
   const [pivotDate, setPivotDate] = useState(() => new Date());
   const [events, setEvents] = useState([]);
@@ -19,7 +54,14 @@ export function TimetablePage() {
   const [toastMessage, setToastMessage] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const weekDays = useMemo(() => getWeekDates(pivotDate), [pivotDate]);
+  const weekDays = useMemo(() => {
+    const raw = getWeekDates(pivotDate);
+    return raw.map((d, idx) => ({
+      ...d,
+      label: t.daysShort[idx] || d.label,
+    }));
+  }, [pivotDate, t.daysShort]);
+
   const range = useMemo(() => getWeekRangeStrings(pivotDate), [pivotDate]);
 
   // Unique courses for legend
@@ -55,7 +97,7 @@ export function TimetablePage() {
       })
       .catch((err) => {
         if (!cancelled) {
-          setError(err.message || 'Không thể tải lịch học cho tuần này.');
+          setError(err.message || t.loadError);
         }
       })
       .finally(() => {
@@ -67,50 +109,25 @@ export function TimetablePage() {
     return () => {
       cancelled = true;
     };
-  }, [range.from, range.to, refreshKey]);
+  }, [range.from, range.to, refreshKey, t.loadError]);
 
-  // GSAP Animations (using fromTo to prevent React StrictMode opacity: 0 lock)
+  // Lightweight 60fps GPU-only entrance for class cards only (no heavy layout or header re-tweening)
   useGSAP(
     () => {
       if (loading) return;
-
-      const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
-
-      tl.fromTo(
-        '.timetable-header',
-        { y: -12, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.4, clearProps: 'opacity,transform' },
-      );
-
-      tl.fromTo(
-        '.timetable-toolbar',
-        { y: -8, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.35, clearProps: 'opacity,transform' },
-        '-=0.2',
-      );
-
-      tl.fromTo(
-        '[data-testid^="day-header-"]',
-        { y: -10, opacity: 0 },
-        { y: 0, opacity: 1, stagger: 0.03, duration: 0.3, clearProps: 'opacity,transform' },
-        '-=0.15',
-      );
-
       const cards = containerRef.current?.querySelectorAll('[data-testid="class-card"]');
       if (cards && cards.length > 0) {
-        tl.fromTo(
+        gsap.fromTo(
           cards,
-          { scale: 0.94, opacity: 0, y: 8 },
+          { opacity: 0, y: 6 },
           {
-            scale: 1,
             opacity: 1,
             y: 0,
-            stagger: 0.02,
-            duration: 0.35,
-            ease: 'back.out(1.2)',
+            stagger: 0.015,
+            duration: 0.22,
+            ease: 'power2.out',
             clearProps: 'opacity,transform',
           },
-          '-=0.1',
         );
       }
     },
@@ -140,7 +157,7 @@ export function TimetablePage() {
 
   function handleUploadSuccess(result) {
     const count = result?.schedulesImported || result?.eventsRead || 0;
-    setToastMessage(`Đã nhập thành công ${count} lịch học vào thời khóa biểu!`);
+    setToastMessage(t.toastSuccess(count));
     setLoading(true);
     setRefreshKey((k) => k + 1);
     setTimeout(() => setToastMessage(null), 5000);
@@ -152,7 +169,7 @@ export function TimetablePage() {
       {toastMessage && (
         <div
           role="status"
-          className="flex items-center justify-between gap-3 rounded-2xl bg-success/10 border border-success/20 px-4 py-3 text-sm font-medium text-success shadow-xs transition-all animate-in fade-in"
+          className="flex items-center justify-between gap-3 rounded-2xl bg-success/10 border border-success/20 px-4 py-3 text-sm font-medium text-success shadow-xs"
         >
           <div className="flex items-center gap-2">
             <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -172,21 +189,18 @@ export function TimetablePage() {
         </div>
       )}
 
-      {/* Header section (Luma inspired) */}
+      {/* Header section */}
       <div className="timetable-header flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-            </span>
-            <span>THỜI KHÓA BIỂU TUẦN</span>
+            <span className="h-2 w-2 rounded-full bg-primary" />
+            <span>{t.badge}</span>
           </div>
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-text sm:text-3xl">
-            Lịch học & Giảng đường
+            {t.title}
           </h1>
           <p className="mt-1 text-sm text-muted">
-            Theo dõi các ca học từ Thứ 2 đến Chủ Nhật, hỗ trợ đồng bộ file lịch Google Calendar (.ics).
+            {t.subtitle}
           </p>
         </div>
 
@@ -206,21 +220,20 @@ export function TimetablePage() {
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
             </svg>
-            <span>Nhập lịch ICS</span>
+            <span>{t.importBtn}</span>
           </button>
         </div>
       </div>
 
-      {/* Toolbar & Week Switcher */}
-      <div className="timetable-toolbar flex flex-col gap-3.5 rounded-3xl border border-border bg-surface/85 backdrop-blur-xl p-4 sm:flex-row sm:items-center sm:justify-between shadow-xs">
+      {/* Toolbar & Week Switcher (Zero backdrop-blur for 60fps scroll) */}
+      <div className="timetable-toolbar glass-card flex flex-col gap-3.5 rounded-3xl p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          {/* Week navigation buttons */}
-          <div className="flex items-center rounded-xl border border-border bg-surface-2/60 p-1">
+          <div className="flex items-center rounded-xl border border-border bg-surface-2 p-1">
             <button
               type="button"
               data-testid="prev-week-btn"
               onClick={handlePrevWeek}
-              aria-label="Tuần trước"
+              aria-label={t.prevWeek}
               className="rounded-lg p-1.5 text-muted hover:bg-surface hover:text-text transition-colors"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -234,14 +247,14 @@ export function TimetablePage() {
               onClick={handleToday}
               className="px-3 py-1 text-xs font-semibold text-text hover:bg-surface rounded-lg transition-colors"
             >
-              Hôm nay
+              {t.today}
             </button>
 
             <button
               type="button"
               data-testid="next-week-btn"
               onClick={handleNextWeek}
-              aria-label="Tuần sau"
+              aria-label={t.nextWeek}
               className="rounded-lg p-1.5 text-muted hover:bg-surface hover:text-text transition-colors"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -250,7 +263,6 @@ export function TimetablePage() {
             </button>
           </div>
 
-          {/* Current week range text */}
           <span data-testid="week-range-label" className="text-sm font-semibold text-text pl-1 sm:pl-2">
             {range.displayLabel}
           </span>
@@ -259,7 +271,7 @@ export function TimetablePage() {
         {/* Legend for courses */}
         {coursesLegend.length > 0 && (
           <div className="flex items-center gap-2 overflow-x-auto py-1 sm:py-0 text-xs">
-            <span className="text-muted shrink-0">Môn học:</span>
+            <span className="text-muted shrink-0">{t.coursesLabel}</span>
             <div className="flex items-center gap-1.5 flex-wrap">
               {coursesLegend.map((c) => (
                 <span
@@ -289,7 +301,7 @@ export function TimetablePage() {
             onClick={handleRetry}
             className="rounded-lg bg-danger/15 px-3 py-1 font-medium hover:bg-danger/20 transition-colors"
           >
-            Thử lại
+            {t.retry}
           </button>
         </div>
       )}

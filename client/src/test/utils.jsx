@@ -3,17 +3,20 @@ import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 import { App } from '../App';
 import { AuthProvider } from '../auth/AuthProvider';
+import { LanguageProvider } from '../i18n/languageContext';
 import { ThemeProvider } from '../theme/ThemeProvider';
 
 export function renderApp(route = '/') {
   return render(
-    <ThemeProvider>
-      <MemoryRouter initialEntries={[route]}>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </MemoryRouter>
-    </ThemeProvider>,
+    <LanguageProvider>
+      <ThemeProvider>
+        <MemoryRouter initialEntries={[route]}>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </MemoryRouter>
+      </ThemeProvider>
+    </LanguageProvider>,
   );
 }
 

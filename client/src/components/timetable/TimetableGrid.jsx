@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useLanguage } from '../../i18n/languageContext';
 import { ClassCard } from './ClassCard';
 import {
   computeEventLayout,
@@ -7,7 +8,23 @@ import {
   START_HOUR,
 } from '../../utils/timetable';
 
+const GRID_COPY = {
+  en: {
+    emptyTitle: 'No classes scheduled this week',
+    emptyDesc: 'You have no classes scheduled for this week. Import an .ics timetable file or switch to another week.',
+    emptyBtn: 'Import timetable (.ics)',
+  },
+  vi: {
+    emptyTitle: 'Chưa có lịch học tuần này',
+    emptyDesc: 'Tuần này bạn chưa có lịch học nào. Bạn có thể nhập file lịch học .ics hoặc chuyển sang tuần kế tiếp.',
+    emptyBtn: 'Nhập lịch học (.ics)',
+  },
+};
+
 export function TimetableGrid({ weekDays, events = [], loading = false, onOpenUpload }) {
+  const { lang } = useLanguage();
+  const t = GRID_COPY[lang] || GRID_COPY.en;
+
   const hours = useMemo(() => {
     return Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i);
   }, []);
@@ -40,12 +57,12 @@ export function TimetableGrid({ weekDays, events = [], loading = false, onOpenUp
   return (
     <div
       data-testid="timetable-grid"
-      className="relative rounded-3xl border border-border bg-surface/85 backdrop-blur-xl shadow-xs overflow-hidden transition-all"
+      className="relative rounded-3xl border border-border bg-surface shadow-xs overflow-hidden"
     >
       <div className="overflow-x-auto min-w-full">
         <div className="min-w-[760px]">
-          {/* Header row: Time gutter corner + 7 weekday headers */}
-          <div className="sticky top-0 z-30 grid grid-cols-[64px_repeat(7,1fr)] border-b border-border bg-surface/90 backdrop-blur-md">
+          {/* Header row: Time gutter corner + 7 weekday headers (solid bg-surface for 60fps scroll) */}
+          <div className="sticky top-0 z-30 grid grid-cols-[64px_repeat(7,1fr)] border-b border-border bg-surface">
             <div className="flex items-center justify-center border-r border-border p-3 text-[11px] font-semibold text-muted">
               GMT+7
             </div>
@@ -54,15 +71,15 @@ export function TimetableGrid({ weekDays, events = [], loading = false, onOpenUp
               <div
                 key={day.dayOfWeek}
                 data-testid={`day-header-${day.dayOfWeek}`}
-                className={`flex flex-col items-center justify-center py-3 px-2 border-r last:border-r-0 border-border transition-colors ${
+                className={`flex flex-col items-center justify-center py-3 px-2 border-r last:border-r-0 border-border ${
                   day.isToday ? 'bg-primary/10 dark:bg-primary/15' : ''
                 }`}
               >
                 <span className="text-xs font-semibold text-muted">{day.label}</span>
                 <span
-                  className={`mt-1 flex h-7 w-7 items-center justify-center rounded-xl text-sm font-bold transition-transform ${
+                  className={`mt-1 flex h-7 w-7 items-center justify-center rounded-xl text-sm font-bold ${
                     day.isToday
-                      ? 'bg-primary text-primary-fg shadow-xs scale-105 luma-glow-sm'
+                      ? 'bg-primary text-primary-fg shadow-xs luma-glow-sm'
                       : 'text-text'
                   }`}
                 >
@@ -75,10 +92,10 @@ export function TimetableGrid({ weekDays, events = [], loading = false, onOpenUp
           {/* Grid body with time labels and 7 day columns */}
           <div
             className="relative grid grid-cols-[64px_repeat(7,1fr)] select-none"
-            style={{ height: `${totalGridHeight}px` }}
+            style={{ height: `${totalGridHeight}px`, contain: 'layout paint' }}
           >
             {/* Time labels column */}
-            <div className="relative border-r border-border bg-surface/40">
+            <div className="relative border-r border-border bg-surface-2/40">
               {hours.slice(0, -1).map((h, i) => (
                 <div
                   key={h}
@@ -109,11 +126,10 @@ export function TimetableGrid({ weekDays, events = [], loading = false, onOpenUp
                 <div
                   key={day.dayOfWeek}
                   data-testid={`day-column-${day.dayOfWeek}`}
-                  className={`relative border-r last:border-r-0 border-border transition-colors ${
+                  className={`relative border-r last:border-r-0 border-border ${
                     day.isToday ? 'bg-primary/[0.04] dark:bg-primary/[0.06]' : ''
                   }`}
                 >
-                  {/* Class events in this day */}
                   {!loading &&
                     dayLayout.map((event) => (
                       <ClassCard key={`${event.scheduleId || event.courseId}-${event.start}`} event={event} />
@@ -126,13 +142,13 @@ export function TimetableGrid({ weekDays, events = [], loading = false, onOpenUp
             {loading && (
               <div
                 data-testid="timetable-skeleton"
-                className="absolute inset-0 left-[64px] z-20 grid grid-cols-7 bg-surface/60 backdrop-blur-[2px] transition-opacity"
+                className="absolute inset-0 left-[64px] z-20 grid grid-cols-7 bg-surface/85"
               >
                 {Array.from({ length: 7 }).map((_, i) => (
                   <div key={i} className="relative p-2 border-r last:border-r-0 border-border/40">
                     {i % 2 === 0 && (
                       <div
-                        className="animate-pulse rounded-2xl bg-muted/15 border border-border/40 p-3"
+                        className="rounded-2xl bg-muted/15 border border-border/40 p-3"
                         style={{ height: '110px', marginTop: `${(i * 35) % 180 + 30}px` }}
                       >
                         <div className="h-4 w-16 rounded-md bg-muted/20 mb-2" />
@@ -152,7 +168,7 @@ export function TimetableGrid({ weekDays, events = [], loading = false, onOpenUp
       {!loading && !hasEvents && (
         <div
           data-testid="timetable-empty"
-          className="absolute inset-0 left-0 sm:left-[64px] z-10 flex flex-col items-center justify-center p-8 bg-surface/90 backdrop-blur-md text-center"
+          className="absolute inset-0 left-0 sm:left-[64px] z-10 flex flex-col items-center justify-center p-8 bg-surface/95 text-center"
         >
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary mb-4 shadow-sm luma-glow-sm">
             <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -160,10 +176,10 @@ export function TimetableGrid({ weekDays, events = [], loading = false, onOpenUp
             </svg>
           </div>
           <h3 className="text-lg font-bold tracking-tight text-text">
-            Chưa có lịch học tuần này
+            {t.emptyTitle}
           </h3>
           <p className="mt-1.5 max-w-sm text-xs sm:text-sm text-muted">
-            Tuần này bạn chưa có lịch học nào. Bạn có thể nhập file lịch học .ics hoặc chuyển sang tuần kế tiếp.
+            {t.emptyDesc}
           </p>
           <div className="mt-5 flex items-center gap-3">
             <button
@@ -174,7 +190,7 @@ export function TimetableGrid({ weekDays, events = [], loading = false, onOpenUp
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>
-              <span>Nhập lịch học (.ics)</span>
+              <span>{t.emptyBtn}</span>
             </button>
           </div>
         </div>

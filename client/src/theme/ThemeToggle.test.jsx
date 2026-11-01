@@ -16,11 +16,11 @@ function renderToggle() {
 test('switching to dark adds the .dark class and persists the choice', async () => {
   renderToggle();
 
-  await userEvent.click(screen.getByRole('radio', { name: 'Tối' }));
+  await userEvent.click(screen.getByRole('radio', { name: /Dark|Tối/i }));
 
   expect(document.documentElement).toHaveClass('dark');
   expect(localStorage.getItem(THEME_KEY)).toBe('dark');
-  expect(screen.getByRole('radio', { name: 'Tối' })).toHaveAttribute('aria-checked', 'true');
+  expect(screen.getByRole('radio', { name: /Dark|Tối/i })).toHaveAttribute('aria-checked', 'true');
 });
 
 test('restores a saved light preference', () => {
@@ -28,5 +28,5 @@ test('restores a saved light preference', () => {
   renderToggle();
 
   expect(document.documentElement).not.toHaveClass('dark');
-  expect(screen.getByRole('radio', { name: 'Sáng' })).toHaveAttribute('aria-checked', 'true');
+  expect(screen.getByRole('radio', { name: /Light|Sáng/i })).toHaveAttribute('aria-checked', 'true');
 });

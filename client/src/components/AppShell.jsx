@@ -2,67 +2,74 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { useAuth } from '../auth/authContext';
+import { useLanguage } from '../i18n/languageContext';
+import { LanguageToggle } from '../i18n/LanguageToggle';
 import { ThemeToggle } from '../theme/ThemeToggle';
 
-const NAV_ITEMS = [
-  {
-    to: '/',
-    label: 'Tổng quan',
-    shortTag: 'Dashboard',
-    badge: 'Live',
-    end: true,
-    icon: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-      </svg>
-    ),
+const SHELL_COPY = {
+  en: {
+    nav: [
+      { to: '/', label: 'Overview', shortTag: 'Dashboard', badge: 'Live', end: true },
+      { to: '/timetable', label: 'Timetable', shortTag: 'Schedule', badge: 'ICS' },
+      { to: '/syllabus', label: 'Syllabus', shortTag: 'Chapters' },
+      { to: '/deadlines', label: 'Deadlines', shortTag: 'Tasks', badge: '2' },
+      { to: '/focus', label: 'Focus Room', shortTag: 'Pomodoro' },
+    ],
+    collapseTitle: 'Collapse Minibar',
+    expandTitle: 'Expand navigation',
+    mainNavLabel: 'Main navigation',
+    peakBanner: '⚡ Peak Focus Window (08:30 – 11:30)',
+    logout: 'Sign Out',
   },
-  {
-    to: '/timetable',
-    label: 'Thời khóa biểu',
-    shortTag: 'Schedule',
-    badge: 'ICS',
-    icon: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    ),
+  vi: {
+    nav: [
+      { to: '/', label: 'Tổng quan', shortTag: 'Dashboard', badge: 'Live', end: true },
+      { to: '/timetable', label: 'Thời khóa biểu', shortTag: 'Schedule', badge: 'ICS' },
+      { to: '/syllabus', label: 'Đề cương', shortTag: 'Syllabus' },
+      { to: '/deadlines', label: 'Deadline', shortTag: 'Tasks', badge: '2' },
+      { to: '/focus', label: 'Focus Room', shortTag: 'Pomodoro' },
+    ],
+    collapseTitle: 'Thu gọn thanh Minibar',
+    expandTitle: 'Mở rộng thanh điều hướng',
+    mainNavLabel: 'Điều hướng chính',
+    peakBanner: '⚡ Nhịp tập trung cao (08:30 – 11:30)',
+    logout: 'Đăng xuất',
   },
-  {
-    to: '/syllabus',
-    label: 'Đề cương',
-    shortTag: 'Syllabus',
-    icon: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-      </svg>
-    ),
-  },
-  {
-    to: '/deadlines',
-    label: 'Deadline',
-    shortTag: 'Tasks',
-    badge: '2',
-    icon: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-  },
-  {
-    to: '/focus',
-    label: 'Focus Room',
-    shortTag: 'Pomodoro',
-    icon: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    ),
-  },
-];
+};
+
+const NAV_ICONS = {
+  '/': (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+    </svg>
+  ),
+  '/timetable': (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+  ),
+  '/syllabus': (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+    </svg>
+  ),
+  '/deadlines': (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  '/focus': (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>
+  ),
+};
 
 export function AppShell() {
   const { user, logout } = useAuth();
+  const { lang } = useLanguage();
+  const t = SHELL_COPY[lang] || SHELL_COPY.en;
+
   const location = useLocation();
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
@@ -74,8 +81,8 @@ export function AppShell() {
   }
 
   const activeNav =
-    NAV_ITEMS.find((item) => (item.end ? location.pathname === item.to : location.pathname.startsWith(item.to))) ||
-    NAV_ITEMS[0];
+    t.nav.find((item) => (item.end ? location.pathname === item.to : location.pathname.startsWith(item.to))) ||
+    t.nav[0];
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -83,12 +90,12 @@ export function AppShell() {
       tl.fromTo(
         '.shell-minibar',
         { x: -16, autoAlpha: 0 },
-        { x: 0, autoAlpha: 1, duration: 0.4, clearProps: 'opacity,visibility,transform' }
+        { x: 0, autoAlpha: 1, duration: 0.35, clearProps: 'opacity,visibility,transform' }
       ).fromTo(
         '.shell-header',
         { y: -12, autoAlpha: 0 },
-        { y: 0, autoAlpha: 1, duration: 0.35, clearProps: 'opacity,visibility,transform' },
-        '-=0.25'
+        { y: 0, autoAlpha: 1, duration: 0.3, clearProps: 'opacity,visibility,transform' },
+        '-=0.2'
       );
     }, shellRef);
 
@@ -125,8 +132,8 @@ export function AppShell() {
           <button
             type="button"
             onClick={() => setExpanded((prev) => !prev)}
-            title={expanded ? 'Thu gọn thanh Minibar' : 'Mở rộng thanh điều hướng'}
-            aria-label={expanded ? 'Thu gọn thanh Minibar' : 'Mở rộng thanh điều hướng'}
+            title={expanded ? t.collapseTitle : t.expandTitle}
+            aria-label={expanded ? t.collapseTitle : t.expandTitle}
             className="hidden md:flex h-7 w-7 items-center justify-center rounded-xl border border-border bg-surface-2/70 text-muted hover:border-primary/40 hover:text-text transition-colors"
           >
             <svg
@@ -143,10 +150,10 @@ export function AppShell() {
 
         {/* Navigation Dock Items */}
         <nav
-          aria-label="Điều hướng chính"
+          aria-label={t.mainNavLabel}
           className="flex-1 flex gap-1.5 overflow-x-auto px-2.5 py-3 md:flex-col md:overflow-y-auto md:overflow-x-hidden"
         >
-          {NAV_ITEMS.map((item) => (
+          {t.nav.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -166,16 +173,11 @@ export function AppShell() {
             >
               {({ isActive }) => (
                 <>
-                  {/* Active side indicator bar on desktop minibar */}
                   {isActive && !expanded && (
                     <span className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-primary-fg/80" />
                   )}
-                  <span className="shrink-0">{item.icon}</span>
-                  <span
-                    className={`leading-tight tracking-tight ${
-                      expanded ? 'text-sm' : 'text-[11px]'
-                    }`}
-                  >
+                  <span className="shrink-0">{NAV_ICONS[item.to]}</span>
+                  <span className={`leading-tight tracking-tight ${expanded ? 'text-sm' : 'text-[11px]'}`}>
                     {item.label}
                   </span>
                   {item.badge && expanded && (
@@ -210,7 +212,7 @@ export function AppShell() {
               <p className="text-[10px] text-muted">60 FPS GPU Composited</p>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-1" title="Nhịp sinh học tập trung: 98%">
+            <div className="flex flex-col items-center gap-1" title="Bio-Flow: 98%">
               <span className="text-[11px] font-extrabold text-primary">98%</span>
               <span className="text-[9px] font-semibold uppercase tracking-wider text-muted">Flow</span>
             </div>
@@ -220,9 +222,8 @@ export function AppShell() {
 
       {/* Main Content Column */}
       <div className="flex min-w-0 flex-col">
-        {/* Intuitive Top Context Bar */}
-        <header className="shell-header sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-surface/90 backdrop-blur-md px-4 sm:px-6 py-3">
-          {/* Left: Current section breadcrumb & quick status */}
+        {/* Intuitive Top Context Bar (Solid surface for 60fps scroll) */}
+        <header className="shell-header sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-surface px-4 sm:px-6 py-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex items-center gap-2 rounded-xl border border-border bg-surface-2/60 px-3 py-1.5 text-xs">
               <span className="h-2 w-2 rounded-full bg-primary" />
@@ -231,12 +232,12 @@ export function AppShell() {
             </div>
 
             <div className="hidden lg:flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-semibold text-primary">
-              <span>⚡ Nhịp tập trung cao (08:30 – 11:30)</span>
+              <span>{t.peakBanner}</span>
             </div>
           </div>
 
-          {/* Right: Quick Nav Pills + Theme Toggle + User + Logout */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
+            <LanguageToggle />
             <ThemeToggle />
 
             <div className="hidden sm:flex items-center gap-2 rounded-xl border border-border bg-surface-2/60 px-3 py-1.5 text-xs font-medium text-muted">
@@ -249,7 +250,7 @@ export function AppShell() {
               onClick={handleLogout}
               className="rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-text hover:border-danger hover:text-danger hover:bg-danger/10 transition-colors"
             >
-              Đăng xuất
+              {t.logout}
             </button>
           </div>
         </header>

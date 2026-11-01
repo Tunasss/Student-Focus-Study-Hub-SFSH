@@ -1,7 +1,50 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLanguage } from '../../i18n/languageContext';
 import { scheduleApi } from '../../lib/api';
 
+const MODAL_COPY = {
+  en: {
+    title: 'Import Timetable (.ics)',
+    subtitle: 'Upload your schedule file from Google Calendar, Canvas, or university portal to sync your week.',
+    close: 'Close',
+    errExt: 'Please select a valid .ics calendar file',
+    errSize: 'File size must not exceed 2MB',
+    errInvalidIcs: 'Invalid .ics file format or no course events found',
+    errGeneral: 'An error occurred while importing the timetable file',
+    changeFile: 'Click to choose another file',
+    dropPrompt1: 'Drag & drop your',
+    dropPrompt2: 'file here or',
+    dropBrowse: 'browse from computer',
+    maxSize: 'Maximum file size: 2MB',
+    replaceLabel: 'Replace previous schedule (keep only classes from this new file)',
+    cancel: 'Cancel',
+    submitting: 'Processing...',
+    submit: 'Sync Timetable',
+  },
+  vi: {
+    title: 'Nhập thời khóa biểu (.ics)',
+    subtitle: 'Tải file lịch học từ Google Calendar, Canvas hoặc Edmodo để tự động đồng bộ tuần học.',
+    close: 'Đóng',
+    errExt: 'Vui lòng chọn file lịch học có định dạng .ics',
+    errSize: 'Kích thước file không được vượt quá 2MB',
+    errInvalidIcs: 'File .ics không đúng định dạng hoặc không có sự kiện môn học',
+    errGeneral: 'Có lỗi xảy ra khi nhập file thời khóa biểu',
+    changeFile: 'Nhấn để đổi file khác',
+    dropPrompt1: 'Kéo thả file',
+    dropPrompt2: 'vào đây hoặc',
+    dropBrowse: 'chọn từ máy tính',
+    maxSize: 'Dung lượng tối đa 2MB',
+    replaceLabel: 'Xóa các lịch học trước đó (chỉ giữ thời khóa biểu trong file mới)',
+    cancel: 'Hủy',
+    submitting: 'Đang xử lý...',
+    submit: 'Đồng bộ thời khóa biểu',
+  },
+};
+
 export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
+  const { lang } = useLanguage();
+  const t = MODAL_COPY[lang] || MODAL_COPY.en;
+
   const [file, setFile] = useState(null);
   const [replaceExisting, setReplaceExisting] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
@@ -17,7 +60,6 @@ export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
     onClose();
   }, [onClose]);
 
-  // Handle ESC key
   useEffect(() => {
     function handleKeyDown(e) {
       if (e.key === 'Escape' && isOpen && !loading) {
@@ -33,12 +75,12 @@ export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
   function validateAndSetFile(candidate) {
     if (!candidate) return;
     if (!candidate.name.toLowerCase().endsWith('.ics')) {
-      setError('Vui lòng chọn file lịch học có định dạng .ics');
+      setError(t.errExt);
       setFile(null);
       return;
     }
     if (candidate.size > 2 * 1024 * 1024) {
-      setError('Kích thước file không được vượt quá 2MB');
+      setError(t.errSize);
       setFile(null);
       return;
     }
@@ -74,9 +116,10 @@ export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
       onSuccess?.(result);
       handleClose();
     } catch (err) {
-      const msg = err.code === 'INVALID_ICS_FORMAT'
-        ? err.message || 'File .ics không đúng định dạng hoặc không có sự kiện môn học'
-        : err.message || 'Có lỗi xảy ra khi nhập file thời khóa biểu';
+      const msg =
+        err.code === 'INVALID_ICS_FORMAT'
+          ? err.message || t.errInvalidIcs
+          : err.message || t.errGeneral;
       setError(msg);
     } finally {
       setLoading(false);
@@ -93,12 +136,12 @@ export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
       {/* Backdrop */}
       <div
         data-testid="modal-backdrop"
-        className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/55"
         onClick={() => !loading && handleClose()}
       />
 
       {/* Modal Dialog Card */}
-      <div className="relative z-10 w-full max-w-lg rounded-3xl border border-border/80 bg-surface/90 backdrop-blur-2xl p-6 sm:p-8 shadow-2xl luma-glow-sm transition-all">
+      <div className="relative z-10 w-full max-w-lg rounded-3xl border border-border bg-surface p-6 sm:p-8 shadow-2xl luma-glow-sm">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -108,18 +151,18 @@ export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
               </svg>
               <span>Google Calendar / iCalendar</span>
             </div>
-            <h2 id="upload-modal-title" className="mt-2 text-xl font-semibold tracking-tight">
-              Nhập thời khóa biểu (.ics)
+            <h2 id="upload-modal-title" className="mt-2 text-xl font-semibold tracking-tight text-text">
+              {t.title}
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Tải file lịch học từ Google Calendar, Canvas hoặc Edmodo để tự động đồng bộ tuần học.
+              {t.subtitle}
             </p>
           </div>
           <button
             type="button"
             onClick={handleClose}
             disabled={loading}
-            aria-label="Đóng"
+            aria-label={t.close}
             className="rounded-full p-1.5 text-muted hover:bg-surface-2 hover:text-text transition-colors disabled:opacity-50"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -145,9 +188,9 @@ export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onClick={() => inputRef.current?.click()}
-            className={`group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 sm:p-8 text-center transition-all ${
+            className={`group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 sm:p-8 text-center transition-colors ${
               isDragging
-                ? 'border-primary bg-primary/5 scale-[0.99]'
+                ? 'border-primary bg-primary/5'
                 : file
                 ? 'border-success/50 bg-success/5'
                 : 'border-border hover:border-primary/50 hover:bg-surface-2/60'
@@ -163,9 +206,11 @@ export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
               onChange={(e) => validateAndSetFile(e.target.files?.[0])}
             />
 
-            <div className={`mb-3 flex h-12 w-12 items-center justify-center rounded-2xl transition-transform group-hover:scale-110 ${
-              file ? 'bg-success/20 text-success' : 'bg-primary/10 text-primary'
-            }`}>
+            <div
+              className={`mb-3 flex h-12 w-12 items-center justify-center rounded-2xl ${
+                file ? 'bg-success/20 text-success' : 'bg-primary/10 text-primary'
+              }`}
+            >
               {file ? (
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -180,15 +225,17 @@ export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
             {file ? (
               <div className="space-y-1">
                 <p className="font-semibold text-text text-sm sm:text-base break-all">{file.name}</p>
-                <p className="text-xs text-muted">{(file.size / 1024).toFixed(1)} KB • Nhấn để đổi file khác</p>
+                <p className="text-xs text-muted">
+                  {(file.size / 1024).toFixed(1)} KB • {t.changeFile}
+                </p>
               </div>
             ) : (
               <div className="space-y-1">
                 <p className="font-medium text-text text-sm sm:text-base">
-                  Kéo thả file <span className="font-semibold text-primary">.ics</span> vào đây hoặc{' '}
-                  <span className="text-primary underline underline-offset-2">chọn từ máy tính</span>
+                  {t.dropPrompt1} <span className="font-semibold text-primary">.ics</span> {t.dropPrompt2}{' '}
+                  <span className="text-primary underline underline-offset-2">{t.dropBrowse}</span>
                 </p>
-                <p className="text-xs text-muted">Dung lượng tối đa 2MB</p>
+                <p className="text-xs text-muted">{t.maxSize}</p>
               </div>
             )}
           </div>
@@ -202,9 +249,7 @@ export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
               onChange={(e) => setReplaceExisting(e.target.checked)}
               className="h-4 w-4 rounded border-border text-primary focus:ring-primary/20 accent-primary cursor-pointer"
             />
-            <span className="text-xs text-muted">
-              Xóa các lịch học trước đó (chỉ giữ thời khóa biểu trong file mới)
-            </span>
+            <span className="text-xs text-muted">{t.replaceLabel}</span>
           </label>
 
           {/* Action buttons */}
@@ -215,7 +260,7 @@ export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
               disabled={loading}
               className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium hover:bg-surface-2 transition-colors disabled:opacity-50"
             >
-              Hủy
+              {t.cancel}
             </button>
             <button
               type="submit"
@@ -228,7 +273,7 @@ export function IcsUploadModal({ isOpen, onClose, onSuccess }) {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                 </svg>
               )}
-              <span>{loading ? 'Đang xử lý...' : 'Đồng bộ thời khóa biểu'}</span>
+              <span>{loading ? t.submitting : t.submit}</span>
             </button>
           </div>
         </form>

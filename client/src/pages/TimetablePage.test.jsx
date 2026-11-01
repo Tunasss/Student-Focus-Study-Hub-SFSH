@@ -4,17 +4,20 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { fail, mockFetch, ok } from '../test/utils';
 import { setToken } from '../lib/tokenStorage';
+import { LanguageProvider } from '../i18n/languageContext';
 import { TimetablePage } from './TimetablePage';
 import { ThemeProvider } from '../theme/ThemeProvider';
 
 function renderTimetable() {
   setToken('valid.jwt.token');
   return render(
-    <ThemeProvider>
-      <MemoryRouter>
-        <TimetablePage />
-      </MemoryRouter>
-    </ThemeProvider>,
+    <LanguageProvider>
+      <ThemeProvider>
+        <MemoryRouter>
+          <TimetablePage />
+        </MemoryRouter>
+      </ThemeProvider>
+    </LanguageProvider>,
   );
 }
 
@@ -46,8 +49,8 @@ describe('TimetablePage', () => {
     mockFetch(() => [200, ok({ events: [] })]);
     renderTimetable();
 
-    expect(await screen.findByRole('heading', { name: /Lịch học & Giảng đường/i })).toBeInTheDocument();
-    expect(screen.getByText(/THỜI KHÓA BIỂU TUẦN/i)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Class Schedule & Rooms|Lịch học & Giảng đường/i })).toBeInTheDocument();
+    expect(screen.getByText(/WEEKLY TIMETABLE|THỜI KHÓA BIỂU TUẦN/i)).toBeInTheDocument();
     expect(screen.getByText(/Asia\/Ho_Chi_Minh/i)).toBeInTheDocument();
 
     for (let day = 1; day <= 7; day++) {
@@ -83,23 +86,20 @@ describe('TimetablePage', () => {
     mockFetch(() => [200, ok({ events: [] })]);
     renderTimetable();
 
-    await screen.findByRole('heading', { name: /Lịch học & Giảng đường/i });
+    await screen.findByRole('heading', { name: /Class Schedule & Rooms|Lịch học & Giảng đường/i });
     const initialRange = screen.getByTestId('week-range-label').textContent;
 
-    // Click next week
     await userEvent.click(screen.getByTestId('next-week-btn'));
     await waitFor(() => {
       expect(screen.getByTestId('week-range-label').textContent).not.toBe(initialRange);
     });
     const nextWeekRange = screen.getByTestId('week-range-label').textContent;
 
-    // Click previous week
     await userEvent.click(screen.getByTestId('prev-week-btn'));
     await waitFor(() => {
       expect(screen.getByTestId('week-range-label').textContent).toBe(initialRange);
     });
 
-    // Move next and click Today to return to today
     await userEvent.click(screen.getByTestId('next-week-btn'));
     await waitFor(() => {
       expect(screen.getByTestId('week-range-label').textContent).toBe(nextWeekRange);
@@ -116,15 +116,15 @@ describe('TimetablePage', () => {
     renderTimetable();
 
     expect(await screen.findByTestId('timetable-empty')).toBeInTheDocument();
-    expect(screen.getByText(/Chưa có lịch học tuần này/i)).toBeInTheDocument();
+    expect(screen.getByText(/No classes scheduled this week|Chưa có lịch học tuần này/i)).toBeInTheDocument();
   });
 
   test('renders error banner with retry option when API fails', async () => {
-    mockFetch(() => [500, fail('INTERNAL_ERROR', 'Lỗi kết nối máy chủ')]);
+    mockFetch(() => [500, fail('INTERNAL_ERROR', 'Server connection error')]);
     renderTimetable();
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(/Lỗi kết nối máy chủ/i);
-    expect(screen.getByRole('button', { name: 'Thử lại' })).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Server connection error/i);
+    expect(screen.getByRole('button', { name: /Retry|Thử lại/i })).toBeInTheDocument();
   });
 
   test('opens ICS upload modal, validates format and handles successful import', async () => {
@@ -136,31 +136,26 @@ describe('TimetablePage', () => {
     });
 
     renderTimetable();
-    await screen.findByRole('heading', { name: /Lịch học & Giảng đường/i });
+    await screen.findByRole('heading', { name: /Class Schedule & Rooms|Lịch học & Giảng đường/i });
 
-    // Open Modal
     await userEvent.click(screen.getByTestId('import-ics-button'));
-    expect(screen.getByRole('dialog', { name: /Nhập thời khóa biểu/i })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: /Import Timetable|Nhập thời khóa biểu/i })).toBeInTheDocument();
 
-    // Select an invalid non-.ics file
     const fileInput = screen.getByTestId('ics-file-input');
     const invalidFile = new File(['hello'], 'document.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [invalidFile] } });
-    expect(await screen.findByRole('alert')).toHaveTextContent('định dạng .ics');
+    expect(await screen.findByRole('alert')).toHaveTextContent(/\.ics/i);
 
-    // Select a valid .ics file
     const validFile = new File(['BEGIN:VCALENDAR...'], 'timetable.ics', { type: 'text/calendar' });
     fireEvent.change(fileInput, { target: { files: [validFile] } });
     expect(screen.getByText('timetable.ics')).toBeInTheDocument();
 
-    // Submit
-    await userEvent.click(screen.getByRole('button', { name: 'Đồng bộ thời khóa biểu' }));
+    await userEvent.click(screen.getByRole('button', { name: /Sync Timetable|Đồng bộ thời khóa biểu/i }));
 
-    // Verify modal closes and success toast appears
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
-    expect(await screen.findByRole('status')).toHaveTextContent('Đã nhập thành công 4 lịch học');
+    expect(await screen.findByRole('status')).toHaveTextContent(/imported 4 classes|Đã nhập thành công 4 lịch học/i);
     expect(fetchMock.mock.calls.some(([url]) => url.includes('/api/schedule/import'))).toBe(true);
   });
 
@@ -171,7 +166,7 @@ describe('TimetablePage', () => {
         courseId: 1,
         courseCode: 'CS101',
         courseName: 'Lớp Sáng 1',
-        dayOfWeek: 2, // Tuesday
+        dayOfWeek: 2,
         start: '2026-10-27T08:00',
         end: '2026-10-27T10:00',
       },
@@ -180,7 +175,7 @@ describe('TimetablePage', () => {
         courseId: 2,
         courseCode: 'MATH201',
         courseName: 'Lớp Sáng 2 (Trùng giờ)',
-        dayOfWeek: 2, // Tuesday
+        dayOfWeek: 2,
         start: '2026-10-27T09:00',
         end: '2026-10-27T11:00',
       },
@@ -195,7 +190,6 @@ describe('TimetablePage', () => {
     const cards = screen.getAllByTestId('class-card');
     expect(cards).toHaveLength(2);
 
-    // Each card in an overlap of 2 takes width ~50%
     expect(cards[0].style.width).toContain('50%');
     expect(cards[1].style.width).toContain('50%');
   });

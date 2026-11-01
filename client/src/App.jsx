@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/authContext';
 import { GuestRoute, ProtectedRoute } from './auth/ProtectedRoute';
 import { AppShell } from './components/AppShell';
+import { useLanguage } from './i18n/languageContext';
 import { AuthPage } from './pages/AuthPage';
 import { HomePage } from './pages/HomePage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
@@ -9,9 +10,14 @@ import { TimetablePage } from './pages/TimetablePage';
 
 function RootEntryRoute() {
   const { user, status, sessionExpired } = useAuth();
+  const { lang } = useLanguage();
 
   if (status === 'loading') {
-    return <div className="grid min-h-screen place-items-center text-muted">Đang tải…</div>;
+    return (
+      <div className="grid min-h-screen place-items-center text-muted">
+        {lang === 'vi' ? 'Đang tải…' : 'Loading…'}
+      </div>
+    );
   }
 
   if (!user) {
@@ -34,11 +40,11 @@ export function App() {
         <Route path="/register" element={<AuthPage mode="register" />} />
       </Route>
 
-      {/* Root "/" shows Apple-style HomePage for guests, or AppShell + Tổng quan for logged-in users */}
+      {/* Root "/" shows Apple-style HomePage for guests, or AppShell + Overview for logged-in users */}
       <Route path="/" element={<RootEntryRoute />}>
         <Route
           index
-          element={<PlaceholderPage title="Tổng quan" description="Gợi ý học tiếp theo và thống kê thời gian tập trung sẽ hiển thị ở đây." />}
+          element={<PlaceholderPage pageKey="overview" title="Overview" description="Next study recommendations and focus rhythm analytics at a glance." />}
         />
       </Route>
 
@@ -47,15 +53,15 @@ export function App() {
           <Route path="timetable" element={<TimetablePage />} />
           <Route
             path="syllabus"
-            element={<PlaceholderPage title="Đề cương" description="Đọc đề cương thành danh sách chương." />}
+            element={<PlaceholderPage pageKey="syllabus" title="Syllabus" description="Structured chapter breakdown and course mastery tracking." />}
           />
           <Route
             path="deadlines"
-            element={<PlaceholderPage title="Deadline" description="Theo dõi các hạn nộp sắp tới." />}
+            element={<PlaceholderPage pageKey="deadlines" title="Deadlines" description="Upcoming assignment & project submission milestones." />}
           />
           <Route
             path="focus"
-            element={<PlaceholderPage title="Focus Room" description="Pomodoro với âm thanh nền." />}
+            element={<PlaceholderPage pageKey="focus" title="Focus Room" description="Botanical Pomodoro timer with ambient soundscapes." />}
           />
         </Route>
       </Route>

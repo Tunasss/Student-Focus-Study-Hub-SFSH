@@ -3,31 +3,31 @@
 /* Dark mode is driven by the `.dark` class on <html> (see ThemeProvider). */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Luma AI-Wellness Theme tokens */
+/* Luma AI-Wellness Theme tokens — tuned for high contrast & zero GPU blur lag */
 :root {
-  --sfsh-bg: #f8faf8;
+  --sfsh-bg: #f6f8f5;
   --sfsh-surface: #ffffff;
-  --sfsh-surface-2: #f0f4ee;
-  --sfsh-border: #e2e8df;
-  --sfsh-text: #131a12;
-  --sfsh-muted: #626e5f;
-  --sfsh-primary: #84cc16;
-  --sfsh-primary-fg: #0a1107;
-  --sfsh-danger: #ef4444;
-  --sfsh-success: #22c55e;
+  --sfsh-surface-2: #edf2eb;
+  --sfsh-border: #dce4d8;
+  --sfsh-text: #111710;
+  --sfsh-muted: #5b6758;
+  --sfsh-primary: #7ccf00;
+  --sfsh-primary-fg: #080c06;
+  --sfsh-danger: #dc2626;
+  --sfsh-success: #16a34a;
   --sfsh-accent-lime: #b6f246;
   color-scheme: light;
 }
 
 .dark {
-  --sfsh-bg: #070907;
-  --sfsh-surface: #0e130e;
+  --sfsh-bg: #060806;
+  --sfsh-surface: #0d120d;
   --sfsh-surface-2: #141b14;
   --sfsh-border: rgba(255, 255, 255, 0.08);
-  --sfsh-text: #f3f6f1;
-  --sfsh-muted: #8b9987;
+  --sfsh-text: #f2f6f0;
+  --sfsh-muted: #8a9986;
   --sfsh-primary: #b6f246;
-  --sfsh-primary-fg: #070907;
+  --sfsh-primary-fg: #060806;
   --sfsh-danger: #f87171;
   --sfsh-success: #4ade80;
   --sfsh-accent-lime: #b6f246;
@@ -52,57 +52,65 @@
 body {
   @apply bg-bg text-text antialiased selection:bg-primary/30 selection:text-text;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  /* Lightweight static radial gradients instead of heavy filter:blur() DOM nodes */
+  background-image:
+    radial-gradient(circle at 80% 10%, rgba(182, 242, 70, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 15% 85%, rgba(34, 197, 94, 0.06) 0%, transparent 40%);
+  background-attachment: fixed;
 }
 
-/* Luma Ambient Glows & Glassmorphic Utilities */
+/* 60fps GPU-friendly glow utilities */
 .luma-glow {
-  box-shadow: 0 0 35px -5px rgba(182, 242, 70, 0.28);
+  box-shadow: 0 8px 28px -6px rgba(182, 242, 70, 0.25);
 }
 
 .luma-glow-sm {
-  box-shadow: 0 0 18px -4px rgba(182, 242, 70, 0.22);
+  box-shadow: 0 4px 16px -3px rgba(182, 242, 70, 0.2);
 }
 
 .luma-glow-lg {
-  box-shadow: 0 0 70px -10px rgba(182, 242, 70, 0.38);
+  box-shadow: 0 16px 48px -10px rgba(182, 242, 70, 0.32);
 }
 
+/* Reserve backdrop-filter ONLY for sticky bars/modals to prevent GPU overdraw */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--sfsh-border);
 }
 
 .dark .glass-panel {
-  background: rgba(14, 19, 14, 0.65);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(13, 18, 13, 0.86);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* High-FPS surface card: no backdrop-filter per card, no transition:all conflict with GSAP */
 .glass-card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--sfsh-surface);
   border: 1px solid var(--sfsh-border);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .dark .glass-card {
-  background: rgba(17, 24, 17, 0.55);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(180deg, rgba(22, 30, 22, 0.92) 0%, rgba(13, 18, 13, 0.96) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .glass-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(182, 242, 70, 0.35);
-  box-shadow: 0 12px 30px -10px rgba(182, 242, 70, 0.15);
+  border-color: rgba(182, 242, 70, 0.4);
+  box-shadow: 0 10px 26px -8px rgba(182, 242, 70, 0.14);
 }
 
-/* Custom smooth dark scrollbar */
+.gpu-layer {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Custom smooth scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -111,9 +119,9 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(139, 153, 135, 0.25);
+  background: rgba(138, 153, 134, 0.28);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(182, 242, 70, 0.45);
+  background: rgba(182, 242, 70, 0.5);
 }

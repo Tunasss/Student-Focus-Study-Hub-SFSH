@@ -24,7 +24,7 @@ export function ClassCard({ event }) {
   return (
     <article
       data-testid="class-card"
-      className={`absolute z-10 select-none overflow-hidden rounded-xl border p-2 shadow-xs transition-all duration-150 hover:z-20 hover:scale-[1.01] hover:shadow-md ${palette.card}`}
+      className={`absolute z-10 select-none overflow-hidden rounded-xl border p-2 shadow-xs transition-shadow duration-150 hover:z-20 hover:shadow-md ${palette.card}`}
       style={{
         top: `${top}px`,
         height: `${height}px`,

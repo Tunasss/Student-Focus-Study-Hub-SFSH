@@ -123,10 +123,6 @@ export function AuthPage({ mode }) {
       ref={containerRef}
       className="relative min-h-screen bg-bg text-text flex items-center justify-center p-4 sm:p-6 lg:p-12 overflow-hidden"
     >
-      {/* Ambient background glows */}
-      <div className="pointer-events-none fixed top-1/6 left-1/4 -z-10 h-[520px] w-[620px] rounded-full bg-primary/15 blur-[140px] opacity-75 dark:opacity-40" />
-      <div className="pointer-events-none fixed bottom-1/6 right-1/4 -z-10 h-[480px] w-[540px] rounded-full bg-emerald-500/10 blur-[130px] opacity-60 dark:opacity-30" />
-
       {/* Theme toggle corner */}
       <div className="absolute top-5 right-5 z-20">
         <ThemeToggle />
@@ -188,7 +184,7 @@ export function AuthPage({ mode }) {
 
         {/* Right Area: Glassmorphic Auth Form */}
         <div className="lg:col-span-5 flex justify-center">
-          <div className="auth-card-panel w-full max-w-md rounded-3xl border border-border/80 bg-surface/85 backdrop-blur-2xl p-7 sm:p-9 shadow-2xl luma-glow-sm">
+          <div className="auth-card-panel glass-card w-full max-w-md rounded-3xl p-7 sm:p-9 shadow-2xl luma-glow-sm">
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-fg shadow-sm">

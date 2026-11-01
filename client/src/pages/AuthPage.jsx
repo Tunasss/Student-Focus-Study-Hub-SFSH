@@ -149,18 +149,18 @@ export function AuthPage({ mode }) {
   }
 
   const inputClass =
-    'mt-1.5 w-full rounded-2xl border border-white/10 bg-[#0d120d] px-4 py-3 text-sm text-white outline-none transition-colors duration-150 placeholder:text-muted/60 focus:border-primary focus:ring-2 focus:ring-primary/20';
+    'mt-1.5 w-full rounded-2xl border border-border bg-surface-2 px-4 py-3 text-sm text-text outline-none transition-colors duration-150 placeholder:text-muted/60 focus:border-primary focus:ring-2 focus:ring-primary/20';
 
   return (
     <div
       ref={containerRef}
-      className="relative min-h-screen bg-black text-text flex items-center justify-center p-4 sm:p-6 lg:p-12 overflow-hidden font-sans"
+      className="relative min-h-screen bg-bg text-text flex items-center justify-center p-4 sm:p-6 lg:p-12 overflow-hidden font-sans"
     >
       {/* Top Corners: Back to Home + Language & Theme */}
       <div className="absolute top-5 left-5 z-20">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-white hover:border-primary/50 transition-colors"
+          className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-xs font-semibold text-text hover:border-primary/50 transition-colors shadow-xs"
         >
           <span>←</span>
           <span>{dict.backHome}</span>
@@ -174,14 +174,14 @@ export function AuthPage({ mode }) {
       <div className="relative z-10 w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         {/* Left Hero Area: Branding & Badges */}
         <div className="lg:col-span-7 flex flex-col justify-center space-y-6 py-6">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-accent-deep/60 px-4 py-1.5 text-xs font-bold text-primary w-fit">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-bold text-primary w-fit">
             <span className="h-1.5 w-1.5 rounded-full bg-primary" />
             <span>{dict.heroBadge}</span>
           </div>
 
-          <h1 className="auth-hero-title text-4xl sm:text-5xl lg:text-[54px] font-extrabold tracking-tight text-white leading-[1.08]">
+          <h1 className="auth-hero-title text-4xl sm:text-5xl lg:text-[54px] font-extrabold tracking-tight text-text leading-[1.08]">
             One experience.{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-deep via-primary to-white">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-deep via-primary to-text dark:to-white">
               Built around you.
             </span>
           </h1>
@@ -191,22 +191,22 @@ export function AuthPage({ mode }) {
           </p>
 
           <div className="pt-2 flex flex-wrap gap-3.5">
-            <div className="auth-badge-pill rounded-2xl border border-white/10 bg-[#0d120d] p-3.5 flex items-center gap-3 shadow-md">
+            <div className="auth-badge-pill glass-card rounded-2xl p-3.5 flex items-center gap-3 shadow-md">
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 text-primary">
                 ⚡
               </span>
               <div>
-                <p className="text-xs font-bold text-white">{dict.pill1Title}</p>
+                <p className="text-xs font-bold text-text">{dict.pill1Title}</p>
                 <p className="text-[10px] text-muted">{dict.pill1Sub}</p>
               </div>
             </div>
 
-            <div className="auth-badge-pill rounded-2xl border border-white/10 bg-[#0d120d] p-3.5 flex items-center gap-3 shadow-md">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-300">
+            <div className="auth-badge-pill glass-card rounded-2xl p-3.5 flex items-center gap-3 shadow-md">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-300">
                 🌿
               </span>
               <div>
-                <p className="text-xs font-bold text-white">{dict.pill2Title}</p>
+                <p className="text-xs font-bold text-text">{dict.pill2Title}</p>
                 <p className="text-[10px] text-muted">{dict.pill2Sub}</p>
               </div>
             </div>
@@ -215,23 +215,23 @@ export function AuthPage({ mode }) {
 
         {/* Right Area: Form Card matching Image 2 */}
         <div className="lg:col-span-5 flex justify-center">
-          <div className="auth-card-panel w-full max-w-md rounded-3xl border border-white/10 bg-[#0a0d0a] p-7 sm:p-9 shadow-2xl luma-glow">
+          <div className="auth-card-panel glass-card w-full max-w-md rounded-3xl p-7 sm:p-9 shadow-2xl luma-glow">
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-black shadow-sm">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary shadow-xs">
                   <LotusIcon className="h-5 w-5" />
                 </div>
                 <div>
-                  <span className="text-base font-bold tracking-tight text-white">Student Focus</span>
+                  <span className="text-base font-bold tracking-tight text-text">Student Focus</span>
                   <p className="text-[10px] text-muted font-medium">Schedule & Focus Studio</p>
                 </div>
               </div>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white/10 text-white">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-surface-2 text-text border border-border">
                 {copy.badge}
               </span>
             </div>
 
-            <h1 className="text-2xl font-bold tracking-tight text-white">{copy.title}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-text">{copy.title}</h1>
             <p className="mt-1 text-xs text-muted">{dict.welcomeSub}</p>
 
             {mode === 'login' && sessionExpired && (
@@ -282,7 +282,7 @@ export function AuthPage({ mode }) {
               <button
                 type="submit"
                 disabled={submitting}
-                className="mt-2 w-full rounded-full bg-white py-3.5 px-4 text-sm font-extrabold text-black shadow-md hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="mt-2 w-full rounded-full bg-text text-bg dark:bg-white dark:text-black py-3.5 px-4 text-sm font-extrabold shadow-md hover:bg-primary hover:text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? dict.submitting : copy.submit}
               </button>

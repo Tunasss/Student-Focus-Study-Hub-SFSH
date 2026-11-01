@@ -5,52 +5,73 @@ import { useLanguage } from '../i18n/languageContext';
 
 const FOCUS_COPY = {
   en: {
-    back: 'Back',
+    back: 'Back to Overview',
+    studioTag: 'STUDENT FOCUS STUDIO',
     title: 'Deep Focus',
-    subtitle: '01 · Reset & Ground',
-    practiceHeader: 'Your Practice',
-    heartLabel: 'Heart rate',
-    heartValue: '58 bpm',
+    subtitle: '01 · MSIS207 - API Endpoint Architecture',
+    practiceHeader: 'Study Sprints',
+    metricLabel: 'Focus Flow Rate',
+    metricValue: '92% Flow',
+    metricStreak: '4x Sprint Streak',
+    activeCourseTag: 'ACTIVE STUDY SPRINT',
+    activeCourseTitle: 'MSIS207 · Web App Dev',
+    activeCourseDesc: 'Lab Practical 4 · REST APIs',
+    intervalLabel: '25m Pomodoro',
+    soundLibrary: 'Library Silence',
+    soundRain: 'Gentle Rain',
+    soundCafe: 'Campus Cafe',
+    viewOverview: 'View Overview Dashboard →',
+    viewTimetable: 'View Timetable Schedule →',
     sessions: [
-      { id: '01', title: 'Reset & Ground', duration: '20 min', active: true, tag: '01 : : : : : : : :' },
-      { id: '02', title: 'Breath & Release', duration: '15 min', active: false, tag: '02' },
-      { id: '03', title: 'Inner Balance', duration: '22 min', active: false, tag: '03' },
-      { id: '04', title: 'Body Awareness', duration: '24 min', active: false, tag: '04' },
-      { id: '05', title: 'Deep Recovery', duration: '30 min', active: false, tag: '05' },
+      { id: '01', title: 'MSIS207 · API Architecture', duration: '25 min', active: true, tag: '01 : : : : : : : :' },
+      { id: '02', title: 'CS5433 · 2PC Distributed DB', duration: '25 min', active: false, tag: '02' },
+      { id: '03', title: 'STAT3013 · Hypothesis Testing', duration: '20 min', active: false, tag: '03' },
+      { id: '04', title: 'MATH201 · Discrete Logic', duration: '25 min', active: false, tag: '04' },
+      { id: '05', title: 'Campus Break · Coffee Walk', duration: '10 min', active: false, tag: '05' },
     ],
   },
   vi: {
-    back: 'Quay lại',
+    back: 'Về Tổng quan',
+    studioTag: 'STUDIO TẬP TRUNG HỌC TẬP',
     title: 'Tập trung sâu',
-    subtitle: '01 · Tái tạo & Nền tảng',
-    practiceHeader: 'Lộ trình luyện tập',
-    heartLabel: 'Nhịp tim',
-    heartValue: '58 bpm',
+    subtitle: '01 · MSIS207 - Thiết kế API Endpoints',
+    practiceHeader: 'Lộ trình phiên học',
+    metricLabel: 'Tốc độ tập trung',
+    metricValue: '92% Flow',
+    metricStreak: 'Chuỗi 4 phiên liên tục',
+    activeCourseTag: 'PHIÊN HỌC ĐANG CHẠY',
+    activeCourseTitle: 'MSIS207 · Phát triển Web',
+    activeCourseDesc: 'Thực hành Lab 4 · REST APIs',
+    intervalLabel: 'Pomodoro 25 phút',
+    soundLibrary: 'Thư viện tĩnh lặng',
+    soundRain: 'Mưa êm dịu',
+    soundCafe: 'Cafe học bài',
+    viewOverview: 'Xem Bảng Tổng quan →',
+    viewTimetable: 'Xem Thời khóa biểu →',
     sessions: [
-      { id: '01', title: 'Tái tạo & Nền tảng', duration: '20 phút', active: true, tag: '01 : : : : : : : :' },
-      { id: '02', title: 'Hít thở & Giải phóng', duration: '15 phút', active: false, tag: '02' },
-      { id: '03', title: 'Cân bằng Nội tại', duration: '22 phút', active: false, tag: '03' },
-      { id: '04', title: 'Nhận thức Thân tâm', duration: '24 phút', active: false, tag: '04' },
-      { id: '05', title: 'Hồi phục Sâu', duration: '30 phút', active: false, tag: '05' },
+      { id: '01', title: 'MSIS207 · Thiết kế API', duration: '25 phút', active: true, tag: '01 : : : : : : : :' },
+      { id: '02', title: 'CS5433 · CSDL Phân tán 2PC', duration: '25 phút', active: false, tag: '02' },
+      { id: '03', title: 'STAT3013 · Kiểm định giả thuyết', duration: '20 phút', active: false, tag: '03' },
+      { id: '04', title: 'MATH201 · Logic & Rời rạc', duration: '25 phút', active: false, tag: '04' },
+      { id: '05', title: 'Nghỉ giải lao · Dạo trường & Cafe', duration: '10 phút', active: false, tag: '05' },
     ],
   },
 };
 
-// Glowing lotus polygon shape from Image 1 & 3
+// Glowing 5-pointed organic radiant shield matching Behance reference style
 function RadiantShield({ className = '', glow = true }) {
   return (
     <div className={`relative flex items-center justify-center ${className}`}>
       {glow && (
-        <div className="absolute inset-0 rounded-full bg-primary/20 blur-3xl scale-150 animate-pulse pointer-events-none" />
+        <div className="absolute inset-0 rounded-full bg-primary/20 blur-3xl scale-125 animate-pulse pointer-events-none" />
       )}
       <svg
-        className="w-full h-full text-primary drop-shadow-[0_0_40px_rgba(219,239,144,0.45)]"
+        className="w-full h-full text-primary drop-shadow-[0_0_35px_rgba(138,203,30,0.4)] dark:drop-shadow-[0_0_40px_rgba(219,239,144,0.45)]"
         viewBox="0 0 200 200"
         fill="currentColor"
       >
-        {/* Modern 5-pointed organic lotus shield from Image 1 & 3 */}
         <path d="M100 20 L138 68 L185 85 L165 145 L100 178 L35 145 L15 85 L62 68 Z" />
-        <circle cx="100" cy="112" r="32" className="fill-black/35" />
+        <circle cx="100" cy="112" r="32" className="fill-bg/40 dark:fill-black/45" />
         <circle cx="100" cy="112" r="14" className="fill-primary" />
       </svg>
     </div>
@@ -65,10 +86,10 @@ export function DeepFocusPage() {
   const containerRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentSeconds, setCurrentSeconds] = useState(133); // 02:13
-  const [totalSeconds] = useState(1200); // 20:00
+  const [totalSeconds] = useState(1500); // 25:00 standard Pomodoro
   const [activeSession, setActiveSession] = useState('01');
 
-  // Timer tick
+  // Pomodoro timer tick
   useEffect(() => {
     if (!isPlaying) return undefined;
     const interval = window.setInterval(() => {
@@ -83,7 +104,7 @@ export function DeepFocusPage() {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
 
-  const progressPercent = (currentSeconds / totalSeconds) * 100;
+  const progressPercent = Math.min(100, (currentSeconds / totalSeconds) * 100);
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -91,27 +112,27 @@ export function DeepFocusPage() {
 
       tl.fromTo(
         '.center-radiant-stage',
-        { scale: 0.92, autoAlpha: 0 },
-        { scale: 1, autoAlpha: 1, duration: 0.65, clearProps: 'opacity,visibility,transform' }
+        { scale: 0.94, autoAlpha: 0 },
+        { scale: 1, autoAlpha: 1, duration: 0.55, clearProps: 'opacity,visibility,transform' }
       )
         .fromTo(
           '.left-widget-card',
-          { x: -24, autoAlpha: 0 },
+          { x: -20, autoAlpha: 0 },
           { x: 0, autoAlpha: 1, stagger: 0.08, duration: 0.45, clearProps: 'opacity,visibility,transform' },
-          '-=0.4'
+          '-=0.35'
         )
         .fromTo(
           '.right-session-card',
-          { x: 24, autoAlpha: 0 },
-          { x: 0, autoAlpha: 1, stagger: 0.06, duration: 0.45, clearProps: 'opacity,visibility,transform' },
-          '-=0.4'
+          { x: 20, autoAlpha: 0 },
+          { x: 0, autoAlpha: 1, stagger: 0.05, duration: 0.45, clearProps: 'opacity,visibility,transform' },
+          '-=0.35'
         );
 
-      // Continuous breathing animation for radiant shield
+      // Subtle breathing ambient animation
       gsap.to('.radiant-lotus-aura', {
-        scale: 1.05,
-        rotation: 4,
-        duration: 4.5,
+        scale: 1.04,
+        rotation: 3,
+        duration: 4,
         repeat: -1,
         yoyo: true,
         ease: 'sine.inOut',
@@ -124,79 +145,83 @@ export function DeepFocusPage() {
   return (
     <div
       ref={containerRef}
-      className="relative min-h-[calc(100vh-65px)] bg-black text-text px-4 sm:px-8 py-6 flex flex-col justify-between overflow-hidden"
+      className="relative min-h-[calc(100vh-65px)] bg-bg text-text px-4 sm:px-8 py-6 flex flex-col justify-between overflow-hidden"
     >
-      {/* Top Bar: Back Button */}
+      {/* Top Bar: Back to Overview & Studio Tag */}
       <div className="flex items-center justify-between z-20">
         <button
           type="button"
-          onClick={() => navigate('/program')}
-          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-muted hover:text-white hover:border-primary/40 transition-colors"
+          onClick={() => navigate('/')}
+          className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-xs font-semibold text-muted hover:text-text hover:border-primary/50 transition-colors shadow-xs"
         >
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-xs">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-surface-2 text-xs">
             ‹
           </span>
           <span>{t.back}</span>
         </button>
 
-        <span className="text-xs font-semibold tracking-wider uppercase text-muted">
-          STUDENT PRACTICE STUDIO
+        <span className="text-xs font-bold tracking-wider uppercase text-primary">
+          {t.studioTag}
         </span>
       </div>
 
-      {/* Main Grid: Left Widgets | Center Glowing Lotus Stage | Right Session Path */}
+      {/* Main Grid: Left Academic Widgets | Center Glowing Lotus Stage | Right Study Sprints */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto py-4 z-10">
-        {/* Left Bottom Widgets matching Image 1 & 3 */}
+        {/* Left Academic Widgets: Active Course Session + Focus Flow Speedometer */}
         <div className="lg:col-span-3 flex flex-col gap-4 order-3 lg:order-1">
-          {/* Top Video Thumbnail Card */}
-          <div className="left-widget-card relative overflow-hidden rounded-3xl border border-white/10 bg-[#0d120d] p-3 aspect-[16/10] flex items-center justify-center group shadow-xl">
-            {/* Minimalist monochrome focus visual silhouette */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10" />
-            <div className="relative z-20 flex flex-col items-center justify-center text-center p-3">
-              <span className="text-2xl mb-1">🧘</span>
-              <p className="text-xs font-bold text-white tracking-wide">Flow Posture</p>
-              <p className="text-[10px] text-muted">Active Routine · 20m</p>
+          {/* Active Course Session Card */}
+          <div className="left-widget-card glass-card rounded-3xl p-5 relative overflow-hidden shadow-xl group">
+            <div className="flex items-center justify-between mb-3">
+              <span className="rounded bg-primary/15 px-2 py-0.5 text-[10px] font-extrabold text-primary uppercase">
+                {t.activeCourseTag}
+              </span>
+              <span className="text-xs text-muted">💻</span>
             </div>
-            {/* Expand icon top right */}
-            <button
-              type="button"
-              className="absolute top-3 right-3 z-20 h-6 w-6 rounded-full bg-white/10 flex items-center justify-center text-xs text-white hover:bg-white/20 transition-colors"
-            >
-              ⤢
-            </button>
+
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-text">{t.activeCourseTitle}</h3>
+              <p className="text-xs text-muted">{t.activeCourseDesc}</p>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-[11px] font-semibold text-muted">
+              <span>{t.intervalLabel}</span>
+              <span className="text-primary font-bold">Chapter 4</span>
+            </div>
           </div>
 
-          {/* Bottom Heart Rate / Activity Pulse Card */}
-          <div className="left-widget-card rounded-3xl border border-white/10 bg-[#0d120d] p-4 flex items-center justify-between shadow-xl">
-            <div>
-              <p className="text-[11px] font-semibold text-muted">{t.heartLabel}</p>
-              <p className="text-2xl font-black text-white tracking-tight mt-0.5">{t.heartValue}</p>
-              {/* ECG Pulse wave line */}
-              <div className="mt-2 flex items-center gap-1 text-primary">
-                <svg className="h-4 w-28 text-primary" viewBox="0 0 100 20" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M0 10 L30 10 L38 2 L45 18 L52 8 L60 10 L100 10" />
+          {/* Focus Flow Rate & Rhythm Card (Replacing Heart Rate) */}
+          <div className="left-widget-card glass-card rounded-3xl p-5 flex items-center justify-between shadow-xl">
+            <div className="space-y-1">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted">{t.metricLabel}</p>
+              <p className="text-2xl font-black text-text tracking-tight">{t.metricValue}</p>
+              <p className="text-[11px] font-semibold text-primary">{t.metricStreak}</p>
+
+              {/* Focus Alpha Waves Audio Spectrum Visualization */}
+              <div className="pt-2 flex items-center gap-1 text-primary">
+                <svg className="h-5 w-32 text-primary" viewBox="0 0 120 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M0 12 L15 12 L22 4 L30 20 L38 8 L46 16 L54 12 L68 12 L75 6 L82 18 L90 12 L120 12" />
                 </svg>
               </div>
             </div>
 
-            {/* Smart wearable mockup with glowing lime heart */}
-            <div className="h-14 w-12 rounded-2xl border-2 border-primary/50 bg-black flex flex-col items-center justify-center shadow-lg">
-              <span className="text-sm animate-pulse">💚</span>
-              <span className="text-[8px] font-bold text-primary mt-0.5">58</span>
+            {/* Smart Focus Sprint Badge */}
+            <div className="h-14 w-14 rounded-2xl border border-primary/40 bg-surface-2 flex flex-col items-center justify-center shadow-md shrink-0">
+              <span className="text-base animate-pulse">⚡</span>
+              <span className="text-[9px] font-extrabold text-primary mt-0.5">25m</span>
             </div>
           </div>
         </div>
 
-        {/* Center Stage: Huge Ambient Radiant Green Lotus & Player Controls matching Image 1 & 3 */}
+        {/* Center Stage: Radiant Organic Green Shield & Media Player Controls */}
         <div className="center-radiant-stage lg:col-span-6 flex flex-col items-center justify-center text-center order-1 lg:order-2">
           {/* Radiant Lotus Core */}
-          <div className="relative flex h-64 sm:h-72 w-64 sm:w-72 items-center justify-center">
-            <RadiantShield className="radiant-lotus-aura w-56 sm:w-64 h-56 sm:h-64" glow={true} />
+          <div className="relative flex h-60 sm:h-72 w-60 sm:w-72 items-center justify-center">
+            <RadiantShield className="radiant-lotus-aura w-52 sm:w-64 h-52 sm:h-64" glow={true} />
           </div>
 
           {/* Deep Focus Title (Urbanist H1 46px font-extrabold) */}
           <div className="mt-4 space-y-1">
-            <h1 className="text-4xl sm:text-[46px] font-extrabold tracking-tight text-white leading-tight">
+            <h1 className="text-4xl sm:text-[46px] font-extrabold tracking-tight text-text leading-tight">
               {t.title}
             </h1>
             <p className="text-sm font-semibold text-muted">
@@ -204,15 +229,15 @@ export function DeepFocusPage() {
             </p>
           </div>
 
-          {/* Audio Scrubber Timeline Bar */}
+          {/* Pomodoro Timeline Scrubber */}
           <div className="w-full max-w-sm mt-6 space-y-1.5">
-            <div className="relative h-1.5 w-full rounded-full bg-white/10 overflow-hidden cursor-pointer">
+            <div className="relative h-2 w-full rounded-full bg-surface-2 border border-border overflow-hidden cursor-pointer">
               <div
-                className="h-full bg-white rounded-full transition-all duration-300"
+                className="h-full bg-primary rounded-full transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <div className="flex justify-between text-[11px] font-semibold text-muted">
+            <div className="flex justify-between text-xs font-semibold text-muted px-0.5">
               <span>{formatTime(currentSeconds)}</span>
               <span>{formatTime(totalSeconds)}</span>
             </div>
@@ -220,21 +245,22 @@ export function DeepFocusPage() {
 
           {/* Media Player Controls */}
           <div className="flex items-center gap-4 mt-5">
-            {/* Volume / Sound button */}
+            {/* Ambient Sound Mode button */}
             <button
               type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10 text-muted hover:text-white hover:bg-white/10 transition-colors"
+              title="Ambient Soundscape"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-surface border border-border text-muted hover:text-text hover:bg-surface-2 transition-colors shadow-xs"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z" />
               </svg>
             </button>
 
-            {/* Big Circular Play/Pause Button with Glowing Border */}
+            {/* Play/Pause Button */}
             <button
               type="button"
               onClick={() => setIsPlaying((p) => !p)}
-              className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-black shadow-xl luma-radiant-glow hover:scale-105 active:scale-95 transition-transform"
+              className="flex h-14 w-14 items-center justify-center rounded-full bg-text text-bg dark:bg-white dark:text-black shadow-xl luma-radiant-glow hover:scale-105 active:scale-95 transition-transform"
             >
               {isPlaying ? (
                 <svg className="h-6 w-6 fill-current" viewBox="0 0 24 24">
@@ -247,11 +273,12 @@ export function DeepFocusPage() {
               )}
             </button>
 
-            {/* Timer / Loop button */}
+            {/* Reset Pomodoro Interval button */}
             <button
               type="button"
+              title="Reset Pomodoro"
               onClick={() => setCurrentSeconds(0)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10 text-muted hover:text-white hover:bg-white/10 transition-colors"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-surface border border-border text-muted hover:text-text hover:bg-surface-2 transition-colors shadow-xs"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -260,15 +287,15 @@ export function DeepFocusPage() {
           </div>
         </div>
 
-        {/* Right Side: "Your Practice" Progression List matching Image 1 & 3 */}
+        {/* Right Side: Study Sprints Progression List */}
         <div className="lg:col-span-3 flex flex-col order-2 lg:order-3">
-          <h2 className="text-base font-extrabold text-white mb-4">
+          <h2 className="text-base font-extrabold text-text mb-4">
             {t.practiceHeader}
           </h2>
 
           <div className="relative flex flex-col gap-3">
             {/* Vertical dotted guide line */}
-            <div className="absolute left-[38px] top-6 bottom-6 w-px border-l border-dashed border-white/20 pointer-events-none" />
+            <div className="absolute left-[34px] top-6 bottom-6 w-px border-l border-dashed border-border pointer-events-none" />
 
             {t.sessions.map((session) => {
               const isSelected = activeSession === session.id;
@@ -278,25 +305,27 @@ export function DeepFocusPage() {
                   onClick={() => setActiveSession(session.id)}
                   className={`right-session-card cursor-pointer rounded-2xl p-3.5 flex items-center justify-between gap-3 border transition-all duration-200 ${
                     isSelected
-                      ? 'border-primary/60 bg-gradient-to-r from-accent-deep/80 to-[#1b2500] text-white shadow-lg'
-                      : 'border-white/10 bg-[#0d120d] text-muted hover:border-white/25 hover:text-white'
+                      ? 'border-primary/60 bg-gradient-to-r from-accent-deep/90 to-[#1b2500] text-white shadow-lg'
+                      : 'glass-card text-muted hover:border-primary/40 hover:text-text'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
                         isSelected
                           ? 'border-primary bg-primary/20 text-primary'
-                          : 'border-white/10 bg-white/5 text-muted'
+                          : 'border-border bg-surface-2 text-muted'
                       }`}
                     >
-                      <RadiantShield className="w-6 h-6" glow={isSelected} />
+                      <RadiantShield className="w-5 h-5" glow={isSelected} />
                     </div>
                     <div>
                       <p className={`text-xs font-bold leading-tight ${isSelected ? 'text-white' : 'text-text'}`}>
                         {session.title}
                       </p>
-                      <p className="text-[10px] text-muted mt-0.5">{session.duration}</p>
+                      <p className={`text-[10px] mt-0.5 ${isSelected ? 'text-white/80' : 'text-muted'}`}>
+                        {session.duration}
+                      </p>
                     </div>
                   </div>
 
@@ -310,16 +339,25 @@ export function DeepFocusPage() {
         </div>
       </div>
 
-      {/* Footer Info Pill */}
-      <div className="flex items-center justify-between text-xs text-muted pt-3 border-t border-white/5 z-10">
-        <span>Urbanist Typography · Pitch Black #000000</span>
-        <button
-          type="button"
-          onClick={() => navigate('/program')}
-          className="text-primary hover:underline font-bold"
-        >
-          View Program Grid →
-        </button>
+      {/* Footer Info & Quick Navigation */}
+      <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-muted pt-3 border-t border-border gap-2 z-10">
+        <span>SFSH Focus Studio · Urbanist Typography</span>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="text-primary hover:underline font-bold"
+          >
+            {t.viewOverview}
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/timetable')}
+            className="text-primary hover:underline font-bold"
+          >
+            {t.viewTimetable}
+          </button>
+        </div>
       </div>
     </div>
   );

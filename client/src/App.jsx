@@ -41,34 +41,64 @@ export function App() {
         <Route path="/register" element={<AuthPage mode="register" />} />
       </Route>
 
-      {/* Root "/" shows HomePage for guests, or AppShell + Deep Focus Practice Space for logged-in users (Images 1 & 3) */}
+      {/* Root "/" shows HomePage for guests, or AppShell + Overview Bento Grid for logged-in users */}
       <Route path="/" element={<RootEntryRoute />}>
-        <Route index element={<DeepFocusPage />} />
+        <Route
+          index
+          element={
+            <PlaceholderPage
+              pageKey="overview"
+              title="Overview"
+              description="Next study recommendations and schedule focus analytics at a glance."
+            />
+          }
+        />
       </Route>
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
           <Route
             path="program"
-            element={<PlaceholderPage pageKey="overview" title="Program" description="Structured schedule mix & active focus modules." />}
+            element={
+              <PlaceholderPage
+                pageKey="overview"
+                title="Overview"
+                description="Next study recommendations and focus analytics."
+              />
+            }
           />
           <Route
             path="overview"
-            element={<PlaceholderPage pageKey="overview" title="Overview" description="Next study recommendations and focus analytics." />}
+            element={
+              <PlaceholderPage
+                pageKey="overview"
+                title="Overview"
+                description="Next study recommendations and focus analytics."
+              />
+            }
           />
           <Route path="timetable" element={<TimetablePage />} />
           <Route
             path="syllabus"
-            element={<PlaceholderPage pageKey="syllabus" title="Syllabus" description="Structured chapter breakdown and course mastery tracking." />}
+            element={
+              <PlaceholderPage
+                pageKey="syllabus"
+                title="Syllabus"
+                description="Structured chapter breakdown and course mastery tracking."
+              />
+            }
           />
           <Route
             path="deadlines"
-            element={<PlaceholderPage pageKey="deadlines" title="Deadlines" description="Upcoming assignment & project submission milestones." />}
+            element={
+              <PlaceholderPage
+                pageKey="deadlines"
+                title="Deadlines"
+                description="Upcoming assignment & project submission milestones."
+              />
+            }
           />
-          <Route
-            path="focus"
-            element={<DeepFocusPage />}
-          />
+          <Route path="focus" element={<DeepFocusPage />} />
         </Route>
       </Route>
 

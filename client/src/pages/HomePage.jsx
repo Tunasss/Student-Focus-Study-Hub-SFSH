@@ -33,6 +33,41 @@ const HOME_COPY = {
       { num: 'Zero', label: 'Schedule Class Collisions', dot: 'bg-primary' },
       { num: '60 FPS', label: 'GPU-Accelerated Smoothness', dot: 'bg-sky-400' },
     ],
+    engines: {
+      scanner: {
+        badge: 'LIVE .ICS SCANNER',
+        title: 'Zero-Collision Timetable Engine',
+        desc: 'Direct calendar parsing resolves university lecture hours, laboratory assignments, and room allocations with 0 collisions.',
+        file: 'TKB_HK1_2026-2027.ics',
+        scanning: 'Scanning room nodes & class periods...',
+        synced: '✓ 11 Classes Auto-Scheduled · 0 Overlaps',
+        sampleCourses: [
+          { code: 'MSIS207', name: 'Web Development', room: 'E32', time: 'Mon 07:30' },
+          { code: 'CS5433', name: 'Distributed DB', room: 'C206', time: 'Wed 13:00' },
+          { code: 'STAT3013', name: 'Statistics Lab', room: 'B5.04', time: 'Sat 07:30' },
+        ],
+      },
+      soundwave: {
+        badge: 'BINAURAL FOCUS ENGINE',
+        title: 'Dynamic Equalizer & Pomodoro',
+        desc: 'Engineered acoustic frequency waves simulate focused library and rain soundscapes during high-intensity 25m sprints.',
+        status: 'Active Acoustic Flow · 60 FPS',
+        bpm: '432 Hz Resonance',
+        soundscapes: ['🎧 Library Silence', '🌧️ Window Rain', '☕ Campus Cafe'],
+      },
+      radar: {
+        badge: 'DEADLINE EARLY RADAR',
+        title: 'Predictive Milestone Sweep',
+        desc: '360° radar sweep visualizes upcoming assignments, exams, and project submissions before deadlines become critical.',
+        target: 'Lab 4 · Express CRUD API',
+        due: 'Due Tonight · 23:59',
+        efficiency: '94.2% On-Time Completion Rate',
+        milestones: [
+          { name: 'Lab 4 - Express CRUD', pct: 90, urgent: true },
+          { name: 'Assignment 2 - 2PC Protocol', pct: 60, urgent: false },
+        ],
+      },
+    },
     floatingPopups: {
       synced: '⚡ 11 Classes Auto-Scheduled',
       syncedSub: 'Portal & Google Cal Sync',
@@ -100,6 +135,41 @@ const HOME_COPY = {
       { num: '0 Ca', label: 'Trùng lịch xếp môn học', dot: 'bg-primary' },
       { num: '60 FPS', label: 'Trải nghiệm mượt mà', dot: 'bg-sky-400' },
     ],
+    engines: {
+      scanner: {
+        badge: 'QUÉT .ICS THỜI GIAN THỰC',
+        title: 'Bộ Xử Lý Lịch Trình Tự Động',
+        desc: 'Tự động bóc tách giảng đường, phòng Lab và giờ học từ file lịch đại học, chuẩn hóa 100% không trùng giờ.',
+        file: 'TKB_HK1_2026-2027.ics',
+        scanning: 'Đang rà soát phòng học & mã môn...',
+        synced: '✓ Tự xếp 11 ca học · 0 ca trùng lịch',
+        sampleCourses: [
+          { code: 'MSIS207', name: 'Phát triển Web', room: 'E32', time: 'Thứ 2 · 07:30' },
+          { code: 'CS5433', name: 'CSDL Phân tán', room: 'C206', time: 'Thứ 4 · 13:00' },
+          { code: 'STAT3013', name: 'Thống kê ứng dụng', room: 'B5.04', time: 'Thứ 7 · 07:30' },
+        ],
+      },
+      soundwave: {
+        badge: 'ÂM HỌC TẬP TRUNG',
+        title: 'Sóng Âm Equalizer & Pomodoro',
+        desc: 'Mô phỏng sóng âm tự nhiên kết hợp chu kỳ đếm ngược 25/5 giúp duy trì sự tỉnh táo và tập trung cao độ.',
+        status: 'Nhịp sóng âm học tập · 60 FPS',
+        bpm: 'Cộng hưởng tần số 432 Hz',
+        soundscapes: ['🎧 Thư viện tĩnh lặng', '🌧️ Mưa êm dịu', '☕ Cafe học bài'],
+      },
+      radar: {
+        badge: 'RADAR DỰ BÁO TIẾN ĐỘ',
+        title: 'Quét Radar Hạn Nộp & Đề Cương',
+        desc: 'Quét 360° phát hiện sớm các hạn chót bài tập, bài thuyết trình và kiểm tra giữa kỳ để luôn chủ động.',
+        target: 'Lab 4 · Express CRUD API',
+        due: 'Hạn chót: Tối nay · 23:59',
+        efficiency: '94.2% Tỷ lệ nộp bài đúng hạn',
+        milestones: [
+          { name: 'Lab 4 - Express CRUD', pct: 90, urgent: true },
+          { name: 'Assignment 2 - 2PC Protocol', pct: 60, urgent: false },
+        ],
+      },
+    },
     floatingPopups: {
       synced: '⚡ 11 Ca học tự động xếp lịch',
       syncedSub: 'Đồng bộ Google Cal & Portal',
@@ -161,11 +231,25 @@ export function HomePage() {
 
   // Demo interactive states
   const [activeTab, setActiveTab] = useState('timetable');
+  const [autoCycle, setAutoCycle] = useState(true);
   const [timerRunning, setTimerRunning] = useState(true);
   const [seconds, setSeconds] = useState(21 * 60 + 45); // 21:45
   const [selectedSound, setSelectedSound] = useState(0);
   const [syncedKey, setSyncedKey] = useState(1);
   const [taglineIndex, setTaglineIndex] = useState(0);
+
+  // Auto-cycle through preview tabs every 4.2s (with pause/resume control)
+  useEffect(() => {
+    if (!autoCycle) return undefined;
+    const tabList = ['timetable', 'focus', 'deadlines'];
+    const timer = window.setInterval(() => {
+      setActiveTab((curr) => {
+        const nextIdx = (tabList.indexOf(curr) + 1) % tabList.length;
+        return tabList[nextIdx];
+      });
+    }, 4200);
+    return () => window.clearInterval(timer);
+  }, [autoCycle]);
 
   // Cycling kinetic tagline index
   useEffect(() => {
@@ -220,9 +304,9 @@ export function HomePage() {
           '-=0.25'
         )
         .fromTo(
-          '.home-stats-bar',
-          { y: 16, autoAlpha: 0 },
-          { y: 0, autoAlpha: 1, duration: 0.4, clearProps: 'opacity,visibility,transform' },
+          '.home-visual-engines',
+          { y: 20, autoAlpha: 0 },
+          { y: 0, autoAlpha: 1, duration: 0.45, clearProps: 'opacity,visibility,transform' },
           '-=0.2'
         )
         .fromTo(
@@ -354,17 +438,177 @@ export function HomePage() {
             </Link>
           </div>
 
-          {/* STATS TICKER BAR */}
-          <div className="home-stats-bar mt-12 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-4xl mx-auto">
-            {t.stats.map((s) => (
-              <div key={s.label} className="glass-card rounded-2xl p-4 text-center border border-border shadow-2xs">
-                <div className="flex items-center justify-center gap-1.5 mb-1">
-                  <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
-                  <span className="text-xl sm:text-2xl font-black text-text tracking-tight">{s.num}</span>
+          {/* VISUAL WORKFLOW ENGINES (Replaces static 4-box ticker with live animated micro-simulations) */}
+          <div className="home-visual-engines mt-12 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto text-left">
+            {/* ENGINE 1: Live .ICS Scanner & Conflict Detector */}
+            <div className="glass-card rounded-3xl p-5 border border-border hover:border-primary/40 transition-all flex flex-col justify-between shadow-md group">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
+                    {t.engines.scanner.badge}
+                  </span>
+                  <span className="text-[10px] font-bold text-muted uppercase">60 FPS Parser</span>
                 </div>
-                <p className="text-[11px] font-semibold text-muted">{s.label}</p>
+                <h3 className="text-base font-extrabold text-text mt-3">{t.engines.scanner.title}</h3>
+                <p className="text-xs text-muted mt-1 leading-relaxed">{t.engines.scanner.desc}</p>
               </div>
-            ))}
+
+              {/* Live Laser Scanner Simulation Viewport */}
+              <div className="relative mt-4 h-36 rounded-2xl bg-black/60 dark:bg-black/80 border border-primary/25 overflow-hidden p-3 flex flex-col justify-between shadow-inner">
+                {/* Sweeping Laser Beam (GPU Composited) */}
+                <div className="pointer-events-none absolute left-0 right-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_14px_#dbef90] animate-laser z-20" />
+
+                {/* Calendar File Node Header */}
+                <div className="flex items-center justify-between text-[11px] font-mono text-muted border-b border-white/10 pb-1.5">
+                  <span className="flex items-center gap-1.5 text-text font-semibold">
+                    <span>📅</span>
+                    <span className="truncate max-w-[150px]">{t.engines.scanner.file}</span>
+                  </span>
+                  <span className="text-primary text-[10px] font-bold">42 KB · iCal</span>
+                </div>
+
+                {/* Animated Sample Course Pills appearing */}
+                <div className="space-y-1.5 my-auto py-1">
+                  {t.engines.scanner.sampleCourses.map((c) => (
+                    <div
+                      key={c.code}
+                      className="flex items-center justify-between rounded-lg bg-surface/10 px-2 py-1 text-[11px] border border-white/5 backdrop-blur-xs transition-colors hover:border-primary/40"
+                    >
+                      <span className="font-bold text-primary">{c.code}</span>
+                      <span className="text-muted text-[10px]">{c.time}</span>
+                      <span className="text-text font-medium text-[10px] opacity-90">📍 {c.room}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Bottom Auto-Resolved Badge */}
+                <div className="pt-1 border-t border-white/10 flex items-center justify-between text-[10px]">
+                  <span className="font-bold text-emerald-400 flex items-center gap-1">
+                    <span>{t.engines.scanner.synced}</span>
+                  </span>
+                  <span className="text-muted font-mono">0ms Lag</span>
+                </div>
+              </div>
+            </div>
+
+            {/* ENGINE 2: Binaural Focus Equalizer Wave */}
+            <div className="glass-card rounded-3xl p-5 border border-border hover:border-primary/40 transition-all flex flex-col justify-between shadow-md group">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    {t.engines.soundwave.badge}
+                  </span>
+                  <span className="text-[10px] font-bold text-muted uppercase">{t.engines.soundwave.bpm}</span>
+                </div>
+                <h3 className="text-base font-extrabold text-text mt-3">{t.engines.soundwave.title}</h3>
+                <p className="text-xs text-muted mt-1 leading-relaxed">{t.engines.soundwave.desc}</p>
+              </div>
+
+              {/* Dynamic Equalizer Simulation Viewport */}
+              <div className="relative mt-4 h-36 rounded-2xl bg-black/60 dark:bg-black/80 border border-emerald-500/25 overflow-hidden p-3 flex flex-col justify-between items-center text-center shadow-inner">
+                {/* Center Pomodoro Aura */}
+                <div className="flex items-center justify-between w-full border-b border-white/10 pb-1.5 text-[11px]">
+                  <span className="text-text font-bold flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>25:00 Focus Sprint</span>
+                  </span>
+                  <span className="text-emerald-400 font-mono text-[10px] font-bold">Flow 94%</span>
+                </div>
+
+                {/* 14-Bar Animated Audio Equalizer (Compositor Transform ScaleY) */}
+                <div className="flex items-end justify-center gap-1.5 h-12 w-full px-2 my-auto">
+                  {[
+                    { h: 'h-6', delay: '0.1s' },
+                    { h: 'h-10', delay: '0.35s' },
+                    { h: 'h-5', delay: '0.15s' },
+                    { h: 'h-8', delay: '0.6s' },
+                    { h: 'h-11', delay: '0.2s' },
+                    { h: 'h-7', delay: '0.45s' },
+                    { h: 'h-12', delay: '0.8s' },
+                    { h: 'h-9', delay: '0.25s' },
+                    { h: 'h-11', delay: '0.5s' },
+                    { h: 'h-6', delay: '0.3s' },
+                    { h: 'h-8', delay: '0.7s' },
+                    { h: 'h-10', delay: '0.18s' },
+                    { h: 'h-5', delay: '0.4s' },
+                    { h: 'h-7', delay: '0.65s' },
+                  ].map((bar, i) => (
+                    <div
+                      key={i}
+                      className={`w-1.5 rounded-full bg-gradient-to-t from-accent-deep via-primary to-emerald-400 animate-equalizer ${bar.h}`}
+                      style={{ animationDelay: bar.delay, willChange: 'transform' }}
+                    />
+                  ))}
+                </div>
+
+                {/* Soundscape Status */}
+                <div className="flex items-center justify-center gap-1.5 w-full pt-1 border-t border-white/10 text-[10px] text-muted">
+                  <span className="truncate font-semibold text-text">{t.engines.soundwave.status}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* ENGINE 3: Predictive Milestone Radar Sweep */}
+            <div className="glass-card rounded-3xl p-5 border border-border hover:border-primary/40 transition-all flex flex-col justify-between shadow-md group">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
+                    {t.engines.radar.badge}
+                  </span>
+                  <span className="text-[10px] font-bold text-rose-500 uppercase">Alert Active</span>
+                </div>
+                <h3 className="text-base font-extrabold text-text mt-3">{t.engines.radar.title}</h3>
+                <p className="text-xs text-muted mt-1 leading-relaxed">{t.engines.radar.desc}</p>
+              </div>
+
+              {/* 360-degree Radar Sweep Viewport */}
+              <div className="relative mt-4 h-36 rounded-2xl bg-black/60 dark:bg-black/80 border border-primary/25 overflow-hidden p-3 flex items-center justify-between gap-3 shadow-inner">
+                {/* Circular Radar Screen */}
+                <div className="relative h-28 w-28 rounded-full border border-primary/30 bg-black/50 flex items-center justify-center overflow-hidden shrink-0">
+                  {/* Concentric distance rings */}
+                  <div className="absolute h-20 w-20 rounded-full border border-primary/20" />
+                  <div className="absolute h-12 w-12 rounded-full border border-primary/20" />
+                  <div className="absolute h-full w-[1px] bg-primary/15" />
+                  <div className="absolute w-full h-[1px] bg-primary/15" />
+
+                  {/* Rotating Radar Sweep Needle (GPU Composited) */}
+                  <div className="pointer-events-none absolute inset-0 animate-radar">
+                    <div className="h-full w-1/2 bg-gradient-to-r from-transparent via-primary/15 to-primary/45 rounded-l-full origin-right" />
+                  </div>
+
+                  {/* Blinking Target Blips */}
+                  <div className="absolute top-4 right-5 h-2 w-2 rounded-full bg-rose-500 animate-ping" />
+                  <div className="absolute top-4 right-5 h-2 w-2 rounded-full bg-rose-500 shadow-[0_0_8px_#f43f5e]" />
+                  <div className="absolute bottom-6 left-6 h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_#fbbf24]" />
+                  <div className="absolute top-10 left-4 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_#dbef90]" />
+                </div>
+
+                {/* Milestone Targets List */}
+                <div className="flex-1 space-y-2 text-left">
+                  <div className="rounded-lg bg-rose-500/10 border border-rose-500/25 p-1.5">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="font-bold text-rose-400">URGENT</span>
+                      <span className="text-muted font-mono">{t.engines.radar.due}</span>
+                    </div>
+                    <p className="text-xs font-bold text-text truncate mt-0.5">{t.engines.radar.target}</p>
+                  </div>
+
+                  {/* Pace track */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[10px] text-muted font-semibold">
+                      <span>Pace Progress</span>
+                      <span className="text-primary font-bold">94.2%</span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                      <div className="h-full w-[94.2%] rounded-full bg-gradient-to-r from-accent-deep via-primary to-emerald-400" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* INTERACTIVE SOFTWARE DEMO PREVIEW (WITH FLOATING MODERN POPUPS) */}
@@ -402,8 +646,8 @@ export function HomePage() {
               </div>
             </div>
 
-            {/* Demo Switcher Pills */}
-            <div className="flex items-center justify-center gap-2 mb-4">
+            {/* Demo Switcher Pills with Auto-Play Loop Controller */}
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
               <button
                 type="button"
                 onClick={() => setActiveTab('timetable')}
@@ -436,6 +680,21 @@ export function HomePage() {
                 }`}
               >
                 {t.demos.tabDeadlines}
+              </button>
+
+              {/* Auto-Play Toggle Pill */}
+              <button
+                type="button"
+                onClick={() => setAutoCycle((c) => !c)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-semibold border transition-all ${
+                  autoCycle
+                    ? 'border-primary/50 bg-primary/10 text-primary shadow-xs'
+                    : 'border-border bg-surface text-muted hover:text-text'
+                }`}
+                title={autoCycle ? 'Pause Auto-Play' : 'Resume Auto-Play'}
+              >
+                <span className={`h-2 w-2 rounded-full ${autoCycle ? 'bg-primary animate-ping' : 'bg-muted'}`} />
+                <span>{autoCycle ? (lang === 'vi' ? 'Tự động chạy' : 'Auto-Cycling') : (lang === 'vi' ? 'Tạm dừng' : 'Paused')}</span>
               </button>
             </div>
 

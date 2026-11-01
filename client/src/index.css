@@ -156,6 +156,47 @@ body {
   will-change: transform, opacity;
 }
 
+/* Live visual workflow animations (GPU compositor transforms) */
+@keyframes laserSweep {
+  0% { transform: translateY(0); opacity: 0; }
+  25% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateY(115px); opacity: 0; }
+}
+
+@keyframes equalizerWave {
+  0%, 100% { transform: scaleY(0.25); }
+  50% { transform: scaleY(1); }
+}
+
+@keyframes radarSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-laser {
+  animation: laserSweep 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-radar {
+  animation: radarSpin 7s linear infinite;
+  transform-origin: center;
+}
+
+.animate-equalizer {
+  animation: equalizerWave 1.4s ease-in-out infinite alternate;
+  transform-origin: bottom;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.18); opacity: 1; filter: drop-shadow(0 0 12px rgba(219, 239, 144, 0.6)); }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
 /* WCAG Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {

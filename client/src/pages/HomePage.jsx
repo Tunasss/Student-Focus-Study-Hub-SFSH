@@ -17,10 +17,29 @@ const HOME_COPY = {
       badge: 'STUDENT SCHEDULE & FOCUS STUDIO',
       titleLine1: 'One experience.',
       titleLine2: 'Built around you.',
+      taglines: [
+        'Automated .ICS Timetable Sync',
+        '25/5 Pomodoro Focus Studio',
+        'Zero Collision Smart Scheduling',
+      ],
       subtitle:
         'A distraction-free workspace for university students. Synchronize your .ics timetable, time-block daily active hours, and master course assignments in one unified interface.',
       ctaPrimary: 'Sign In to Workspace',
       ctaSecondary: 'Create Free Account',
+    },
+    stats: [
+      { num: '100%', label: 'Automatic .ICS Parser', dot: 'bg-primary' },
+      { num: '25m', label: 'Pomodoro Focus Sprints', dot: 'bg-emerald-400' },
+      { num: 'Zero', label: 'Schedule Class Collisions', dot: 'bg-primary' },
+      { num: '60 FPS', label: 'GPU-Accelerated Smoothness', dot: 'bg-sky-400' },
+    ],
+    floatingPopups: {
+      synced: '⚡ 11 Classes Auto-Scheduled',
+      syncedSub: 'Portal & Google Cal Sync',
+      onTime: '🎯 94.2% On-Time Completion',
+      onTimeSub: 'Academic Pace: Grade A',
+      focus: '⏱️ 4x Pomodoro Streak · 92% Flow',
+      focusSub: 'Active Study Sprint',
     },
     demos: {
       tag: 'INTERACTIVE SOFTWARE PREVIEW',
@@ -65,10 +84,29 @@ const HOME_COPY = {
       badge: 'KHÔNG GIAN LỊCH TRÌNH & TẬP TRUNG HỌC TẬP',
       titleLine1: 'Một trải nghiệm.',
       titleLine2: 'Xoay quanh nhịp của bạn.',
+      taglines: [
+        'Đồng bộ thời khóa biểu tự động .ICS',
+        'Phòng tập trung Pomodoro 25/5',
+        'Kiểm soát 100% deadline không trễ hạn',
+      ],
       subtitle:
         'Không gian học tập không xao nhãng dành cho sinh viên đại học. Đồng bộ thời khóa biểu .ics, quản lý khung giờ hoạt động hiệu quả và theo dõi hạn nộp bài tập.',
       ctaPrimary: 'Đăng nhập Không gian',
       ctaSecondary: 'Tạo tài khoản miễn phí',
+    },
+    stats: [
+      { num: '100%', label: 'Tự động bóc tách .ICS', dot: 'bg-primary' },
+      { num: '25 phút', label: 'Phiên học Pomodoro tối ưu', dot: 'bg-emerald-400' },
+      { num: '0 Ca', label: 'Trùng lịch xếp môn học', dot: 'bg-primary' },
+      { num: '60 FPS', label: 'Trải nghiệm mượt mà', dot: 'bg-sky-400' },
+    ],
+    floatingPopups: {
+      synced: '⚡ 11 Ca học tự động xếp lịch',
+      syncedSub: 'Đồng bộ Google Cal & Portal',
+      onTime: '🎯 94.2% Tỷ lệ nộp bài đúng hạn',
+      onTimeSub: 'Xếp loại học tập: Loại A',
+      focus: '⏱️ 4x Pomodoro Streak · 92% Flow',
+      focusSub: 'Phiên tập trung chuyên sâu',
     },
     demos: {
       tag: 'TRẢI NGHIỆM TƯƠNG TÁC PHẦN MỀM',
@@ -127,6 +165,15 @@ export function HomePage() {
   const [seconds, setSeconds] = useState(21 * 60 + 45); // 21:45
   const [selectedSound, setSelectedSound] = useState(0);
   const [syncedKey, setSyncedKey] = useState(1);
+  const [taglineIndex, setTaglineIndex] = useState(0);
+
+  // Cycling kinetic tagline index
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setTaglineIndex((idx) => (idx + 1) % t.hero.taglines.length);
+    }, 3200);
+    return () => window.clearInterval(timer);
+  }, [t.hero.taglines.length]);
 
   // Timer countdown
   useEffect(() => {
@@ -146,47 +193,85 @@ export function HomePage() {
       tl.fromTo(
         '.home-hero-badge',
         { y: 14, autoAlpha: 0 },
-        { y: 0, autoAlpha: 1, duration: 0.4, clearProps: 'opacity,visibility,transform' }
+        { y: 0, autoAlpha: 1, duration: 0.35, clearProps: 'opacity,visibility,transform' }
       )
         .fromTo(
           '.home-hero-title',
-          { y: 22, autoAlpha: 0 },
-          { y: 0, autoAlpha: 1, duration: 0.55, clearProps: 'opacity,visibility,transform' },
+          { y: 20, autoAlpha: 0 },
+          { y: 0, autoAlpha: 1, duration: 0.45, clearProps: 'opacity,visibility,transform' },
+          '-=0.2'
+        )
+        .fromTo(
+          '.home-hero-ticker',
+          { y: 14, autoAlpha: 0 },
+          { y: 0, autoAlpha: 1, duration: 0.35, clearProps: 'opacity,visibility,transform' },
           '-=0.25'
         )
         .fromTo(
           '.home-hero-desc',
-          { y: 16, autoAlpha: 0 },
-          { y: 0, autoAlpha: 1, duration: 0.45, clearProps: 'opacity,visibility,transform' },
-          '-=0.35'
+          { y: 14, autoAlpha: 0 },
+          { y: 0, autoAlpha: 1, duration: 0.35, clearProps: 'opacity,visibility,transform' },
+          '-=0.25'
         )
         .fromTo(
           '.home-hero-cta',
-          { y: 14, autoAlpha: 0 },
+          { y: 12, autoAlpha: 0 },
+          { y: 0, autoAlpha: 1, duration: 0.35, clearProps: 'opacity,visibility,transform' },
+          '-=0.25'
+        )
+        .fromTo(
+          '.home-stats-bar',
+          { y: 16, autoAlpha: 0 },
           { y: 0, autoAlpha: 1, duration: 0.4, clearProps: 'opacity,visibility,transform' },
-          '-=0.3'
+          '-=0.2'
         )
         .fromTo(
           '.home-interactive-stage',
-          { y: 28, scale: 0.96, autoAlpha: 0 },
-          { y: 0, scale: 1, autoAlpha: 1, duration: 0.65, ease: 'power2.out', clearProps: 'opacity,visibility,transform' },
-          '-=0.3'
+          { y: 24, scale: 0.97, autoAlpha: 0 },
+          { y: 0, scale: 1, autoAlpha: 1, duration: 0.55, ease: 'power2.out', clearProps: 'opacity,visibility,transform' },
+          '-=0.25'
         );
 
+      // Gentle floating sine motion for floating popups (GPU compositor only)
+      gsap.to('.float-popup-1', {
+        y: -6,
+        duration: 3.2,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+      });
+
+      gsap.to('.float-popup-2', {
+        y: 6,
+        duration: 3.8,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+      });
+
+      gsap.to('.float-popup-3', {
+        y: -5,
+        duration: 4.2,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+      });
+
+      // Scroll reveals with once: true to prevent scroll FPS drop
       gsap.utils.toArray('.home-scroll-reveal').forEach((el) => {
         gsap.fromTo(
           el,
-          { y: 26, autoAlpha: 0 },
+          { y: 22, autoAlpha: 0 },
           {
             y: 0,
             autoAlpha: 1,
-            duration: 0.5,
+            duration: 0.45,
             ease: 'power2.out',
             clearProps: 'opacity,visibility,transform',
             scrollTrigger: {
               trigger: el,
-              start: 'top 86%',
-              toggleActions: 'play none none none',
+              start: 'top 88%',
+              once: true,
             },
           }
         );
@@ -198,7 +283,7 @@ export function HomePage() {
 
   return (
     <div ref={rootRef} className="min-h-screen bg-bg text-text selection:bg-primary/30 selection:text-text overflow-x-hidden font-sans">
-      {/* Top Navbar matching Image 1: Clean Brand + Action Controls (NO Studio/Program pill) */}
+      {/* Top Navbar: Clean Brand + Action Controls (No Studio/Program pill) */}
       <header className="sticky top-0 z-50 w-full px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-border bg-surface/75 backdrop-blur-2xl">
         <Link to="/" className="flex items-center gap-2.5 group">
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/15 text-primary group-hover:scale-105 transition-transform shadow-xs">
@@ -226,9 +311,9 @@ export function HomePage() {
         </div>
       </header>
 
-      <main className="space-y-24 sm:space-y-32 pb-24">
+      <main className="space-y-20 sm:space-y-28 pb-24">
         {/* HERO SECTION */}
-        <section className="mx-auto max-w-6xl px-4 pt-12 sm:px-8 sm:pt-20 text-center">
+        <section className="mx-auto max-w-6xl px-4 pt-10 sm:px-8 sm:pt-16 text-center">
           <div className="home-hero-badge inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-xs font-bold text-primary">
             <span className="h-1.5 w-1.5 rounded-full bg-primary" />
             <span>{t.hero.badge}</span>
@@ -241,7 +326,16 @@ export function HomePage() {
             </span>
           </h1>
 
-          <p className="home-hero-desc mx-auto mt-6 max-w-2xl text-base sm:text-lg text-muted leading-relaxed">
+          {/* Kinetic cycling tagline badge */}
+          <div className="home-hero-ticker mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-1.5 text-xs font-bold shadow-2xs">
+            <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-primary font-black uppercase text-[10px]">Highlight:</span>
+            <span className="text-text transition-all duration-300">
+              {t.hero.taglines[taglineIndex]}
+            </span>
+          </div>
+
+          <p className="home-hero-desc mx-auto mt-5 max-w-2xl text-base sm:text-lg text-muted leading-relaxed">
             {t.hero.subtitle}
           </p>
 
@@ -260,8 +354,54 @@ export function HomePage() {
             </Link>
           </div>
 
-          {/* INTERACTIVE SOFTWARE DEMO PREVIEW (TIMETABLE, POMODORO, COURSE MILESTONES) */}
+          {/* STATS TICKER BAR */}
+          <div className="home-stats-bar mt-12 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-4xl mx-auto">
+            {t.stats.map((s) => (
+              <div key={s.label} className="glass-card rounded-2xl p-4 text-center border border-border shadow-2xs">
+                <div className="flex items-center justify-center gap-1.5 mb-1">
+                  <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+                  <span className="text-xl sm:text-2xl font-black text-text tracking-tight">{s.num}</span>
+                </div>
+                <p className="text-[11px] font-semibold text-muted">{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* INTERACTIVE SOFTWARE DEMO PREVIEW (WITH FLOATING MODERN POPUPS) */}
           <div className="home-interactive-stage relative mx-auto mt-14 max-w-5xl">
+            {/* FLOATING POPUP 1 (Top-Left: Timetable Sync) */}
+            <div className="float-popup-1 gpu-layer absolute -top-6 -left-2 sm:-left-8 z-30 hidden md:flex items-center gap-2.5 glass-card rounded-2xl px-4 py-2.5 border border-primary/40 shadow-xl">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 text-primary text-sm font-bold">
+                ⚡
+              </span>
+              <div className="text-left">
+                <p className="text-xs font-bold text-text">{t.floatingPopups.synced}</p>
+                <p className="text-[10px] text-muted">{t.floatingPopups.syncedSub}</p>
+              </div>
+            </div>
+
+            {/* FLOATING POPUP 2 (Top-Right: On-Time Rate) */}
+            <div className="float-popup-2 gpu-layer absolute -top-7 -right-2 sm:-right-8 z-30 hidden md:flex items-center gap-2.5 glass-card rounded-2xl px-4 py-2.5 border border-primary/40 shadow-xl">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-bold">
+                🎯
+              </span>
+              <div className="text-left">
+                <p className="text-xs font-bold text-text">{t.floatingPopups.onTime}</p>
+                <p className="text-[10px] text-muted">{t.floatingPopups.onTimeSub}</p>
+              </div>
+            </div>
+
+            {/* FLOATING POPUP 3 (Bottom-Right: Pomodoro Streak) */}
+            <div className="float-popup-3 gpu-layer absolute -bottom-6 right-4 sm:right-10 z-30 hidden md:flex items-center gap-2.5 glass-card rounded-2xl px-4 py-2 border border-primary/40 shadow-xl">
+              <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/20 text-primary text-xs font-bold">
+                ⏱️
+              </span>
+              <div className="text-left">
+                <p className="text-xs font-bold text-text">{t.floatingPopups.focus}</p>
+                <p className="text-[10px] text-muted">{t.floatingPopups.focusSub}</p>
+              </div>
+            </div>
+
             {/* Demo Switcher Pills */}
             <div className="flex items-center justify-center gap-2 mb-4">
               <button
@@ -299,7 +439,7 @@ export function HomePage() {
               </button>
             </div>
 
-            {/* Software Showcase Frame with Real Frosted Glass */}
+            {/* Software Showcase Frame with Frosted Glass */}
             <div className="glass-card rounded-[2.25rem] p-4 sm:p-7 shadow-2xl text-left border border-border">
               {/* Window Header */}
               <div className="flex items-center justify-between border-b border-border pb-3 px-2">
@@ -310,7 +450,7 @@ export function HomePage() {
                   <span className="ml-2 text-xs font-semibold text-muted">SFSH Web Workspace · Urbanist</span>
                 </div>
                 <span className="text-xs font-bold text-primary flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-primary" />
+                  <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
                   <span>Live Interactive Preview</span>
                 </span>
               </div>

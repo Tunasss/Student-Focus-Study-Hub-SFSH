@@ -6,33 +6,35 @@
 /* Design tokens matching Image 2 (Urbanist, Light & Dark modes, Accent 01 #243100 -> #DBEF90) */
 :root {
   --sfsh-bg: #f5f7f3;
-  --sfsh-surface: rgba(255, 255, 255, 0.76);
-  --sfsh-surface-2: rgba(240, 246, 238, 0.72);
+  --sfsh-surface: rgba(255, 255, 255, 0.78);
+  --sfsh-surface-2: rgba(240, 246, 238, 0.74);
   --sfsh-border: rgba(0, 0, 0, 0.08);
   --sfsh-text: #0e140d;
-  --sfsh-muted: #536250;
-  --sfsh-primary: #3d6b04;
+  --sfsh-muted: #495746;
+  --sfsh-primary: #386304;
   --sfsh-primary-fg: #ffffff;
   --sfsh-accent-lime: #8acb1e;
   --sfsh-accent-deep: #243100;
   --sfsh-danger: #dc2626;
   --sfsh-success: #16a34a;
+  --sfsh-warning: #d97706;
   color-scheme: light;
 }
 
 .dark {
   --sfsh-bg: #000000;
-  --sfsh-surface: rgba(14, 19, 14, 0.72);
-  --sfsh-surface-2: rgba(20, 28, 20, 0.65);
+  --sfsh-surface: rgba(14, 19, 14, 0.74);
+  --sfsh-surface-2: rgba(20, 28, 20, 0.68);
   --sfsh-border: rgba(255, 255, 255, 0.09);
   --sfsh-text: #f5f5f8;
-  --sfsh-muted: #8e9882;
+  --sfsh-muted: #95a08d;
   --sfsh-primary: #dbef90;
   --sfsh-primary-fg: #000000;
   --sfsh-accent-lime: #dbef90;
   --sfsh-accent-deep: #243100;
   --sfsh-danger: #f87171;
   --sfsh-success: #4ade80;
+  --sfsh-warning: #fbbf24;
   color-scheme: dark;
 }
 
@@ -49,6 +51,7 @@
   --color-accent-deep: var(--sfsh-accent-deep);
   --color-danger: var(--sfsh-danger);
   --color-success: var(--sfsh-success);
+  --color-warning: var(--sfsh-warning);
   --font-sans: 'Urbanist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -58,9 +61,9 @@ body {
   letter-spacing: -0.015em;
   background-color: var(--sfsh-bg);
   background-image:
-    radial-gradient(circle at 50% 12%, rgba(219, 239, 144, 0.18) 0%, transparent 55%),
-    radial-gradient(circle at 15% 85%, rgba(61, 107, 4, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 85% 60%, rgba(219, 239, 144, 0.1) 0%, transparent 45%);
+    radial-gradient(circle at 50% 12%, rgba(219, 239, 144, 0.16) 0%, transparent 55%),
+    radial-gradient(circle at 15% 85%, rgba(61, 107, 4, 0.07) 0%, transparent 50%),
+    radial-gradient(circle at 85% 60%, rgba(219, 239, 144, 0.09) 0%, transparent 45%);
   background-attachment: fixed;
 }
 
@@ -71,6 +74,12 @@ body {
     radial-gradient(circle at 10% 80%, rgba(36, 49, 0, 0.45) 0%, transparent 50%),
     radial-gradient(circle at 90% 40%, rgba(219, 239, 144, 0.05) 0%, transparent 50%);
   background-attachment: fixed;
+}
+
+/* WCAG 2.1 Keyboard Focus Indicator */
+:focus-visible {
+  outline: 2px solid var(--sfsh-primary);
+  outline-offset: 2px;
 }
 
 /* Accent 01 gradient matching Image 2 */
@@ -86,33 +95,33 @@ body {
 
 /* Radiant aura glow from Image 1 & 3 */
 .luma-radiant-glow {
-  box-shadow: 0 0 70px 10px rgba(219, 239, 144, 0.28), 0 0 140px 30px rgba(36, 49, 0, 0.4);
+  box-shadow: 0 0 60px 8px rgba(219, 239, 144, 0.25), 0 0 120px 25px rgba(36, 49, 0, 0.35);
 }
 
 .luma-glow {
-  box-shadow: 0 8px 32px -4px rgba(219, 239, 144, 0.22);
+  box-shadow: 0 8px 30px -4px rgba(219, 239, 144, 0.2);
 }
 
 .luma-glow-sm {
-  box-shadow: 0 4px 20px -2px rgba(219, 239, 144, 0.16);
+  box-shadow: 0 4px 18px -2px rgba(219, 239, 144, 0.15);
 }
 
-/* Highly distinct, clear frosted glass cards in both Light & Dark */
+/* 60fps-optimized Frosted Glass with blur(16px) */
 .glass-card {
   background: var(--sfsh-surface);
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid var(--sfsh-border);
-  box-shadow: 0 8px 28px -4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.04);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .dark .glass-card {
   background: var(--sfsh-surface);
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid var(--sfsh-border);
-  box-shadow: 0 10px 36px -4px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.5);
 }
 
 .glass-card:hover {
@@ -121,24 +130,40 @@ body {
 
 .dark .glass-card:hover {
   border-color: rgba(219, 239, 144, 0.35);
-  box-shadow: 0 12px 32px -8px rgba(219, 239, 144, 0.15);
+  box-shadow: 0 12px 30px -8px rgba(219, 239, 144, 0.15);
 }
 
-/* Floating Top Pill Nav with ultra-clear frosted glass blur */
+/* Floating Top Pill Nav with 16px blur */
 .floating-pill-nav {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid var(--sfsh-border);
   box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.05);
 }
 
 .dark .floating-pill-nav {
-  background: rgba(16, 22, 16, 0.72);
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  background: rgba(16, 22, 16, 0.75);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid var(--sfsh-border);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.55);
+  box-shadow: 0 8px 30px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* GPU promotion for GSAP animated cards */
+.gpu-layer {
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+/* WCAG Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Custom smooth scrollbar */

@@ -193,4 +193,26 @@ describe('TimetablePage', () => {
     expect(cards[0].style.width).toContain('50%');
     expect(cards[1].style.width).toContain('50%');
   });
+
+  test('allows clearing timetable with confirmation dialog and shows success toast', async () => {
+    mockFetch((url) => {
+      if (url.includes('/api/schedule')) {
+        return [200, ok({ events: SAMPLE_EVENTS })];
+      }
+      return [404, {}];
+    });
+
+    renderTimetable();
+
+    expect(await screen.findByText('Cấu trúc dữ liệu')).toBeInTheDocument();
+    const clearBtn = screen.getByTestId('clear-timetable-button');
+    expect(clearBtn).toBeInTheDocument();
+
+    await userEvent.click(clearBtn);
+    expect(screen.getByText(/Clear Current Timetable|Xóa thời khóa biểu/i)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByTestId('confirm-clear-action-btn'));
+    expect(await screen.findByText(/Timetable cleared successfully|Đã xóa thời khóa biểu thành công/i)).toBeInTheDocument();
+    expect(screen.queryByText('Cấu trúc dữ liệu')).not.toBeInTheDocument();
+  });
 });

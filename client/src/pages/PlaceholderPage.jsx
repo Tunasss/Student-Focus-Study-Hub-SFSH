@@ -1,140 +1,287 @@
 import { useLayoutEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { useLanguage } from '../i18n/languageContext';
 
 const OVERVIEW_COPY = {
   en: {
     pageTitle: 'Overview',
-    description: 'Next study recommendations and schedule focus analytics at a glance.',
-    studyMix: 'Study Mix & Filters',
-    mixPills: ['Lecture', 'Lab Work', 'Self-Study', 'Revision'],
-    autoSyncToggle: 'Auto-sync .ics timetable',
-    autoAdjustToggle: 'Adaptive study intervals',
-    pomoLength: 'Pomodoro length',
-    studyBreakRatio: 'Study / Break ratio',
-    priorityCourse: 'Priority course',
-    intensity: 'Pacing',
-    intensityValue: 'Balanced (25/5)',
-    addCustomBtn: '+ Add Custom Study Slot',
-    cat1Label: "01 · Today's Priority Classes",
-    activeNow: 'Active semester',
-    cat2Label: '02 · Enrolled Course Modules',
-    allCourses: 'Semester 1 · 2026–2027',
-    weeklyPace: 'Weekly Study Pace',
-    weeklyHours: '24.5 hrs / week',
-    nextClassTitle: 'Next Class Reminder',
-    nextClassName: 'MSIS207 · Web App Dev',
-    nextClassRoom: 'Room C206 • 13:00 – 16:15',
-    openTimetable: 'Open Timetable →',
-    activeClasses: [
-      { code: 'MSIS207', title: 'Web App Development', time: '13:00 – 16:15', room: 'Room C206', shape: 'M100 20 L138 68 L185 85 L165 145 L100 178 L35 145 L15 85 L62 68 Z' },
-      { code: 'CS5433', title: 'Distributed Databases', time: '13:00 – 17:00', room: 'Room B5.04', shape: 'M100 20 L150 80 L140 160 L60 160 L50 80 Z' },
-      { code: 'STAT3013', title: 'Statistical Analysis', time: '07:30 – 11:30', room: 'Room B5.04', shape: 'M100 30 C150 60 170 120 140 160 C110 180 90 180 60 160 C30 120 50 60 100 30 Z' },
+    subtitle: 'Monday, April 8, 2026 · Real-time academic overview',
+    dateFilter: 'Last 7 days',
+    startFocusBtn: '+ Enter Focus Room',
+    metrics: [
+      { label: 'Active Courses', value: '5/6', dot: 'bg-primary' },
+      { label: 'Deadlines', value: '3 Pending', dot: 'bg-rose-500' },
+      { label: 'Weekly Study', value: '24.5 hrs', dot: 'bg-emerald-400' },
+      { label: 'Focus Rate', value: '92%', dot: 'bg-primary' },
+      { label: 'On-Time Rate', value: '94.2%', dot: 'bg-sky-400' },
     ],
-    otherCourses: [
-      { code: 'MSIS4263', name: 'Decision Support Apps', credits: '3 Credits' },
-      { code: 'MATH201', name: 'Calculus II', credits: '4 Credits' },
-      { code: 'CS101', name: 'Data Structures Lab', credits: '3 Credits' },
-      { code: 'ENG102', name: 'Academic English', credits: '2 Credits' },
-      { code: 'PE231', name: 'Physical Education 1', credits: '1 Credit' },
-      { code: 'PROJ202', name: 'Capstone Project', credits: '3 Credits' },
-    ],
+    quickActions: {
+      title: 'Quick Actions',
+      focus: '+ Start 25m Focus Sprint',
+      timetable: '📅 Open Weekly Timetable',
+      ics: '⚡ Import .ICS Timetable',
+    },
+    deadlinesQueue: {
+      title: 'Priority Deadlines Queue',
+      seeAll: 'View All Deadlines',
+      items: [
+        {
+          code: 'MSIS207',
+          title: 'Lab 4 · Express CRUD & REST API',
+          desc: 'Submit GitHub repository link and Swagger OpenAPI documentation before midnight.',
+          due: 'Due Tonight · 23:59',
+          badge: 'Critical',
+          badgeColor: 'border-rose-500/30 bg-rose-500/10 text-rose-500',
+          dot: 'bg-rose-500',
+        },
+        {
+          code: 'CS5433',
+          title: 'Assignment 2 · 2PC Distributed DB Protocol',
+          desc: 'Complete coordinator failure recovery simulation and commit consensus benchmark.',
+          due: 'Due in 2 days · 17:00',
+          badge: 'Warning',
+          badgeColor: 'border-amber-500/30 bg-amber-500/10 text-amber-500',
+          dot: 'bg-amber-500',
+        },
+        {
+          code: 'STAT3013',
+          title: 'Quiz 3 · Regression & Hypothesis Testing',
+          desc: 'Online LMS 30-minute timed quiz covering multiple linear regression and p-values.',
+          due: 'Saturday · 08:00',
+          badge: 'Scheduled',
+          badgeColor: 'border-primary/30 bg-primary/10 text-primary',
+          dot: 'bg-primary',
+        },
+      ],
+    },
+    nextDaySchedule: {
+      title: "Next Day's Class Schedule",
+      dateLabel: 'Tuesday · 3 Classes Scheduled',
+      seeAll: 'Full Schedule',
+      classes: [
+        {
+          time: '13:00 – 16:15',
+          code: 'MSIS207',
+          name: 'Web Application Development',
+          room: 'Room C206 · Practical Lab',
+          type: 'Lab Sprint',
+          dot: 'bg-primary',
+        },
+        {
+          time: '07:30 – 11:30',
+          code: 'STAT3013',
+          name: 'Statistical Analysis',
+          room: 'Room B5.04 · Main Hall',
+          type: 'Lecture',
+          dot: 'bg-amber-400',
+        },
+        {
+          time: '13:00 – 17:00',
+          code: 'CS5433',
+          name: 'Distributed Database Systems',
+          room: 'Room B5.04 · Hall B',
+          type: 'Theory & Lab',
+          dot: 'bg-sky-400',
+        },
+      ],
+    },
+    weeklyTrend: {
+      title: 'Study Pace & Hours Trend',
+      subtitle: 'Weekly study utilization % and total hours (Goal: 25 hrs)',
+      tooltipDay: 'Wed',
+      tooltipHours: 'Study: 6.5 hrs',
+      tooltipRate: 'Focus: 94%',
+      days: [
+        { day: '2 Sun', height: '35%', hours: '2.5h' },
+        { day: '3 Mon', height: '65%', hours: '4.5h' },
+        { day: '4 Tue', height: '75%', hours: '5.2h' },
+        { day: '5 Wed', height: '95%', hours: '6.5h', active: true },
+        { day: '6 Thu', height: '55%', hours: '4.0h' },
+        { day: '7 Fri', height: '45%', hours: '3.2h' },
+        { day: '8 Sat', height: '70%', hours: '5.0h' },
+      ],
+    },
+    performanceCard: {
+      title: 'Current Efficiency & On-Time Performance',
+      subtitle: 'Weekly on-time vs delayed assignment submissions',
+      statLabel: 'On-time Rate',
+      statValue: '94.2%',
+      streakLabel: '4-Week Streak',
+    },
   },
   vi: {
     pageTitle: 'Tổng quan',
-    description: 'Gợi ý học tiếp theo và thống kê thời gian tập trung sẽ hiển thị ở đây.',
-    studyMix: 'Bộ lọc & Khung học tập',
-    mixPills: ['Lý thuyết', 'Thực hành', 'Tự học', 'Ôn tập'],
-    autoSyncToggle: 'Tự động đồng bộ lịch .ics',
-    autoAdjustToggle: 'Tối ưu phiên tập trung',
-    pomoLength: 'Thời lượng Pomodoro',
-    studyBreakRatio: 'Tỷ lệ Học / Nghỉ',
-    priorityCourse: 'Môn ưu tiên',
-    intensity: 'Nhịp độ',
-    intensityValue: 'Cân bằng (25/5)',
-    addCustomBtn: '+ Thêm khung giờ tự chọn',
-    cat1Label: '01 · Ca học hôm nay',
-    activeNow: 'Học kỳ hiện tại',
-    cat2Label: '02 · Các học phần đã đăng ký',
-    allCourses: 'Học kỳ 1 · 2026–2027',
-    weeklyPace: 'Nhịp học tập tuần',
-    weeklyHours: '24.5 giờ / tuần',
-    nextClassTitle: 'Ca học kế tiếp',
-    nextClassName: 'MSIS207 · Phát triển web',
-    nextClassRoom: 'Phòng C206 • 13:00 – 16:15',
-    openTimetable: 'Xem Thời khóa biểu →',
-    activeClasses: [
-      { code: 'MSIS207', title: 'Phát triển ứng dụng web', time: '13:00 – 16:15', room: 'Phòng C206', shape: 'M100 20 L138 68 L185 85 L165 145 L100 178 L35 145 L15 85 L62 68 Z' },
-      { code: 'CS5433', title: 'Các hệ CSDL phân tán', time: '13:00 – 17:00', room: 'Phòng B5.04', shape: 'M100 20 L150 80 L140 160 L60 160 L50 80 Z' },
-      { code: 'STAT3013', title: 'Phân tích thống kê', time: '07:30 – 11:30', room: 'Phòng B5.04', shape: 'M100 30 C150 60 170 120 140 160 C110 180 90 180 60 160 C30 120 50 60 100 30 Z' },
+    subtitle: 'Thứ Hai, 8 tháng 4 · Báo cáo học tập thời gian thực',
+    dateFilter: '7 ngày qua',
+    startFocusBtn: '+ Vào phòng Focus',
+    metrics: [
+      { label: 'Môn đang học', value: '5/6 môn', dot: 'bg-primary' },
+      { label: 'Hạn nộp bài', value: '3 bài tập', dot: 'bg-rose-500' },
+      { label: 'Giờ học tuần', value: '24.5 giờ', dot: 'bg-emerald-400' },
+      { label: 'Độ tập trung', value: '92%', dot: 'bg-primary' },
+      { label: 'Tỷ lệ đúng hạn', value: '94.2%', dot: 'bg-sky-400' },
     ],
-    otherCourses: [
-      { code: 'MSIS4263', name: 'Ứng dụng thông minh', credits: '3 Tín chỉ' },
-      { code: 'MATH201', name: 'Toán rời rạc & Giải tích', credits: '4 Tín chỉ' },
-      { code: 'CS101', name: 'Thực hành Cấu trúc DL', credits: '3 Tín chỉ' },
-      { code: 'ENG102', name: 'Tiếng Anh học thuật', credits: '2 Tín chỉ' },
-      { code: 'PE231', name: 'Giáo dục thể chất 1', credits: '1 Tín chỉ' },
-      { code: 'PROJ202', name: 'Đồ án cơ sở ngành', credits: '3 Tín chỉ' },
-    ],
+    quickActions: {
+      title: 'Thao tác nhanh',
+      focus: '+ Bắt đầu phiên học 25m',
+      timetable: '📅 Mở Thời khóa biểu',
+      ics: '⚡ Đồng bộ lịch .ICS',
+    },
+    deadlinesQueue: {
+      title: 'Hàng đợi Deadline Ưu tiên',
+      seeAll: 'Xem tất cả',
+      items: [
+        {
+          code: 'MSIS207',
+          title: 'Lab 4 · Express CRUD & REST API',
+          desc: 'Nộp link GitHub repo và tài liệu Swagger OpenAPI trước nửa đêm.',
+          due: 'Hạn chót: Tối nay · 23:59',
+          badge: 'Khẩn cấp',
+          badgeColor: 'border-rose-500/30 bg-rose-500/10 text-rose-500',
+          dot: 'bg-rose-500',
+        },
+        {
+          code: 'CS5433',
+          title: 'Bài tập 2 · Giao thức 2PC CSDL Phân tán',
+          desc: 'Hoàn thiện mô phỏng điều phối viên phục hồi lỗi và đánh giá thông lượng.',
+          due: 'Hạn chót: Còn 2 ngày · 17:00',
+          badge: 'Cảnh báo',
+          badgeColor: 'border-amber-500/30 bg-amber-500/10 text-amber-500',
+          dot: 'bg-amber-500',
+        },
+        {
+          code: 'STAT3013',
+          title: 'Kiểm tra 3 · Hồi quy & Kiểm định giả thuyết',
+          desc: 'Bài trắc nghiệm 30 phút trên hệ thống LMS về mô hình hồi quy tuyến tính.',
+          due: 'Thứ Bảy · 08:00',
+          badge: 'Đã lên lịch',
+          badgeColor: 'border-primary/30 bg-primary/10 text-primary',
+          dot: 'bg-primary',
+        },
+      ],
+    },
+    nextDaySchedule: {
+      title: 'Danh sách môn học ngày tiếp theo',
+      dateLabel: 'Thứ Ba · 3 Ca học đã xếp lịch',
+      seeAll: 'Xem lịch đầy đủ',
+      classes: [
+        {
+          time: '13:00 – 16:15',
+          code: 'MSIS207',
+          name: 'Phát triển ứng dụng Web',
+          room: 'Phòng C206 · Thực hành Lab',
+          type: 'Thực hành',
+          dot: 'bg-primary',
+        },
+        {
+          time: '07:30 – 11:30',
+          code: 'STAT3013',
+          name: 'Phân tích thống kê',
+          room: 'Phòng B5.04 · Giảng đường',
+          type: 'Lý thuyết',
+          dot: 'bg-amber-400',
+        },
+        {
+          time: '13:00 – 17:00',
+          code: 'CS5433',
+          name: 'Các hệ CSDL phân tán',
+          room: 'Phòng B5.04 · Phòng B',
+          type: 'Lý thuyết & Thảo luận',
+          dot: 'bg-sky-400',
+        },
+      ],
+    },
+    weeklyTrend: {
+      title: 'Tiến độ học tập & Giờ học tuần',
+      subtitle: 'Tỷ lệ phân bổ thời gian học (Mục tiêu tuần: 25 giờ)',
+      tooltipDay: 'Thứ 4',
+      tooltipHours: 'Tập trung: 6.5 giờ',
+      tooltipRate: 'Hiệu suất: 94%',
+      days: [
+        { day: 'CN', height: '35%', hours: '2.5h' },
+        { day: 'T2', height: '65%', hours: '4.5h' },
+        { day: 'T3', height: '75%', hours: '5.2h' },
+        { day: 'T4', height: '95%', hours: '6.5h', active: true },
+        { day: 'T5', height: '55%', hours: '4.0h' },
+        { day: 'T6', height: '45%', hours: '3.2h' },
+        { day: 'T7', height: '70%', hours: '5.0h' },
+      ],
+    },
+    performanceCard: {
+      title: 'Hiệu suất hiện tại & Tỷ lệ đúng hạn',
+      subtitle: 'Tỷ lệ nộp bài tập đúng hạn so với trễ hạn theo tuần',
+      statLabel: 'Tỷ lệ đúng hạn',
+      statValue: '94.2%',
+      streakLabel: 'Chuỗi 4 tuần liên tục',
+    },
   },
 };
 
-export function PlaceholderPage({ pageKey = 'overview', title = 'Overview', description = 'Study Hub overview and scheduling.' }) {
+export function PlaceholderPage({
+  pageKey = 'overview',
+  title = 'Overview',
+  description = 'Study Hub overview and scheduling.',
+}) {
   const { lang } = useLanguage();
   const t = OVERVIEW_COPY[lang] || OVERVIEW_COPY.en;
-  const navigate = useNavigate();
   const containerRef = useRef(null);
 
-  const [autoSync, setAutoSync] = useState(true);
-  const [adaptivePomo, setAdaptivePomo] = useState(true);
-  const [selectedMix, setSelectedMix] = useState(0);
+  const [completedItems, setCompletedItems] = useState({});
 
   const isOverview = pageKey === 'overview' || title === 'Overview' || title === 'Tổng quan';
   const resolvedTitle = isOverview ? t.pageTitle : title;
-  const resolvedDesc = isOverview ? t.description : description;
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
 
       tl.fromTo(
-        '.bento-col-1',
-        { x: -18, autoAlpha: 0 },
-        { x: 0, autoAlpha: 1, duration: 0.4, clearProps: 'opacity,visibility,transform' }
+        '.dash-metric-pill',
+        { y: -10, opacity: 0 },
+        { y: 0, opacity: 1, stagger: 0.04, duration: 0.35, clearProps: 'opacity,transform' }
       )
         .fromTo(
-          '.bento-col-2',
-          { y: 18, autoAlpha: 0 },
-          { y: 0, autoAlpha: 1, duration: 0.4, clearProps: 'opacity,visibility,transform' },
-          '-=0.25'
+          '.dash-card-left',
+          { x: -16, opacity: 0 },
+          { x: 0, opacity: 1, stagger: 0.08, duration: 0.4, clearProps: 'opacity,transform' },
+          '-=0.2'
         )
         .fromTo(
-          '.bento-col-3',
-          { x: 18, autoAlpha: 0 },
-          { x: 0, autoAlpha: 1, duration: 0.4, clearProps: 'opacity,visibility,transform' },
-          '-=0.25'
+          '.dash-card-right',
+          { x: 16, opacity: 0 },
+          { x: 0, opacity: 1, stagger: 0.08, duration: 0.4, clearProps: 'opacity,transform' },
+          '-=0.3'
         );
     }, containerRef);
 
     return () => ctx.revert();
   }, [pageKey, title]);
 
+  function toggleComplete(id) {
+    setCompletedItems((prev) => ({ ...prev, [id]: !prev[id] }));
+  }
+
+  // Non-overview placeholder views (Syllabus, Deadlines fallback)
   if (!isOverview) {
     return (
       <div ref={containerRef} className="px-4 sm:px-8 py-8 space-y-6">
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-primary">SFSH MODULE</span>
           <h1 className="text-3xl sm:text-[42px] font-extrabold tracking-tight text-text mt-1">{resolvedTitle}</h1>
-          <p className="text-sm text-muted mt-1">{resolvedDesc}</p>
+          <p className="text-sm text-muted mt-1">{description}</p>
         </div>
 
         <div className="glass-card rounded-3xl p-8 sm:p-12 text-center max-w-xl mx-auto space-y-4">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary text-2xl">
             🌱
           </div>
-          <p className="text-base font-semibold text-text">{resolvedDesc}</p>
-          <p className="text-xs text-muted">Mô-đun đang hoạt động và đồng bộ với thời khóa biểu của bạn.</p>
+          <p className="text-base font-semibold text-text">{description}</p>
+          <p className="text-xs text-muted">
+            {lang === 'vi'
+              ? 'Mô-đun đang hoạt động và đồng bộ với thời khóa biểu của bạn.'
+              : 'Module active and synchronized with your academic timetable.'}
+          </p>
           <div className="pt-2">
             <Link
               to="/timetable"
@@ -149,249 +296,266 @@ export function PlaceholderPage({ pageKey = 'overview', title = 'Overview', desc
     );
   }
 
+  // EXACT REPLICATION OF OPERATIONS DASHBOARD LAYOUT (STUDENT ACADEMIC CONTENT)
   return (
     <div
       ref={containerRef}
-      className="min-h-[calc(100vh-65px)] bg-bg text-text px-4 sm:px-8 py-6 space-y-6"
+      className="min-h-[calc(100vh-65px)] bg-bg text-text px-4 sm:px-8 py-6 space-y-6 overflow-x-hidden font-sans"
     >
-      {/* Title Header with Tests Accessibility Heading */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* 1. TOP METRIC PILLS RAIL (MATCHING THE TOP OF THE SCREENSHOT) */}
+      <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1 text-xs font-semibold no-scrollbar">
+        {t.metrics.map((m) => (
+          <div
+            key={m.label}
+            className="dash-metric-pill glass-card shrink-0 flex items-center gap-2 rounded-full px-3.5 py-1.5 border border-border shadow-2xs"
+          >
+            <span className={`h-2 w-2 rounded-full ${m.dot}`} />
+            <span className="text-muted">{m.label}:</span>
+            <span className="font-extrabold text-text">{m.value}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* 2. DASHBOARD TITLE & ACTION CONTROLS */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
         <div>
-          <h1 className="text-3xl sm:text-[42px] font-extrabold tracking-tight text-text leading-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-text">
             {resolvedTitle}
           </h1>
-          <p className="text-xs sm:text-sm text-muted mt-1">{resolvedDesc}</p>
+          <p className="text-xs sm:text-sm text-muted mt-0.5">{t.subtitle}</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
+          <span className="glass-card text-xs font-semibold text-muted rounded-full px-3.5 py-1.5 border border-border">
+            {t.dateFilter} ▾
+          </span>
           <Link
             to="/focus"
-            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-xs font-bold text-primary-fg shadow-xs hover:opacity-90 transition-opacity"
+            className="rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-fg shadow-sm hover:opacity-90 transition-opacity flex items-center gap-1.5"
           >
-            <span>⏱️ {lang === 'vi' ? 'Vào Focus Room' : 'Enter Focus Room'}</span>
-            <span>→</span>
+            <span>⏱️</span>
+            <span>{t.startFocusBtn}</span>
           </Link>
         </div>
       </div>
 
-      {/* BENTO GRID EXACTLY MATCHING IMAGE 4 FORMAT (STUDENT ACADEMIC CONTENT) */}
+      {/* 3. MAIN BENTO GRID (LEFT: QUICK ACTIONS, DEADLINE QUEUE, NEXT DAY CLASSES | RIGHT: PACE TREND, EFFICIENCY CHART) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* COL 1: Study Mix & Controls Panel */}
-        <div className="bento-col-1 lg:col-span-3 glass-card rounded-3xl p-5 space-y-5">
-          <div>
-            <p className="text-xs font-bold text-muted uppercase tracking-wider mb-2.5">
-              {t.studyMix}
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {t.mixPills.map((pill, idx) => (
-                <button
-                  key={pill}
-                  type="button"
-                  onClick={() => setSelectedMix(idx)}
-                  className={`rounded-xl py-2 px-3 text-xs font-bold text-center transition-colors ${
-                    selectedMix === idx
-                      ? 'bg-text text-bg dark:bg-white dark:text-black shadow-xs'
-                      : 'border border-border bg-surface-2 text-muted hover:text-text'
-                  }`}
-                >
-                  {pill}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-3 pt-2 border-t border-border">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-muted">{t.autoSyncToggle}</span>
-              <button
-                type="button"
-                onClick={() => setAutoSync((v) => !v)}
-                className={`relative h-5 w-9 rounded-full transition-colors ${
-                  autoSync ? 'bg-primary' : 'bg-muted/30'
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
-                    autoSync ? 'left-4.5' : 'left-0.5'
-                  }`}
-                />
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-muted">{t.autoAdjustToggle}</span>
-              <button
-                type="button"
-                onClick={() => setAdaptivePomo((v) => !v)}
-                className={`relative h-5 w-9 rounded-full transition-colors ${
-                  adaptivePomo ? 'bg-primary' : 'bg-muted/30'
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
-                    adaptivePomo ? 'left-4.5' : 'left-0.5'
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-2.5 pt-2 border-t border-border text-xs">
-            <div className="flex justify-between items-center py-1">
-              <span className="text-muted">{t.pomoLength}</span>
-              <span className="font-bold text-text">25 min</span>
-            </div>
-            <div className="flex justify-between items-center py-1">
-              <span className="text-muted">{t.studyBreakRatio}</span>
-              <span className="font-bold text-text">25 / 5 min</span>
-            </div>
-            <div className="flex justify-between items-center py-1">
-              <span className="text-muted">{t.priorityCourse}</span>
-              <span className="font-bold text-primary">MSIS207</span>
-            </div>
-            <div className="flex justify-between items-center py-1">
-              <span className="text-muted">{t.intensity}</span>
-              <span className="font-bold text-text">{t.intensityValue}</span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => navigate('/focus')}
-            className="w-full rounded-full bg-text text-bg dark:bg-white dark:text-black py-3 px-4 text-xs font-extrabold shadow-sm hover:bg-primary hover:text-black transition-colors flex items-center justify-center gap-1.5"
-          >
-            {t.addCustomBtn}
-          </button>
-        </div>
-
-        {/* COL 2: Class Progression & Course Modules */}
-        <div className="bento-col-2 lg:col-span-6 space-y-6">
-          {/* Section 01: Priority Classes Today (Radiant Green Glow cards matching Image 4) */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-muted tracking-wider uppercase">
-                {t.cat1Label}
-              </span>
-              <span className="text-xs font-bold text-primary">
-                {t.activeNow}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-              {t.activeClasses.map((item) => (
-                <div
-                  key={item.code}
-                  onClick={() => navigate('/timetable')}
-                  className="cursor-pointer group relative overflow-hidden rounded-3xl border border-primary/40 p-4 aspect-[4/5] flex flex-col justify-between transition-all hover:scale-[1.02] shadow-sm"
-                  style={{
-                    background:
-                      'radial-gradient(circle at 50% 60%, rgba(219, 239, 144, 0.35) 0%, rgba(36, 49, 0, 0.95) 75%)',
-                  }}
-                >
-                  <div className="flex items-center justify-between text-xs font-bold text-white">
-                    <span className="truncate pr-1">{item.code}</span>
-                    <span className="group-hover:translate-x-0.5 transition-transform text-primary">›</span>
-                  </div>
-
-                  <div className="relative mx-auto flex h-16 w-16 items-center justify-center">
-                    <svg className="w-full h-full text-primary drop-shadow-[0_0_16px_rgba(219,239,144,0.6)]" viewBox="0 0 200 200" fill="currentColor">
-                      <path d={item.shape} />
-                    </svg>
-                  </div>
-
-                  <div className="text-white space-y-0.5">
-                    <p className="text-xs font-bold leading-tight truncate">{item.title}</p>
-                    <p className="text-[10px] text-white/75">{item.room}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Section 02: Enrolled Course Modules */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-muted tracking-wider uppercase">
-                {t.cat2Label}
-              </span>
-              <span className="text-xs font-semibold text-muted">
-                {t.allCourses}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {t.otherCourses.map((course) => (
-                <div
-                  key={course.code}
-                  className="glass-card rounded-2xl p-3.5 flex flex-col justify-between aspect-[1.15/1]"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-extrabold text-primary">
-                      {course.code}
-                    </span>
-                    <span className="text-[10px] text-muted">📚</span>
-                  </div>
-                  <p className="text-xs font-bold text-text truncate my-1">{course.name}</p>
-                  <span className="text-[10px] font-semibold text-muted">{course.credits}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* COL 3: Weekly Speedometer Dial & Next Class Reminder */}
-        <div className="bento-col-3 lg:col-span-3 space-y-5">
-          {/* Speedometer Gauge Dial Graphic */}
-          <div className="glass-card rounded-3xl p-5">
-            <span className="text-xs font-bold text-muted uppercase tracking-wider">
-              {t.weeklyPace}
+        {/* LEFT COLUMN (lg:col-span-6) */}
+        <div className="lg:col-span-6 space-y-6">
+          {/* CARD 1: Quick Actions */}
+          <div className="dash-card-left glass-card rounded-3xl p-5 space-y-3.5">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted">
+              {t.quickActions.title}
             </span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <Link
+                to="/focus"
+                className="rounded-2xl border border-border bg-surface-2 p-3 text-center text-xs font-bold text-text hover:border-primary/50 hover:bg-primary/10 transition-colors"
+              >
+                {t.quickActions.focus}
+              </Link>
+              <Link
+                to="/timetable"
+                className="rounded-2xl border border-border bg-surface-2 p-3 text-center text-xs font-bold text-text hover:border-primary/50 hover:bg-primary/10 transition-colors"
+              >
+                {t.quickActions.timetable}
+              </Link>
+              <Link
+                to="/timetable"
+                className="rounded-2xl border border-border bg-surface-2 p-3 text-center text-xs font-bold text-text hover:border-primary/50 hover:bg-primary/10 transition-colors"
+              >
+                {t.quickActions.ics}
+              </Link>
+            </div>
+          </div>
 
-            <div className="relative my-4 flex flex-col items-center justify-center">
-              <svg className="h-28 w-44" viewBox="0 0 200 120">
-                <path
-                  d="M 20 110 A 80 80 0 0 1 180 110"
-                  fill="none"
-                  stroke="rgba(128, 128, 128, 0.2)"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M 20 110 A 80 80 0 0 1 145 40"
-                  fill="none"
-                  stroke="var(--sfsh-primary)"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                />
-                <line x1="100" y1="110" x2="135" y2="50" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-                <circle cx="100" cy="110" r="5" fill="currentColor" />
-              </svg>
+          {/* CARD 2: Alert Priority Queue (MATCHING ALERT PRIORITY QUEUE IN SCREENSHOT) */}
+          <div className="dash-card-left glass-card rounded-3xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm">⚠️</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-text">
+                  {t.deadlinesQueue.title}
+                </span>
+              </div>
+              <Link to="/deadlines" className="text-xs font-bold text-primary hover:underline">
+                {t.deadlinesQueue.seeAll}
+              </Link>
+            </div>
 
-              <div className="text-center mt-1">
-                <p className="text-[11px] font-semibold text-muted">Semester Goal: 25h</p>
-                <p className="text-2xl font-black text-text">{t.weeklyHours}</p>
+            <div className="space-y-3">
+              {t.deadlinesQueue.items.map((item) => {
+                const isDone = completedItems[item.code];
+                return (
+                  <div
+                    key={item.code}
+                    className={`rounded-2xl border p-4 transition-all duration-150 ${
+                      item.badgeColor
+                    } ${isDone ? 'opacity-50 line-through' : ''}`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2 w-2 rounded-full ${item.dot}`} />
+                        <span className="text-xs font-extrabold text-text">{item.title}</span>
+                      </div>
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full border border-current">
+                        {item.badge}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-muted mt-2 leading-relaxed">{item.desc}</p>
+
+                    <div className="mt-3 pt-2.5 border-t border-border/50 flex items-center justify-between text-xs">
+                      <span className="font-bold text-text">{item.due}</span>
+                      <button
+                        type="button"
+                        onClick={() => toggleComplete(item.code)}
+                        className="rounded-full bg-surface px-3 py-1 text-[11px] font-bold text-text hover:bg-primary hover:text-primary-fg transition-colors"
+                      >
+                        {isDone ? '✓ Completed' : 'Mark Done'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* CARD 3: Next Day's Class Schedule (MATCHING RECENT ACTIVITY IN SCREENSHOT) */}
+          <div className="dash-card-left glass-card rounded-3xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm">📚</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-text">
+                  {t.nextDaySchedule.title}
+                </span>
+              </div>
+              <Link to="/timetable" className="text-xs font-bold text-primary hover:underline">
+                {t.nextDaySchedule.seeAll}
+              </Link>
+            </div>
+
+            <p className="text-xs text-muted">{t.nextDaySchedule.dateLabel}</p>
+
+            <div className="space-y-2.5">
+              {t.nextDaySchedule.classes.map((c) => (
+                <div
+                  key={c.code}
+                  className="rounded-2xl border border-border bg-surface-2 p-3.5 flex items-center justify-between gap-3 hover:border-primary/40 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`h-2.5 w-2.5 rounded-full ${c.dot} shrink-0`} />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-extrabold text-primary">
+                          {c.code}
+                        </span>
+                        <p className="text-xs font-bold text-text">{c.name}</p>
+                      </div>
+                      <p className="text-[11px] text-muted mt-0.5">{c.room}</p>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <p className="text-xs font-bold text-text">{c.time}</p>
+                    <span className="text-[10px] text-muted">{c.type}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN (lg:col-span-6) */}
+        <div className="lg:col-span-6 space-y-6">
+          {/* CARD 4: Study Pace Trend (MATCHING FLEET UTILIZATION TREND IN SCREENSHOT) */}
+          <div className="dash-card-right glass-card rounded-3xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-muted">
+                  {t.weeklyTrend.title}
+                </span>
+                <p className="text-xs text-muted mt-0.5">{t.weeklyTrend.subtitle}</p>
+              </div>
+              <span className="text-sm text-primary">↗</span>
+            </div>
+
+            {/* Vertical Bar Chart Graphic with Active Day Highlight */}
+            <div className="relative pt-6 pb-2">
+              <div className="flex items-end justify-between gap-2 h-44 px-2">
+                {t.weeklyTrend.days.map((bar) => (
+                  <div key={bar.day} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+                    {/* Active tooltip badge for Wednesday */}
+                    {bar.active && (
+                      <div className="glass-card rounded-xl px-2.5 py-1 text-[10px] font-bold text-center border border-primary/50 shadow-md mb-1 animate-bounce">
+                        <span className="text-primary block">{t.weeklyTrend.tooltipHours}</span>
+                        <span className="text-muted text-[9px] block">{t.weeklyTrend.tooltipRate}</span>
+                      </div>
+                    )}
+
+                    <div
+                      className={`w-full max-w-[28px] rounded-t-xl transition-all duration-300 ${
+                        bar.active
+                          ? 'bg-gradient-to-t from-primary via-accent-lime to-white shadow-md'
+                          : 'bg-primary/25 hover:bg-primary/40'
+                      }`}
+                      style={{ height: bar.height }}
+                    />
+                    <span className={`text-[10px] font-semibold ${bar.active ? 'text-primary font-bold' : 'text-muted'}`}>
+                      {bar.day}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Next Class Reminder Widget */}
-          <div className="glass-card rounded-3xl p-5 space-y-3">
+          {/* CARD 5: On-Time Performance Area Wave (MATCHING ON-TIME DELIVERY PERFORMANCE IN SCREENSHOT) */}
+          <div className="dash-card-right glass-card rounded-3xl p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-muted uppercase tracking-wider">{t.nextClassTitle}</span>
-              <span className="h-2 w-2 rounded-full bg-primary" />
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-muted">
+                  {t.performanceCard.title}
+                </span>
+                <p className="text-xs text-muted mt-0.5">{t.performanceCard.subtitle}</p>
+              </div>
+              <span className="text-xs font-bold text-primary">{t.performanceCard.streakLabel}</span>
             </div>
 
-            <div className="space-y-1">
-              <p className="text-base font-bold text-text">{t.nextClassName}</p>
-              <p className="text-xs text-muted">{t.nextClassRoom}</p>
+            <div className="flex items-baseline gap-2 pt-1">
+              <span className="text-3xl font-black text-text">{t.performanceCard.statValue}</span>
+              <span className="text-xs font-semibold text-emerald-500">↑ +3.8% this month</span>
             </div>
 
-            <Link
-              to="/timetable"
-              className="inline-block w-full text-center rounded-full border border-border bg-surface-2 py-2 text-xs font-bold text-text hover:border-primary/50 transition-colors"
-            >
-              {t.openTimetable}
-            </Link>
+            {/* Smooth Wave Area Chart */}
+            <div className="relative h-32 w-full pt-2">
+              <svg className="w-full h-full overflow-visible" viewBox="0 0 500 120" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="performanceWaveGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--sfsh-primary)" stopOpacity="0.45" />
+                    <stop offset="100%" stopColor="var(--sfsh-primary)" stopOpacity="0.0" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M 0 90 Q 60 70, 120 78 T 240 50 T 360 40 T 500 20 L 500 120 L 0 120 Z"
+                  fill="url(#performanceWaveGradient)"
+                />
+                <path
+                  d="M 0 90 Q 60 70, 120 78 T 240 50 T 360 40 T 500 20"
+                  fill="none"
+                  stroke="var(--sfsh-primary)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+                <circle cx="500" cy="20" r="5" fill="var(--sfsh-primary)" />
+              </svg>
+            </div>
+
+            <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-muted">
+              <span>Goal: 90% on-time completion</span>
+              <span className="font-bold text-primary">Grade A Academic Status</span>
+            </div>
           </div>
         </div>
       </div>

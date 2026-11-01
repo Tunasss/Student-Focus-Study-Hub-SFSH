@@ -7,6 +7,14 @@ import { getToken, setToken } from './lib/tokenStorage';
 const USER = { id: 1, email: 'student@sfsh.dev', createdAt: '2026-10-25T00:00:00.000Z' };
 
 describe('auth flow', () => {
+  test('shows Apple-style Home page for guests at / before clicking login', async () => {
+    renderApp('/');
+    expect(await screen.findByRole('heading', { name: /Học tập đỉnh cao/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('link', { name: 'Đăng nhập' }));
+    expect(await screen.findByRole('heading', { name: 'Đăng nhập' })).toBeInTheDocument();
+  });
+
   test('redirects guests from a protected page to /login', async () => {
     renderApp('/deadlines');
     expect(await screen.findByRole('heading', { name: 'Đăng nhập' })).toBeInTheDocument();

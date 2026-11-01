@@ -123,7 +123,16 @@ export function AuthPage({ mode }) {
       ref={containerRef}
       className="relative min-h-screen bg-bg text-text flex items-center justify-center p-4 sm:p-6 lg:p-12 overflow-hidden"
     >
-      {/* Theme toggle corner */}
+      {/* Back to Apple Home & Theme toggle corners */}
+      <div className="absolute top-5 left-5 z-20">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 px-4 py-2 text-xs font-semibold text-text hover:border-primary/50 transition-colors"
+        >
+          <span>←</span>
+          <span>Trang chủ</span>
+        </Link>
+      </div>
       <div className="absolute top-5 right-5 z-20">
         <ThemeToggle />
       </div>

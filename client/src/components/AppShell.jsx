@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { useAuth } from '../auth/authContext';
 import { ThemeToggle } from '../theme/ThemeToggle';
@@ -64,8 +64,14 @@ const NAV_ITEMS = [
 export function AppShell() {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const shellRef = useRef(null);
+
+  function handleLogout() {
+    logout();
+    navigate('/login');
+  }
 
   const activeNav =
     NAV_ITEMS.find((item) => (item.end ? location.pathname === item.to : location.pathname.startsWith(item.to))) ||
@@ -240,7 +246,7 @@ export function AppShell() {
 
             <button
               type="button"
-              onClick={logout}
+              onClick={handleLogout}
               className="rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-text hover:border-danger hover:text-danger hover:bg-danger/10 transition-colors"
             >
               Đăng xuất

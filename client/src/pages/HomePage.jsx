@@ -23,89 +23,60 @@ const HOME_COPY = {
         'Zero Collision Smart Scheduling',
       ],
       subtitle:
-        'A distraction-free workspace for university students. Synchronize your .ics timetable, time-block daily active hours, and master course assignments in one unified interface.',
+        'A distraction-free academic workspace for university students. Synchronize your .ics timetable, protect your peak active hours, and master course assignments in one unified interface.',
       ctaPrimary: 'Sign In to Workspace',
       ctaSecondary: 'Create Free Account',
     },
-    stats: [
-      { num: '100%', label: 'Automatic .ICS Parser', dot: 'bg-primary' },
-      { num: '25m', label: 'Pomodoro Focus Sprints', dot: 'bg-emerald-400' },
-      { num: 'Zero', label: 'Schedule Class Collisions', dot: 'bg-primary' },
-      { num: '60 FPS', label: 'GPU-Accelerated Smoothness', dot: 'bg-sky-400' },
-    ],
-    engines: {
-      scanner: {
-        badge: 'LIVE .ICS SCANNER',
-        title: 'Zero-Collision Timetable Engine',
-        desc: 'Direct calendar parsing resolves university lecture hours, laboratory assignments, and room allocations with 0 collisions.',
-        file: 'TKB_HK1_2026-2027.ics',
-        scanning: 'Scanning room nodes & class periods...',
-        synced: '✓ 11 Classes Auto-Scheduled · 0 Overlaps',
-        sampleCourses: [
-          { code: 'MSIS207', name: 'Web Development', room: 'E32', time: 'Mon 07:30' },
-          { code: 'CS5433', name: 'Distributed DB', room: 'C206', time: 'Wed 13:00' },
-          { code: 'STAT3013', name: 'Statistics Lab', room: 'B5.04', time: 'Sat 07:30' },
+    features: {
+      timetable: {
+        tag: '01 / TIMETABLE & .ICS CALENDAR SYNC',
+        title: 'Automatic timetable parsing. Zero scheduling collisions.',
+        desc: 'Never manually retype lecture hours or search for classroom numbers. Upload your university portal or Google Calendar .ics export, and Luma instantly structures your entire semester with zero room or time collisions.',
+        bullets: [
+          'Instant .ICS parsing in under 200ms with deduplicated course codes',
+          'Automatic lecture hall & laboratory mapping (E32, C206, B5.04)',
+          'Intelligent active hour alignment tailored to your circadian rhythm',
         ],
+        fileName: 'TKB_HK1_2026-2027.ics',
+        syncStatus: '11 Classes Synced · 0 Overlaps',
+        syncBtn: '⚡ Simulate .ICS Import',
       },
-      soundwave: {
-        badge: 'BINAURAL FOCUS ENGINE',
-        title: 'Dynamic Equalizer & Pomodoro',
-        desc: 'Engineered acoustic frequency waves simulate focused library and rain soundscapes during high-intensity 25m sprints.',
-        status: 'Active Acoustic Flow · 60 FPS',
-        bpm: '432 Hz Resonance',
-        soundscapes: ['🎧 Library Silence', '🌧️ Window Rain', '☕ Campus Cafe'],
-      },
-      radar: {
-        badge: 'DEADLINE EARLY RADAR',
-        title: 'Predictive Milestone Sweep',
-        desc: '360° radar sweep visualizes upcoming assignments, exams, and project submissions before deadlines become critical.',
-        target: 'Lab 4 · Express CRUD API',
-        due: 'Due Tonight · 23:59',
-        efficiency: '94.2% On-Time Completion Rate',
-        milestones: [
-          { name: 'Lab 4 - Express CRUD', pct: 90, urgent: true },
-          { name: 'Assignment 2 - 2PC Protocol', pct: 60, urgent: false },
+      focus: {
+        tag: '02 / DEEP FOCUS STUDIO & POMODORO',
+        title: 'Distraction-free flow. Scientifically-paced study intervals.',
+        desc: 'Enter an acoustic sanctuary designed for deep academic work. Pair scientifically-backed 25/5 Pomodoro intervals with curated ambient soundscapes to maintain high-retention focus without mental fatigue.',
+        bullets: [
+          '25-minute Pomodoro focus sprints with gentle break transitions',
+          'Curated ambient audio soundscapes: Library silence, rain, and campus cafe',
+          'Real-time flow state and consecutive streak tracking',
         ],
+        sprintBadge: 'Pomodoro Sprint 3 of 4',
+        courseName: 'MSIS207 · Web Application Development',
+        courseTopic: 'Chapter 4: RESTful API Architecture & Authentication',
+        btnStart: 'Start Timer',
+        btnPause: 'Pause Timer',
+        btnReset: 'Reset',
+        soundscapes: ['🎧 Library Silence', '🌧️ Gentle Rain', '☕ Campus Cafe'],
+        flowRate: 'Flow State: 94%',
       },
-    },
-    floatingPopups: {
-      synced: '⚡ 11 Classes Auto-Scheduled',
-      syncedSub: 'Portal & Google Cal Sync',
-      onTime: '🎯 94.2% On-Time Completion',
-      onTimeSub: 'Academic Pace: Grade A',
-      focus: '⏱️ 4x Pomodoro Streak · 92% Flow',
-      focusSub: 'Active Study Sprint',
-    },
-    demos: {
-      tag: 'INTERACTIVE SOFTWARE PREVIEW',
-      title: 'Real tools designed for high-performance semesters.',
-      tabTimetable: 'Weekly Timetable Sync',
-      tabFocus: 'Pomodoro Study Room',
-      tabDeadlines: 'Course Milestones',
-      // Timetable Demo
-      syncBtn: '⚡ Simulate .ICS Import',
-      syncDone: '11 Classes Synced · Zero Collision',
-      syncRoomLabel: 'Room C206 • 13:00 – 16:15',
-      // Focus Demo
-      pomoCourse: 'MSIS207 · Web Application Development',
-      pomoSprint: 'Pomodoro Sprint 3 of 4',
-      pomoStart: 'Start Timer',
-      pomoPause: 'Pause Timer',
-      pomoReset: 'Reset',
-      soundscapes: ['🎧 Library Silence', '🌧️ Gentle Rain', '☕ Campus Cafe'],
-    },
-    pillars: {
-      tag: 'CORE MODULES',
-      title: 'Engineered for simplicity and speed.',
-      card1Title: 'Active Hours Scheduling',
-      card1Desc:
-        'Structure lectures, lab practicals, and independent study blocks around your natural peak productive hours.',
-      card2Title: 'Instant .ICS Timetable Parser',
-      card2Desc:
-        'Upload your Google Calendar or university portal file. Automatically deduplicates course codes and maps classroom locations.',
-      card3Title: 'Clean Focus Timer',
-      card3Desc:
-        'Built-in customizable Pomodoro study intervals with minimal distraction and ambient soundscapes.',
+      deadlines: {
+        tag: '03 / COURSE MILESTONES & DEADLINE RADAR',
+        title: 'Master course syllabi. Eliminate late assignment submissions.',
+        desc: 'Keep high-stakes coursework under control with proactive priority queues. From urgent midnight programming labs to semester milestones, track every deliverable against your personal academic pace.',
+        bullets: [
+          'Priority triage: Critical (Tonight), Approaching (2 Days), Scheduled',
+          'Proactive completion pacing (94.2% on-time submission rate · Grade A pace)',
+          'Direct alignment with weekly course syllabi and lab deliverables',
+        ],
+        queueStatus: '3 Pending Assignments · 94.2% On-Time Pace',
+        items: [
+          { id: 1, code: 'MSIS207', title: 'Lab 4 · Express CRUD & REST API', due: 'Tonight · 23:59', badge: 'CRITICAL', badgeColor: 'text-rose-500 bg-rose-500/15 border-rose-500/30' },
+          { id: 2, code: 'CS5433', title: 'Assignment 2 · 2PC Distributed DB Protocol', due: 'In 2 days · 17:00', badge: 'WARNING', badgeColor: 'text-amber-500 bg-amber-500/15 border-amber-500/30' },
+          { id: 3, code: 'STAT3013', title: 'Quiz 3 · Hypothesis Testing & ANOVA', due: 'Saturday · 08:00', badge: 'SCHEDULED', badgeColor: 'text-primary bg-primary/15 border-primary/30' },
+        ],
+        markDone: 'Mark Done',
+        completedLabel: 'Completed',
+      },
     },
     finale: {
       title: 'Ready for your best academic term?',
@@ -129,83 +100,56 @@ const HOME_COPY = {
       ctaPrimary: 'Đăng nhập Không gian',
       ctaSecondary: 'Tạo tài khoản miễn phí',
     },
-    stats: [
-      { num: '100%', label: 'Tự động bóc tách .ICS', dot: 'bg-primary' },
-      { num: '25 phút', label: 'Phiên học Pomodoro tối ưu', dot: 'bg-emerald-400' },
-      { num: '0 Ca', label: 'Trùng lịch xếp môn học', dot: 'bg-primary' },
-      { num: '60 FPS', label: 'Trải nghiệm mượt mà', dot: 'bg-sky-400' },
-    ],
-    engines: {
-      scanner: {
-        badge: 'QUÉT .ICS THỜI GIAN THỰC',
-        title: 'Bộ Xử Lý Lịch Trình Tự Động',
-        desc: 'Tự động bóc tách giảng đường, phòng Lab và giờ học từ file lịch đại học, chuẩn hóa 100% không trùng giờ.',
-        file: 'TKB_HK1_2026-2027.ics',
-        scanning: 'Đang rà soát phòng học & mã môn...',
-        synced: '✓ Tự xếp 11 ca học · 0 ca trùng lịch',
-        sampleCourses: [
-          { code: 'MSIS207', name: 'Phát triển Web', room: 'E32', time: 'Thứ 2 · 07:30' },
-          { code: 'CS5433', name: 'CSDL Phân tán', room: 'C206', time: 'Thứ 4 · 13:00' },
-          { code: 'STAT3013', name: 'Thống kê ứng dụng', room: 'B5.04', time: 'Thứ 7 · 07:30' },
+    features: {
+      timetable: {
+        tag: '01 / ĐỒNG BỘ THỜI KHÓA BIỂU & .ICS',
+        title: 'Xếp lịch học tự động. Giải quyết triệt để trùng lịch.',
+        desc: 'Không bao giờ phải nhập lịch thủ công từng môn hay tra cứu phòng học. Chỉ cần kéo thả file .ics từ cổng trường hoặc Google Calendar, hệ thống sẽ tự động bóc tách mã môn, phòng học, giảng đường và thời gian học tức thì.',
+        bullets: [
+          'Bóc tách file .ics siêu tốc dưới 0.2 giây, tự chuẩn hóa mã môn',
+          'Tự động định vị phòng học & giảng đường (E32, C206, B5.04)',
+          'Tránh xung đột lịch học và cân đối khung giờ sinh hoạt cá nhân',
         ],
+        fileName: 'TKB_HK1_2026-2027.ics',
+        syncStatus: 'Đã xếp 11 ca học · 0 ca trùng giờ',
+        syncBtn: '⚡ Thử nạp file .ICS',
       },
-      soundwave: {
-        badge: 'ÂM HỌC TẬP TRUNG',
-        title: 'Sóng Âm Equalizer & Pomodoro',
-        desc: 'Mô phỏng sóng âm tự nhiên kết hợp chu kỳ đếm ngược 25/5 giúp duy trì sự tỉnh táo và tập trung cao độ.',
-        status: 'Nhịp sóng âm học tập · 60 FPS',
-        bpm: 'Cộng hưởng tần số 432 Hz',
+      focus: {
+        tag: '02 / PHÒNG TẬP TRUNG CHUYÊN SÂU & POMODORO',
+        title: 'Không gian tĩnh lặng. Nhịp Pomodoro tối đa hiệu suất.',
+        desc: 'Bước vào không gian học tập loại bỏ hoàn toàn xao nhãng. Kết hợp chu kỳ Pomodoro 25/5 khoa học cùng hệ thống âm thanh tự nhiên giúp não bộ duy trì trạng thái tập trung sâu suốt buổi học.',
+        bullets: [
+          'Phiên tập trung 25 phút chuẩn khoa học kèm chuông báo nhẹ nhàng',
+          'Âm thanh nền chọn lọc: Thư viện tĩnh lặng, Mưa rào, Cafe sinh viên',
+          'Theo dõi trạng thái dòng chảy (Flow State) và chuỗi học liên tục',
+        ],
+        sprintBadge: 'Phiên Pomodoro 3 trên 4',
+        courseName: 'MSIS207 · Phát triển ứng dụng Web',
+        courseTopic: 'Chương 4: Kiến trúc RESTful API & Xác thực người dùng',
+        btnStart: 'Bắt đầu',
+        btnPause: 'Tạm dừng',
+        btnReset: 'Đặt lại',
         soundscapes: ['🎧 Thư viện tĩnh lặng', '🌧️ Mưa êm dịu', '☕ Cafe học bài'],
+        flowRate: 'Trạng thái tập trung: 94%',
       },
-      radar: {
-        badge: 'RADAR DỰ BÁO TIẾN ĐỘ',
-        title: 'Quét Radar Hạn Nộp & Đề Cương',
-        desc: 'Quét 360° phát hiện sớm các hạn chót bài tập, bài thuyết trình và kiểm tra giữa kỳ để luôn chủ động.',
-        target: 'Lab 4 · Express CRUD API',
-        due: 'Hạn chót: Tối nay · 23:59',
-        efficiency: '94.2% Tỷ lệ nộp bài đúng hạn',
-        milestones: [
-          { name: 'Lab 4 - Express CRUD', pct: 90, urgent: true },
-          { name: 'Assignment 2 - 2PC Protocol', pct: 60, urgent: false },
+      deadlines: {
+        tag: '03 / QUẢN TRỊ DEADLINE & ĐỀ CƯƠNG',
+        title: 'Làm chủ đề cương môn học. 100% không trễ hạn nộp bài.',
+        desc: 'Kiểm soát khối lượng bài tập lớn, đồ án chuyên ngành và bài kiểm tra theo hàng đợi ưu tiên thông minh. Cảnh báo sớm theo thời gian thực giúp bạn hoàn thành bài tập đúng hạn với điểm số tối đa.',
+        bullets: [
+          'Phân luồng ưu tiên: Khẩn cấp (Tối nay), Cận kề (2 ngày), Dự kiến',
+          'Đo lường tiến độ học tập chủ động (94.2% nộp bài đúng hạn - Hạng A)',
+          'Gắn liền trực tiếp với đề cương môn học của từng giảng viên',
         ],
+        queueStatus: '3 Bài tập chờ nộp · Tỷ lệ đúng hạn 94.2%',
+        items: [
+          { id: 1, code: 'MSIS207', title: 'Lab 4 · Express CRUD & REST API', due: 'Tối nay · 23:59', badge: 'KHẨN CẤP', badgeColor: 'text-rose-500 bg-rose-500/15 border-rose-500/30' },
+          { id: 2, code: 'CS5433', title: 'Bài tập 2 · Giao thức 2PC CSDL Phân tán', due: 'Còn 2 ngày · 17:00', badge: 'CẬN KỀ', badgeColor: 'text-amber-500 bg-amber-500/15 border-amber-500/30' },
+          { id: 3, code: 'STAT3013', title: 'Kiểm tra 3 · Kiểm định giả thuyết & ANOVA', due: 'Thứ 7 · 08:00', badge: 'DỰ KIẾN', badgeColor: 'text-primary bg-primary/15 border-primary/30' },
+        ],
+        markDone: 'Đánh dấu xong',
+        completedLabel: 'Đã hoàn thành',
       },
-    },
-    floatingPopups: {
-      synced: '⚡ 11 Ca học tự động xếp lịch',
-      syncedSub: 'Đồng bộ Google Cal & Portal',
-      onTime: '🎯 94.2% Tỷ lệ nộp bài đúng hạn',
-      onTimeSub: 'Xếp loại học tập: Loại A',
-      focus: '⏱️ 4x Pomodoro Streak · 92% Flow',
-      focusSub: 'Phiên tập trung chuyên sâu',
-    },
-    demos: {
-      tag: 'TRẢI NGHIỆM TƯƠNG TÁC PHẦN MỀM',
-      title: 'Công cụ thực tế hỗ trợ kết quả học tập tối đa.',
-      tabTimetable: 'Đồng bộ Thời khóa biểu',
-      tabFocus: 'Phòng Tập trung Pomodoro',
-      tabDeadlines: 'Tiến độ Đề cương & Hạn nộp',
-      syncBtn: '⚡ Thử nạp file .ICS',
-      syncDone: 'Đã xếp 11 ca học · Không trùng giờ',
-      syncRoomLabel: 'Phòng C206 • 13:00 – 16:15',
-      pomoCourse: 'MSIS207 · Phát triển ứng dụng Web',
-      pomoSprint: 'Phiên Pomodoro 3 trên 4',
-      pomoStart: 'Bắt đầu',
-      pomoPause: 'Tạm dừng',
-      pomoReset: 'Đặt lại',
-      soundscapes: ['🎧 Thư viện tĩnh lặng', '🌧️ Mưa êm dịu', '☕ Cafe học bài'],
-    },
-    pillars: {
-      tag: 'TÍNH NĂNG NÒNG CỐT',
-      title: 'Tối giản, mượt mà và trực quan.',
-      card1Title: 'Phân bổ Khung giờ Hoạt động',
-      card1Desc:
-        'Sắp xếp ca học giảng đường, phòng Lab và thời gian tự học theo nhịp thời gian sinh hoạt thực tế của bạn.',
-      card2Title: 'Bóc tách File .ICS Tức thì',
-      card2Desc:
-        'Kéo thả file từ Google Calendar hoặc cổng trường. Tự động chuẩn hóa mã môn, phòng học và thời gian bắt đầu/kết thúc.',
-      card3Title: 'Đồng hồ Pomodoro Tập trung',
-      card3Desc:
-        'Theo dõi phiên học 25 phút chuyên sâu với âm thanh nền hỗ trợ giữ nhịp tập trung bền bỉ.',
     },
     finale: {
       title: 'Sẵn sàng nâng cao năng suất học tập?',
@@ -217,11 +161,11 @@ const HOME_COPY = {
 };
 
 const DEMO_CLASSES = [
-  { day: 'Mon', code: 'PE231', name: 'Physical Education', room: 'Field A', time: '15:25 – 17:00', color: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' },
-  { day: 'Tue', code: 'MATH201', name: 'Calculus II', room: 'Room C302', time: '09:45 – 11:45', color: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400' },
-  { day: 'Wed', code: 'MSIS207', name: 'Web App Development', room: 'Room C206', time: '13:00 – 16:15', color: 'border-primary/40 bg-primary/10 text-primary' },
-  { day: 'Thu', code: 'CS5433', name: 'Distributed Databases', room: 'Room B5.04', time: '13:00 – 17:00', color: 'border-teal-500/30 bg-teal-500/10 text-teal-700 dark:text-teal-400' },
-  { day: 'Sat', code: 'STAT3013', name: 'Statistical Analysis', room: 'Room B5.04', time: '07:30 – 11:30', color: 'border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-400' },
+  { day: 'Mon', dayVi: 'T2', code: 'PE231', nameEn: 'Physical Education', nameVi: 'Giáo dục thể chất', room: 'Field A', time: '15:25 – 17:00', color: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' },
+  { day: 'Tue', dayVi: 'T3', code: 'MATH201', nameEn: 'Calculus II', nameVi: 'Giải tích II', room: 'Room C302', time: '09:45 – 11:45', color: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400' },
+  { day: 'Wed', dayVi: 'T4', code: 'MSIS207', nameEn: 'Web App Development', nameVi: 'Phát triển ứng dụng Web', room: 'Room C206', time: '13:00 – 16:15', color: 'border-primary/40 bg-primary/10 text-primary' },
+  { day: 'Thu', dayVi: 'T5', code: 'CS5433', nameEn: 'Distributed Databases', nameVi: 'CSDL Phân tán', room: 'Room B5.04', time: '13:00 – 17:00', color: 'border-teal-500/30 bg-teal-500/10 text-teal-700 dark:text-teal-400' },
+  { day: 'Sat', dayVi: 'T7', code: 'STAT3013', nameEn: 'Statistical Analysis', nameVi: 'Phân tích thống kê', room: 'Room B5.04', time: '07:30 – 11:30', color: 'border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-400' },
 ];
 
 export function HomePage() {
@@ -229,29 +173,15 @@ export function HomePage() {
   const t = HOME_COPY[lang] || HOME_COPY.en;
   const rootRef = useRef(null);
 
-  // Demo interactive states
-  const [activeTab, setActiveTab] = useState('timetable');
-  const [autoCycle, setAutoCycle] = useState(true);
+  // Interactive states for each dedicated section
+  const [syncedKey, setSyncedKey] = useState(1);
   const [timerRunning, setTimerRunning] = useState(true);
   const [seconds, setSeconds] = useState(21 * 60 + 45); // 21:45
   const [selectedSound, setSelectedSound] = useState(0);
-  const [syncedKey, setSyncedKey] = useState(1);
+  const [completedItems, setCompletedItems] = useState({});
   const [taglineIndex, setTaglineIndex] = useState(0);
 
-  // Auto-cycle through preview tabs every 4.2s (with pause/resume control)
-  useEffect(() => {
-    if (!autoCycle) return undefined;
-    const tabList = ['timetable', 'focus', 'deadlines'];
-    const timer = window.setInterval(() => {
-      setActiveTab((curr) => {
-        const nextIdx = (tabList.indexOf(curr) + 1) % tabList.length;
-        return tabList[nextIdx];
-      });
-    }, 4200);
-    return () => window.clearInterval(timer);
-  }, [autoCycle]);
-
-  // Cycling kinetic tagline index
+  // Cycling kinetic tagline index in Hero
   useEffect(() => {
     const timer = window.setInterval(() => {
       setTaglineIndex((idx) => (idx + 1) % t.hero.taglines.length);
@@ -259,7 +189,7 @@ export function HomePage() {
     return () => window.clearInterval(timer);
   }, [t.hero.taglines.length]);
 
-  // Timer countdown
+  // Pomodoro countdown timer in Focus Section
   useEffect(() => {
     if (!timerRunning) return undefined;
     const interval = window.setInterval(() => {
@@ -302,59 +232,22 @@ export function HomePage() {
           { y: 12, autoAlpha: 0 },
           { y: 0, autoAlpha: 1, duration: 0.35, clearProps: 'opacity,visibility,transform' },
           '-=0.25'
-        )
-        .fromTo(
-          '.home-visual-engines',
-          { y: 20, autoAlpha: 0 },
-          { y: 0, autoAlpha: 1, duration: 0.45, clearProps: 'opacity,visibility,transform' },
-          '-=0.2'
-        )
-        .fromTo(
-          '.home-interactive-stage',
-          { y: 24, scale: 0.97, autoAlpha: 0 },
-          { y: 0, scale: 1, autoAlpha: 1, duration: 0.55, ease: 'power2.out', clearProps: 'opacity,visibility,transform' },
-          '-=0.25'
         );
 
-      // Gentle floating sine motion for floating popups (GPU compositor only)
-      gsap.to('.float-popup-1', {
-        y: -6,
-        duration: 3.2,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      });
-
-      gsap.to('.float-popup-2', {
-        y: 6,
-        duration: 3.8,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      });
-
-      gsap.to('.float-popup-3', {
-        y: -5,
-        duration: 4.2,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      });
-
-      // Scroll reveals with once: true to prevent scroll FPS drop
+      // Scroll reveals with once: true for 60fps performance
       gsap.utils.toArray('.home-scroll-reveal').forEach((el) => {
         gsap.fromTo(
           el,
-          { y: 22, autoAlpha: 0 },
+          { y: 26, autoAlpha: 0 },
           {
             y: 0,
             autoAlpha: 1,
-            duration: 0.45,
+            duration: 0.5,
             ease: 'power2.out',
             clearProps: 'opacity,visibility,transform',
             scrollTrigger: {
               trigger: el,
-              start: 'top 88%',
+              start: 'top 85%',
               once: true,
             },
           }
@@ -367,7 +260,7 @@ export function HomePage() {
 
   return (
     <div ref={rootRef} className="min-h-screen bg-bg text-text selection:bg-primary/30 selection:text-text overflow-x-hidden font-sans">
-      {/* Top Navbar: Clean Brand + Action Controls (No Studio/Program pill) */}
+      {/* Top Navbar */}
       <header className="sticky top-0 z-50 w-full px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-border bg-surface/75 backdrop-blur-2xl">
         <Link to="/" className="flex items-center gap-2.5 group">
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/15 text-primary group-hover:scale-105 transition-transform shadow-xs">
@@ -395,9 +288,9 @@ export function HomePage() {
         </div>
       </header>
 
-      <main className="space-y-20 sm:space-y-28 pb-24">
-        {/* HERO SECTION */}
-        <section className="mx-auto max-w-6xl px-4 pt-10 sm:px-8 sm:pt-16 text-center">
+      <main className="space-y-12 sm:space-y-16 pb-24">
+        {/* HERO SECTION: Clean, spacious, Apple-like minimalism */}
+        <section className="mx-auto max-w-5xl px-4 pt-12 sm:px-8 sm:pt-20 text-center">
           <div className="home-hero-badge inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-xs font-bold text-primary">
             <span className="h-1.5 w-1.5 rounded-full bg-primary" />
             <span>{t.hero.badge}</span>
@@ -437,375 +330,162 @@ export function HomePage() {
               {t.hero.ctaSecondary}
             </Link>
           </div>
+        </section>
 
-          {/* VISUAL WORKFLOW ENGINES (Replaces static 4-box ticker with live animated micro-simulations) */}
-          <div className="home-visual-engines mt-12 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto text-left">
-            {/* ENGINE 1: Live .ICS Scanner & Conflict Detector */}
-            <div className="glass-card rounded-3xl p-5 border border-border hover:border-primary/40 transition-all flex flex-col justify-between shadow-md group">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
-                    <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
-                    {t.engines.scanner.badge}
-                  </span>
-                  <span className="text-[10px] font-bold text-muted uppercase">60 FPS Parser</span>
-                </div>
-                <h3 className="text-base font-extrabold text-text mt-3">{t.engines.scanner.title}</h3>
-                <p className="text-xs text-muted mt-1 leading-relaxed">{t.engines.scanner.desc}</p>
+        {/* CORE FEATURE 1: DEDICATED TIMETABLE & .ICS SYNC ZONE */}
+        <section className="home-scroll-reveal mx-auto max-w-6xl px-4 sm:px-8 py-12 sm:py-20 border-t border-border">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            {/* Left Column: Description & Highlights */}
+            <div className="lg:col-span-5 space-y-5 text-left">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-[11px] font-extrabold uppercase tracking-wider text-primary">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                <span>{t.features.timetable.tag}</span>
               </div>
 
-              {/* Live Laser Scanner Simulation Viewport */}
-              <div className="relative mt-4 h-36 rounded-2xl bg-black/60 dark:bg-black/80 border border-primary/25 overflow-hidden p-3 flex flex-col justify-between shadow-inner">
-                {/* Sweeping Laser Beam (GPU Composited) */}
-                <div className="pointer-events-none absolute left-0 right-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_14px_#dbef90] animate-laser z-20" />
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-text leading-tight">
+                {t.features.timetable.title}
+              </h2>
 
-                {/* Calendar File Node Header */}
-                <div className="flex items-center justify-between text-[11px] font-mono text-muted border-b border-white/10 pb-1.5">
-                  <span className="flex items-center gap-1.5 text-text font-semibold">
-                    <span>📅</span>
-                    <span className="truncate max-w-[150px]">{t.engines.scanner.file}</span>
+              <p className="text-sm sm:text-base text-muted leading-relaxed">
+                {t.features.timetable.desc}
+              </p>
+
+              {/* Bullet Points with Checkmark Circles */}
+              <div className="space-y-3 pt-2">
+                {t.features.timetable.bullets.map((b, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold mt-0.5">
+                      ✓
+                    </span>
+                    <span className="text-xs sm:text-sm font-semibold text-text/90">{b}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-3">
+                <button
+                  type="button"
+                  onClick={() => setSyncedKey((k) => k + 1)}
+                  className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-xs font-bold text-primary-fg shadow-sm hover:opacity-90 transition-opacity cursor-pointer"
+                >
+                  {t.features.timetable.syncBtn}
+                </button>
+              </div>
+            </div>
+
+            {/* Right Column: Large Timetable Interactive Mockup Card */}
+            <div className="lg:col-span-7">
+              <div className="glass-card rounded-[2rem] p-5 sm:p-7 shadow-2xl border border-border text-left">
+                {/* Card Header */}
+                <div className="flex flex-wrap items-center justify-between border-b border-border pb-4 gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/15 text-primary text-base">
+                      📅
+                    </span>
+                    <div>
+                      <p className="text-xs sm:text-sm font-extrabold text-text">{t.features.timetable.fileName}</p>
+                      <p className="text-[10px] sm:text-[11px] text-muted">Google Calendar & Portal iCal Protocol</p>
+                    </div>
+                  </div>
+                  <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                    {t.features.timetable.syncStatus}
                   </span>
-                  <span className="text-primary text-[10px] font-bold">42 KB · iCal</span>
                 </div>
 
-                {/* Animated Sample Course Pills appearing */}
-                <div className="space-y-1.5 my-auto py-1">
-                  {t.engines.scanner.sampleCourses.map((c) => (
+                {/* 5-Day Classes Grid */}
+                <div key={syncedKey} className="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-5">
+                  {DEMO_CLASSES.map((c) => (
                     <div
                       key={c.code}
-                      className="flex items-center justify-between rounded-lg bg-surface/10 px-2 py-1 text-[11px] border border-white/5 backdrop-blur-xs transition-colors hover:border-primary/40"
+                      className={`rounded-2xl border p-3 flex flex-col justify-between transition-transform hover:scale-[1.02] shadow-xs ${c.color}`}
                     >
-                      <span className="font-bold text-primary">{c.code}</span>
-                      <span className="text-muted text-[10px]">{c.time}</span>
-                      <span className="text-text font-medium text-[10px] opacity-90">📍 {c.room}</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wider">
+                          {lang === 'vi' ? c.dayVi : c.day}
+                        </span>
+                        <span className="rounded bg-black/20 dark:bg-white/20 px-1.5 py-0.5 text-[10px] font-extrabold">
+                          {c.code}
+                        </span>
+                      </div>
+                      <div className="my-3">
+                        <p className="text-xs font-bold text-text truncate">
+                          {lang === 'vi' ? c.nameVi : c.nameEn}
+                        </p>
+                        <p className="text-[11px] opacity-85 mt-0.5">📍 {c.room}</p>
+                      </div>
+                      <span className="text-[10px] font-semibold opacity-90">{c.time}</span>
                     </div>
                   ))}
-                </div>
-
-                {/* Bottom Auto-Resolved Badge */}
-                <div className="pt-1 border-t border-white/10 flex items-center justify-between text-[10px]">
-                  <span className="font-bold text-emerald-400 flex items-center gap-1">
-                    <span>{t.engines.scanner.synced}</span>
-                  </span>
-                  <span className="text-muted font-mono">0ms Lag</span>
-                </div>
-              </div>
-            </div>
-
-            {/* ENGINE 2: Binaural Focus Equalizer Wave */}
-            <div className="glass-card rounded-3xl p-5 border border-border hover:border-primary/40 transition-all flex flex-col justify-between shadow-md group">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    {t.engines.soundwave.badge}
-                  </span>
-                  <span className="text-[10px] font-bold text-muted uppercase">{t.engines.soundwave.bpm}</span>
-                </div>
-                <h3 className="text-base font-extrabold text-text mt-3">{t.engines.soundwave.title}</h3>
-                <p className="text-xs text-muted mt-1 leading-relaxed">{t.engines.soundwave.desc}</p>
-              </div>
-
-              {/* Dynamic Equalizer Simulation Viewport */}
-              <div className="relative mt-4 h-36 rounded-2xl bg-black/60 dark:bg-black/80 border border-emerald-500/25 overflow-hidden p-3 flex flex-col justify-between items-center text-center shadow-inner">
-                {/* Center Pomodoro Aura */}
-                <div className="flex items-center justify-between w-full border-b border-white/10 pb-1.5 text-[11px]">
-                  <span className="text-text font-bold flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>25:00 Focus Sprint</span>
-                  </span>
-                  <span className="text-emerald-400 font-mono text-[10px] font-bold">Flow 94%</span>
-                </div>
-
-                {/* 14-Bar Animated Audio Equalizer (Compositor Transform ScaleY) */}
-                <div className="flex items-end justify-center gap-1.5 h-12 w-full px-2 my-auto">
-                  {[
-                    { h: 'h-6', delay: '0.1s' },
-                    { h: 'h-10', delay: '0.35s' },
-                    { h: 'h-5', delay: '0.15s' },
-                    { h: 'h-8', delay: '0.6s' },
-                    { h: 'h-11', delay: '0.2s' },
-                    { h: 'h-7', delay: '0.45s' },
-                    { h: 'h-12', delay: '0.8s' },
-                    { h: 'h-9', delay: '0.25s' },
-                    { h: 'h-11', delay: '0.5s' },
-                    { h: 'h-6', delay: '0.3s' },
-                    { h: 'h-8', delay: '0.7s' },
-                    { h: 'h-10', delay: '0.18s' },
-                    { h: 'h-5', delay: '0.4s' },
-                    { h: 'h-7', delay: '0.65s' },
-                  ].map((bar, i) => (
-                    <div
-                      key={i}
-                      className={`w-1.5 rounded-full bg-gradient-to-t from-accent-deep via-primary to-emerald-400 animate-equalizer ${bar.h}`}
-                      style={{ animationDelay: bar.delay, willChange: 'transform' }}
-                    />
-                  ))}
-                </div>
-
-                {/* Soundscape Status */}
-                <div className="flex items-center justify-center gap-1.5 w-full pt-1 border-t border-white/10 text-[10px] text-muted">
-                  <span className="truncate font-semibold text-text">{t.engines.soundwave.status}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* ENGINE 3: Predictive Milestone Radar Sweep */}
-            <div className="glass-card rounded-3xl p-5 border border-border hover:border-primary/40 transition-all flex flex-col justify-between shadow-md group">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
-                    <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
-                    {t.engines.radar.badge}
-                  </span>
-                  <span className="text-[10px] font-bold text-rose-500 uppercase">Alert Active</span>
-                </div>
-                <h3 className="text-base font-extrabold text-text mt-3">{t.engines.radar.title}</h3>
-                <p className="text-xs text-muted mt-1 leading-relaxed">{t.engines.radar.desc}</p>
-              </div>
-
-              {/* 360-degree Radar Sweep Viewport */}
-              <div className="relative mt-4 h-36 rounded-2xl bg-black/60 dark:bg-black/80 border border-primary/25 overflow-hidden p-3 flex items-center justify-between gap-3 shadow-inner">
-                {/* Circular Radar Screen */}
-                <div className="relative h-28 w-28 rounded-full border border-primary/30 bg-black/50 flex items-center justify-center overflow-hidden shrink-0">
-                  {/* Concentric distance rings */}
-                  <div className="absolute h-20 w-20 rounded-full border border-primary/20" />
-                  <div className="absolute h-12 w-12 rounded-full border border-primary/20" />
-                  <div className="absolute h-full w-[1px] bg-primary/15" />
-                  <div className="absolute w-full h-[1px] bg-primary/15" />
-
-                  {/* Rotating Radar Sweep Needle (GPU Composited) */}
-                  <div className="pointer-events-none absolute inset-0 animate-radar">
-                    <div className="h-full w-1/2 bg-gradient-to-r from-transparent via-primary/15 to-primary/45 rounded-l-full origin-right" />
-                  </div>
-
-                  {/* Blinking Target Blips */}
-                  <div className="absolute top-4 right-5 h-2 w-2 rounded-full bg-rose-500 animate-ping" />
-                  <div className="absolute top-4 right-5 h-2 w-2 rounded-full bg-rose-500 shadow-[0_0_8px_#f43f5e]" />
-                  <div className="absolute bottom-6 left-6 h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_#fbbf24]" />
-                  <div className="absolute top-10 left-4 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_#dbef90]" />
-                </div>
-
-                {/* Milestone Targets List */}
-                <div className="flex-1 space-y-2 text-left">
-                  <div className="rounded-lg bg-rose-500/10 border border-rose-500/25 p-1.5">
-                    <div className="flex items-center justify-between text-[10px]">
-                      <span className="font-bold text-rose-400">URGENT</span>
-                      <span className="text-muted font-mono">{t.engines.radar.due}</span>
-                    </div>
-                    <p className="text-xs font-bold text-text truncate mt-0.5">{t.engines.radar.target}</p>
-                  </div>
-
-                  {/* Pace track */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-[10px] text-muted font-semibold">
-                      <span>Pace Progress</span>
-                      <span className="text-primary font-bold">94.2%</span>
-                    </div>
-                    <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
-                      <div className="h-full w-[94.2%] rounded-full bg-gradient-to-r from-accent-deep via-primary to-emerald-400" />
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
           </div>
+        </section>
 
-          {/* INTERACTIVE SOFTWARE DEMO PREVIEW (WITH FLOATING MODERN POPUPS) */}
-          <div className="home-interactive-stage relative mx-auto mt-14 max-w-5xl">
-            {/* FLOATING POPUP 1 (Top-Left: Timetable Sync) */}
-            <div className="float-popup-1 gpu-layer absolute -top-6 -left-2 sm:-left-8 z-30 hidden md:flex items-center gap-2.5 glass-card rounded-2xl px-4 py-2.5 border border-primary/40 shadow-xl">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 text-primary text-sm font-bold">
-                ⚡
-              </span>
-              <div className="text-left">
-                <p className="text-xs font-bold text-text">{t.floatingPopups.synced}</p>
-                <p className="text-[10px] text-muted">{t.floatingPopups.syncedSub}</p>
-              </div>
-            </div>
+        {/* CORE FEATURE 2: DEDICATED DEEP FOCUS STUDIO ZONE */}
+        <section className="home-scroll-reveal mx-auto max-w-6xl px-4 sm:px-8 py-12 sm:py-20 border-t border-border">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            {/* Left Column: Focus Studio Interactive Player Widget */}
+            <div className="lg:col-span-7 order-2 lg:order-1">
+              <div className="glass-card rounded-[2rem] p-6 sm:p-8 shadow-2xl border border-border text-left relative overflow-hidden">
+                {/* Radiant blooming aura glow behind timer */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
 
-            {/* FLOATING POPUP 2 (Top-Right: On-Time Rate) */}
-            <div className="float-popup-2 gpu-layer absolute -top-7 -right-2 sm:-right-8 z-30 hidden md:flex items-center gap-2.5 glass-card rounded-2xl px-4 py-2.5 border border-primary/40 shadow-xl">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-bold">
-                🎯
-              </span>
-              <div className="text-left">
-                <p className="text-xs font-bold text-text">{t.floatingPopups.onTime}</p>
-                <p className="text-[10px] text-muted">{t.floatingPopups.onTimeSub}</p>
-              </div>
-            </div>
-
-            {/* FLOATING POPUP 3 (Bottom-Right: Pomodoro Streak) */}
-            <div className="float-popup-3 gpu-layer absolute -bottom-6 right-4 sm:right-10 z-30 hidden md:flex items-center gap-2.5 glass-card rounded-2xl px-4 py-2 border border-primary/40 shadow-xl">
-              <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/20 text-primary text-xs font-bold">
-                ⏱️
-              </span>
-              <div className="text-left">
-                <p className="text-xs font-bold text-text">{t.floatingPopups.focus}</p>
-                <p className="text-[10px] text-muted">{t.floatingPopups.focusSub}</p>
-              </div>
-            </div>
-
-            {/* Demo Switcher Pills with Auto-Play Loop Controller */}
-            <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-              <button
-                type="button"
-                onClick={() => setActiveTab('timetable')}
-                className={`rounded-full px-5 py-2 text-xs font-bold transition-all ${
-                  activeTab === 'timetable'
-                    ? 'bg-text text-bg dark:bg-white dark:text-black shadow-md'
-                    : 'border border-border bg-surface text-muted hover:text-text'
-                }`}
-              >
-                {t.demos.tabTimetable}
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('focus')}
-                className={`rounded-full px-5 py-2 text-xs font-bold transition-all ${
-                  activeTab === 'focus'
-                    ? 'bg-text text-bg dark:bg-white dark:text-black shadow-md'
-                    : 'border border-border bg-surface text-muted hover:text-text'
-                }`}
-              >
-                {t.demos.tabFocus}
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('deadlines')}
-                className={`rounded-full px-5 py-2 text-xs font-bold transition-all ${
-                  activeTab === 'deadlines'
-                    ? 'bg-text text-bg dark:bg-white dark:text-black shadow-md'
-                    : 'border border-border bg-surface text-muted hover:text-text'
-                }`}
-              >
-                {t.demos.tabDeadlines}
-              </button>
-
-              {/* Auto-Play Toggle Pill */}
-              <button
-                type="button"
-                onClick={() => setAutoCycle((c) => !c)}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-semibold border transition-all ${
-                  autoCycle
-                    ? 'border-primary/50 bg-primary/10 text-primary shadow-xs'
-                    : 'border-border bg-surface text-muted hover:text-text'
-                }`}
-                title={autoCycle ? 'Pause Auto-Play' : 'Resume Auto-Play'}
-              >
-                <span className={`h-2 w-2 rounded-full ${autoCycle ? 'bg-primary animate-ping' : 'bg-muted'}`} />
-                <span>{autoCycle ? (lang === 'vi' ? 'Tự động chạy' : 'Auto-Cycling') : (lang === 'vi' ? 'Tạm dừng' : 'Paused')}</span>
-              </button>
-            </div>
-
-            {/* Software Showcase Frame with Frosted Glass */}
-            <div className="glass-card rounded-[2.25rem] p-4 sm:p-7 shadow-2xl text-left border border-border">
-              {/* Window Header */}
-              <div className="flex items-center justify-between border-b border-border pb-3 px-2">
-                <div className="flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full bg-border" />
-                  <span className="h-3 w-3 rounded-full bg-border" />
-                  <span className="h-3 w-3 rounded-full bg-border" />
-                  <span className="ml-2 text-xs font-semibold text-muted">SFSH Web Workspace · Urbanist</span>
-                </div>
-                <span className="text-xs font-bold text-primary flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                  <span>Live Interactive Preview</span>
-                </span>
-              </div>
-
-              {/* DEMO 1: WEEKLY TIMETABLE SIMULATOR */}
-              {activeTab === 'timetable' && (
-                <div className="pt-5 space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-base font-bold text-text">TKB_HK1_2026-2027.ics</h3>
-                      <p className="text-xs text-muted">Google Calendar & Portal Schedule Sync</p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-primary">{t.demos.syncDone}</span>
-                      <button
-                        type="button"
-                        onClick={() => setSyncedKey((k) => k + 1)}
-                        className="rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-fg shadow-xs hover:opacity-90 transition-opacity"
-                      >
-                        {t.demos.syncBtn}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 5-Day Class Grid */}
-                  <div key={syncedKey} className="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-2">
-                    {DEMO_CLASSES.map((c) => (
-                      <div
-                        key={c.code}
-                        className={`rounded-2xl border p-3 flex flex-col justify-between transition-transform hover:scale-[1.02] shadow-xs ${c.color}`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold uppercase tracking-wider">{c.day}</span>
-                          <span className="rounded bg-black/20 dark:bg-white/20 px-1.5 py-0.5 text-[10px] font-extrabold">
-                            {c.code}
-                          </span>
-                        </div>
-                        <div className="my-3">
-                          <p className="text-xs font-bold text-text truncate">{c.name}</p>
-                          <p className="text-[11px] opacity-85 mt-0.5">📍 {c.room}</p>
-                        </div>
-                        <span className="text-[10px] font-semibold opacity-90">{c.time}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* DEMO 2: POMODORO STUDY TIMER */}
-              {activeTab === 'focus' && (
-                <div className="pt-5 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                  <div className="lg:col-span-5 flex flex-col items-center justify-center p-4">
-                    <div className="relative flex h-44 w-44 items-center justify-center rounded-full border-4 border-primary/30 bg-surface-2 shadow-inner">
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center relative z-10">
+                  {/* Circular Timer Ring */}
+                  <div className="sm:col-span-5 flex flex-col items-center justify-center">
+                    <div className="relative flex h-48 w-48 items-center justify-center rounded-full border-4 border-primary/30 bg-surface-2/80 shadow-inner luma-radiant-glow">
                       <div className="text-center">
-                        <span className="text-3xl font-black text-text tracking-tight">{formattedTimer}</span>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-primary mt-1">
-                          {timerRunning ? 'Focusing' : 'Paused'}
+                        <span className="text-4xl font-black text-text tracking-tight">{formattedTimer}</span>
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-primary mt-1.5 flex items-center justify-center gap-1.5">
+                          <span className={`h-2 w-2 rounded-full ${timerRunning ? 'bg-primary animate-ping' : 'bg-muted'}`} />
+                          <span>{timerRunning ? (lang === 'vi' ? 'Đang tập trung' : 'Focusing') : (lang === 'vi' ? 'Tạm dừng' : 'Paused')}</span>
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="lg:col-span-7 space-y-4">
+                  {/* Sprint Details & Soundscapes */}
+                  <div className="sm:col-span-7 space-y-4">
                     <div>
-                      <span className="rounded-md bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">
-                        {t.demos.pomoSprint}
+                      <span className="inline-flex rounded-md bg-primary/15 border border-primary/30 px-2.5 py-0.5 text-xs font-bold text-primary">
+                        {t.features.focus.sprintBadge}
                       </span>
-                      <h4 className="text-lg font-bold text-text mt-1.5">{t.demos.pomoCourse}</h4>
-                      <p className="text-xs text-muted">Chapter 4: RESTful API Architecture & Authentication</p>
+                      <h4 className="text-lg font-bold text-text mt-2">{t.features.focus.courseName}</h4>
+                      <p className="text-xs text-muted mt-0.5">{t.features.focus.courseTopic}</p>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
-                      {t.demos.soundscapes.map((sound, idx) => (
-                        <button
-                          key={sound}
-                          type="button"
-                          onClick={() => setSelectedSound(idx)}
-                          className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                            selectedSound === idx
-                              ? 'bg-primary text-primary-fg font-bold'
-                              : 'border border-border bg-surface text-muted hover:text-text'
-                          }`}
-                        >
-                          {sound}
-                        </button>
-                      ))}
+                    {/* Soundscape Pills */}
+                    <div className="space-y-1.5 pt-1">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                        {lang === 'vi' ? 'Âm thanh nền học tập:' : 'Acoustic Soundscapes:'}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {t.features.focus.soundscapes.map((sound, idx) => (
+                          <button
+                            key={sound}
+                            type="button"
+                            onClick={() => setSelectedSound(idx)}
+                            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                              selectedSound === idx
+                                ? 'bg-primary text-primary-fg font-bold shadow-xs'
+                                : 'border border-border bg-surface text-muted hover:text-text'
+                            }`}
+                          >
+                            {sound}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
+                    {/* Timer Action Controls */}
                     <div className="flex items-center gap-3 pt-2">
                       <button
                         type="button"
                         onClick={() => setTimerRunning((r) => !r)}
-                        className="rounded-full bg-primary px-6 py-2.5 text-xs font-bold text-primary-fg shadow-xs hover:opacity-90 transition-opacity"
+                        className="rounded-full bg-primary px-6 py-2.5 text-xs font-bold text-primary-fg shadow-xs hover:opacity-90 transition-opacity cursor-pointer"
                       >
-                        {timerRunning ? t.demos.pomoPause : t.demos.pomoStart}
+                        {timerRunning ? t.features.focus.btnPause : t.features.focus.btnStart}
                       </button>
                       <button
                         type="button"
@@ -813,98 +493,155 @@ export function HomePage() {
                           setSeconds(25 * 60);
                           setTimerRunning(true);
                         }}
-                        className="rounded-full border border-border bg-surface px-4 py-2.5 text-xs font-semibold text-muted hover:text-text transition-colors"
+                        className="rounded-full border border-border bg-surface px-4 py-2.5 text-xs font-semibold text-muted hover:text-text transition-colors cursor-pointer"
                       >
-                        {t.demos.pomoReset}
+                        {t.features.focus.btnReset}
                       </button>
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
+            </div>
 
-              {/* DEMO 3: COURSE MILESTONES & DEADLINE CHECKLIST */}
-              {activeTab === 'deadlines' && (
-                <div className="pt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    { code: 'MSIS207', task: 'Lab 4 · Express CRUD API', due: 'Tonight 20:00', badge: 'Urgent', status: '80% complete' },
-                    { code: 'CS5433', task: 'Assignment 2 · 2PC Protocol', due: 'In 3 days', badge: 'In Progress', status: '45% complete' },
-                    { code: 'STAT3013', task: 'Quiz 3 · Hypothesis Testing', due: 'Saturday 08:00', badge: 'Scheduled', status: 'Ready' },
-                  ].map((item) => (
-                    <div key={item.code} className="rounded-2xl border border-border bg-surface-2/60 p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="rounded bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">
-                          {item.code}
-                        </span>
-                        <span className="text-[10px] font-bold text-rose-500 uppercase">{item.badge}</span>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-text">{item.task}</h4>
-                        <p className="text-xs text-muted mt-0.5">Due: {item.due}</p>
-                      </div>
-                      <div className="pt-2 border-t border-border flex justify-between text-[11px] font-semibold text-muted">
-                        <span>Progress</span>
-                        <span className="text-primary font-bold">{item.status}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+            {/* Right Column: Description & Highlights */}
+            <div className="lg:col-span-5 space-y-5 text-left order-1 lg:order-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-[11px] font-extrabold uppercase tracking-wider text-primary">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                <span>{t.features.focus.tag}</span>
+              </div>
+
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-text leading-tight">
+                {t.features.focus.title}
+              </h2>
+
+              <p className="text-sm sm:text-base text-muted leading-relaxed">
+                {t.features.focus.desc}
+              </p>
+
+              {/* Bullet Points with Checkmark Circles */}
+              <div className="space-y-3 pt-2">
+                {t.features.focus.bullets.map((b, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold mt-0.5">
+                      ✓
+                    </span>
+                    <span className="text-xs sm:text-sm font-semibold text-text/90">{b}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
 
-        {/* 3 CORE PILLARS */}
-        <section className="home-scroll-reveal mx-auto max-w-6xl px-4 sm:px-8 space-y-8">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-primary">
-              {t.pillars.tag}
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-text">
-              {t.pillars.title}
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="glass-card rounded-3xl p-7 flex flex-col justify-between">
-              <div>
-                <span className="text-3xl">⏱️</span>
-                <h3 className="text-lg font-bold text-text mt-4">{t.pillars.card1Title}</h3>
-                <p className="text-xs sm:text-sm text-muted mt-2 leading-relaxed">{t.pillars.card1Desc}</p>
+        {/* CORE FEATURE 3: DEDICATED COURSE MILESTONES & DEADLINE RADAR ZONE */}
+        <section className="home-scroll-reveal mx-auto max-w-6xl px-4 sm:px-8 py-12 sm:py-20 border-t border-border">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            {/* Left Column: Description & Highlights */}
+            <div className="lg:col-span-5 space-y-5 text-left">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-[11px] font-extrabold uppercase tracking-wider text-primary">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                <span>{t.features.deadlines.tag}</span>
               </div>
-              <div className="pt-4 border-t border-border mt-6 flex justify-between text-xs text-primary font-bold">
-                <span>08:00 – 17:00</span>
-                <span>Active Hours</span>
+
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-text leading-tight">
+                {t.features.deadlines.title}
+              </h2>
+
+              <p className="text-sm sm:text-base text-muted leading-relaxed">
+                {t.features.deadlines.desc}
+              </p>
+
+              {/* Bullet Points with Checkmark Circles */}
+              <div className="space-y-3 pt-2">
+                {t.features.deadlines.bullets.map((b, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold mt-0.5">
+                      ✓
+                    </span>
+                    <span className="text-xs sm:text-sm font-semibold text-text/90">{b}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="glass-card rounded-3xl p-7 flex flex-col justify-between">
-              <div>
-                <span className="text-3xl">📅</span>
-                <h3 className="text-lg font-bold text-text mt-4">{t.pillars.card2Title}</h3>
-                <p className="text-xs sm:text-sm text-muted mt-2 leading-relaxed">{t.pillars.card2Desc}</p>
-              </div>
-              <div className="pt-4 border-t border-border mt-6 flex justify-between text-xs text-primary font-bold">
-                <span>.ICS Calendar Format</span>
-                <span>Auto-Parse</span>
-              </div>
-            </div>
+            {/* Right Column: Large Priority Deadline Queue Card */}
+            <div className="lg:col-span-7">
+              <div className="glass-card rounded-[2rem] p-5 sm:p-7 shadow-2xl border border-border text-left space-y-4">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-500/15 text-rose-500 text-sm font-bold">
+                      ⚡
+                    </span>
+                    <span className="text-xs sm:text-sm font-extrabold text-text">{t.features.deadlines.queueStatus}</span>
+                  </div>
+                  <span className="text-xs font-bold text-primary">Academic Pace: Grade A</span>
+                </div>
 
-            <div className="glass-card rounded-3xl p-7 flex flex-col justify-between">
-              <div>
-                <span className="text-3xl">🎯</span>
-                <h3 className="text-lg font-bold text-text mt-4">{t.pillars.card3Title}</h3>
-                <p className="text-xs sm:text-sm text-muted mt-2 leading-relaxed">{t.pillars.card3Desc}</p>
-              </div>
-              <div className="pt-4 border-t border-border mt-6 flex justify-between text-xs text-primary font-bold">
-                <span>Full Focus Studio</span>
-                <span>Pomodoro 25/5</span>
+                {/* 3 Deadline Cards */}
+                <div className="space-y-3 pt-1">
+                  {t.features.deadlines.items.map((item) => {
+                    const isDone = completedItems[item.id];
+                    return (
+                      <div
+                        key={item.id}
+                        className={`rounded-2xl border p-4 transition-all ${
+                          isDone
+                            ? 'border-emerald-500/30 bg-emerald-500/5 opacity-75'
+                            : 'border-border bg-surface-2/60 hover:border-primary/40'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="rounded bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">
+                              {item.code}
+                            </span>
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase border ${item.badgeColor}`}>
+                              {item.badge}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setCompletedItems((prev) => ({ ...prev, [item.id]: !prev[item.id] }))}
+                            className={`rounded-full px-3 py-1 text-[11px] font-bold border transition-colors cursor-pointer ${
+                              isDone
+                                ? 'bg-emerald-500 text-black border-emerald-500'
+                                : 'border-border bg-surface hover:border-primary/50 text-text'
+                            }`}
+                          >
+                            {isDone ? `✓ ${t.features.deadlines.completedLabel}` : t.features.deadlines.markDone}
+                          </button>
+                        </div>
+
+                        <div className="my-2.5">
+                          <h4 className={`text-sm font-bold text-text ${isDone ? 'line-through opacity-60' : ''}`}>
+                            {item.title}
+                          </h4>
+                          <p className="text-xs text-muted mt-0.5">Due: {item.due}</p>
+                        </div>
+
+                        {/* Progress bar */}
+                        <div className="pt-2 border-t border-border flex items-center justify-between text-[11px] font-semibold text-muted">
+                          <span>Progress</span>
+                          <span className="text-primary font-bold">{isDone ? '100%' : `${item.pct}%`}</span>
+                        </div>
+                        <div className="h-1.5 w-full rounded-full bg-white/10 mt-1 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-accent-deep to-primary transition-all duration-300"
+                            style={{ width: isDone ? '100%' : `${item.pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
         </section>
 
         {/* FINALE CALL TO ACTION */}
-        <section className="home-scroll-reveal mx-auto max-w-4xl px-4 sm:px-8">
+        <section className="home-scroll-reveal mx-auto max-w-4xl px-4 sm:px-8 pt-6">
           <div className="glass-card rounded-[2.5rem] p-8 sm:p-14 text-center space-y-6 border border-primary/30 luma-glow-sm">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-fg text-xl shadow-sm">
               <LotusIcon className="h-6 w-6" />

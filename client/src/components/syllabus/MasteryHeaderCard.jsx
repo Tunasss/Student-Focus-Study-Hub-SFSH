@@ -1,7 +1,9 @@
 import { useLanguage } from '../../i18n/languageContext';
+import { formatCourseInfo } from '../../utils/courseFormat';
 
 export function MasteryHeaderCard({ course, topics = [] }) {
   const { lang } = useLanguage();
+  const courseInfo = formatCourseInfo(course);
 
   const total = topics.length;
   const doneCount = topics.filter((t) => t.status === 'DONE').length;
@@ -55,12 +57,12 @@ export function MasteryHeaderCard({ course, topics = [] }) {
         <div>
           <div className="flex items-center gap-2.5">
             <span className="rounded-md border border-primary/40 bg-primary/15 px-2.5 py-0.5 text-xs font-mono font-bold text-primary tracking-wide">
-              {course?.code || 'COURSE'}
+              {courseInfo.code}
             </span>
             <span className="text-xs font-semibold text-muted tracking-wider uppercase">{t.mastery}</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-text tracking-tight mt-1.5">
-            {course?.name || 'Academic Syllabus'}
+            {courseInfo.name}
           </h2>
           <p className="text-xs font-medium text-primary mt-1 flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />

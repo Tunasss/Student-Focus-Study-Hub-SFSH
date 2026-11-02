@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { CourseTabs } from '../components/syllabus/CourseTabs';
 import { MasteryHeaderCard } from '../components/syllabus/MasteryHeaderCard';
@@ -7,13 +8,6 @@ import { AddTopicModal } from '../components/syllabus/AddTopicModal';
 import { ToastNotification } from '../components/syllabus/ToastNotification';
 import { useLanguage } from '../i18n/languageContext';
 import { scheduleApi, syllabusApi } from '../lib/api';
-
-const DEFAULT_COURSES = [
-  { id: 1, code: 'CS101', name: 'Intro to Computer Science' },
-  { id: 2, code: 'MATH201', name: 'Calculus & Linear Algebra' },
-  { id: 3, code: 'PHY110', name: 'General Physics I' },
-  { id: 4, code: 'ENG102', name: 'Technical Academic Writing' },
-];
 
 const DEFAULT_TOPICS = {
   1: [
@@ -68,10 +62,12 @@ export function SyllabusPage() {
   const { lang } = useLanguage();
   const containerRef = useRef(null);
 
-  const [courses, setCourses] = useState(DEFAULT_COURSES);
-  const [activeCourseId, setActiveCourseId] = useState(1);
+  const [courses, setCourses] = useState([]);
+  const [activeCourseId, setActiveCourseId] = useState(null);
   const [topics, setTopics] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(
+    () => !(typeof localStorage !== 'undefined' && localStorage.getItem('sfsh_timetable_cleared') === 'true')
+  );
   const [updatingTopicId, setUpdatingTopicId] = useState(null);
   const [toast, setToast] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -79,7 +75,7 @@ export function SyllabusPage() {
   const t = {
     en: {
       pageTitle: 'Course Syllabi & Topics',
-      pageSubtitle: 'Structured chapter breakdown and progressive mastery tracking for each enrolled course.',
+      pageSubtitle: 'Structured chapter breakdown and progressive mastery tracking for your enrolled courses.',
       addTopicBtn: '+ Add Topic',
       noTopicsTitle: 'No Topics for this Course Yet',
       noTopicsDesc: 'Start breaking down this course by adding your first chapter topic or uploading a syllabus.',
@@ -87,6 +83,13 @@ export function SyllabusPage() {
       updateFailed: 'Failed to update topic status. Changes rolled back.',
       createSuccess: 'New topic chapter added successfully.',
       createFailed: 'Failed to create topic.',
+      // Timetable Constraint Requirement View
+      reqBadge: 'TIMETABLE REQUIRED · SYSTEM PREREQUISITE',
+      reqTitle: 'No Enrolled Courses Found in Timetable',
+      reqSubtitle:
+        'The Syllabus module is synchronized directly with your weekly class schedule. You must have an active timetable imported to track curriculum topics and course mastery.',
+      reqAction: '📅 Open Timetable & Import (.ICS)',
+      reqTip: 'Import your Google Calendar (.ics) file in the Timetable tab to automatically link your university courses.',
     },
     vi: {
       pageTitle: 'Giáo trình & Chủ đề môn học',
@@ -98,6 +101,13 @@ export function SyllabusPage() {
       updateFailed: 'Không thể cập nhật trạng thái chương. Đã hoàn tác lại thay đổi.',
       createSuccess: 'Đã thêm chương học mới thành công.',
       createFailed: 'Không thể tạo chương học mới.',
+      // Timetable Constraint Requirement View
+      reqBadge: 'YÊU CẦU THỜI KHÓA BIỂU · RÀNG BUỘC HỆ THỐNG',
+      reqTitle: 'Chưa có môn học nào từ Thời khóa biểu',
+      reqSubtitle:
+        'Mô-đun Giáo trình được liên kết trực tiếp với Thời khóa biểu tuần của bạn. Bạn bắt buộc phải có thời khóa biểu để hệ thống tự động nhận diện và theo dõi tiến độ các môn học.',
+      reqAction: '📅 Mở Thời khóa biểu & Nhập file (.ICS)',
+      reqTip: 'Nhập file lịch học Google Calendar (.ics) bên trang Thời khóa biểu để tự động đồng bộ danh sách môn học.',
     },
   }[lang] || {
     pageTitle: 'Course Syllabi & Topics',
@@ -109,32 +119,82 @@ export function SyllabusPage() {
     updateFailed: 'Failed to update topic status. Changes rolled back.',
     createSuccess: 'New topic chapter added successfully.',
     createFailed: 'Failed to create topic.',
+    reqBadge: 'TIMETABLE REQUIRED',
+    reqTitle: 'No Courses in Timetable',
+    reqSubtitle: 'Import a timetable to track syllabus topics.',
+    reqAction: '📅 Open Timetable',
+    reqTip: 'Import an .ics file to begin.',
   };
 
-  // Fetch courses on mount
+  // Fetch courses from timetable
   useEffect(() => {
     let cancelled = false;
+
     async function loadCourses() {
+      // Check if timetable was manually cleared
+      const isCleared = typeof localStorage !== 'undefined' && localStorage.getItem('sfsh_timetable_cleared') === 'true';
+      if (isCleared) {
+        return;
+      }
+
+      setLoading(true);
       try {
         const res = await scheduleApi.getCourses();
         const list = res?.courses || (Array.isArray(res) ? res : []);
-        if (!cancelled && list.length > 0) {
+        if (!cancelled) {
           setCourses(list);
-          setActiveCourseId(list[0].id);
+          if (list.length > 0) {
+            setActiveCourseId(list[0].id);
+          } else {
+            setActiveCourseId(null);
+            setTopics([]);
+          }
         }
       } catch {
-        // Use default fallback courses
+        if (!cancelled) {
+          setCourses([]);
+          setActiveCourseId(null);
+          setTopics([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     }
+
     loadCourses();
+
+    function handleTimetableCleared() {
+      setCourses([]);
+      setActiveCourseId(null);
+      setTopics([]);
+    }
+
+    function handleTimetableImported() {
+      try {
+        localStorage.removeItem('sfsh_timetable_cleared');
+      } catch {
+        // ignore
+      }
+      loadCourses();
+    }
+
+    window.addEventListener('sfsh:timetable_cleared', handleTimetableCleared);
+    window.addEventListener('sfsh:timetable_imported', handleTimetableImported);
+
     return () => {
       cancelled = true;
+      window.removeEventListener('sfsh:timetable_cleared', handleTimetableCleared);
+      window.removeEventListener('sfsh:timetable_imported', handleTimetableImported);
     };
   }, []);
 
   // Fetch topics whenever activeCourseId changes
   useEffect(() => {
     let cancelled = false;
+    if (!activeCourseId) {
+      return;
+    }
+
     async function loadTopics() {
       setLoading(true);
       try {
@@ -155,9 +215,8 @@ export function SyllabusPage() {
         if (!cancelled) setLoading(false);
       }
     }
-    if (activeCourseId) {
-      loadTopics();
-    }
+
+    loadTopics();
     return () => {
       cancelled = true;
     };
@@ -165,7 +224,7 @@ export function SyllabusPage() {
 
   // GSAP animation for topic entrance
   useLayoutEffect(() => {
-    if (loading || topics.length === 0) return;
+    if (loading || topics.length === 0 || !containerRef.current) return;
 
     const ctx = gsap.context(() => {
       gsap.fromTo(
@@ -233,8 +292,57 @@ export function SyllabusPage() {
   const activeCourse = courses.find((c) => c.id === activeCourseId) || courses[0];
   const nextSortOrder = topics.length > 0 ? Math.max(...topics.map((t) => t.sortOrder || 0)) + 1 : 1;
 
+  // Case 1: If there are NO courses in the timetable (or timetable was cleared)
+  if (!loading && courses.length === 0) {
+    return (
+      <div ref={containerRef} className="px-4 sm:px-8 py-10 space-y-6 max-w-4xl mx-auto font-sans">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-wider text-rose-400">
+            {t.reqBadge}
+          </span>
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-text mt-1.5">
+            {t.pageTitle}
+          </h1>
+          <p className="text-xs sm:text-sm text-muted mt-1">{t.pageSubtitle}</p>
+        </div>
+
+        <div className="glass-card rounded-3xl p-8 sm:p-14 text-center space-y-6 border border-border/80 shadow-lg relative overflow-hidden">
+          {/* Subtle radiant background glow */}
+          <div className="pointer-events-none absolute -top-20 -right-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
+
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/15 border border-primary/30 text-3xl shadow-inner">
+            📅
+          </div>
+
+          <div className="space-y-2 max-w-lg mx-auto">
+            <h2 className="text-xl sm:text-2xl font-black text-text tracking-tight">
+              {t.reqTitle}
+            </h2>
+            <p className="text-xs sm:text-sm text-muted leading-relaxed">
+              {t.reqSubtitle}
+            </p>
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              to="/timetable"
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3 text-xs sm:text-sm font-bold text-primary-fg shadow-lg hover:opacity-90 transition-all cursor-pointer"
+            >
+              <span>{t.reqAction}</span>
+            </Link>
+          </div>
+
+          <p className="text-[11px] text-muted/80 max-w-sm mx-auto pt-2 border-t border-border/40">
+            💡 {t.reqTip}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Case 2: Normal Syllabus View with Enrolled Courses
   return (
-    <div ref={containerRef} className="px-4 sm:px-8 py-8 space-y-8 max-w-7xl mx-auto">
+    <div ref={containerRef} className="px-4 sm:px-8 py-8 space-y-8 max-w-7xl mx-auto font-sans">
       {/* Header banner */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -254,7 +362,7 @@ export function SyllabusPage() {
         </button>
       </div>
 
-      {/* Course Switcher Tabs */}
+      {/* Course Switcher Bar */}
       <CourseTabs
         courses={courses}
         activeCourseId={activeCourseId}
@@ -262,7 +370,7 @@ export function SyllabusPage() {
       />
 
       {/* Mastery Progress Card */}
-      <MasteryHeaderCard course={activeCourse} topics={topics} />
+      {activeCourse && <MasteryHeaderCard course={activeCourse} topics={topics} />}
 
       {/* Topics list */}
       <div className="space-y-4">
@@ -315,7 +423,7 @@ export function SyllabusPage() {
       {/* Add Topic Modal */}
       <AddTopicModal
         isOpen={isAddModalOpen}
-        courseId={activeCourseId}
+        _courseId={activeCourseId}
         nextSortOrder={nextSortOrder}
         onClose={() => setIsAddModalOpen(false)}
         onCreated={handleCreateTopic}
@@ -330,4 +438,3 @@ export function SyllabusPage() {
     </div>
   );
 }
-

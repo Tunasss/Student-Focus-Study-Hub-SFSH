@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import { SyllabusPage } from './SyllabusPage';
 import { LanguageProvider } from '../i18n/languageContext';
 import { scheduleApi, syllabusApi } from '../lib/api';
@@ -29,6 +30,7 @@ describe('SyllabusPage Integration', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     scheduleApi.getCourses.mockResolvedValue({ courses: mockCourses });
     syllabusApi.getCourseTopics.mockResolvedValue(mockTopicsCourse1);
     syllabusApi.updateTopicStatus.mockResolvedValue({ id: 103, status: 'DONE' });
@@ -36,13 +38,15 @@ describe('SyllabusPage Integration', () => {
 
   test('renders course tabs, mastery card, and topic cards for selected course', async () => {
     render(
-      <LanguageProvider>
-        <SyllabusPage />
-      </LanguageProvider>
+      <MemoryRouter>
+        <LanguageProvider>
+          <SyllabusPage />
+        </LanguageProvider>
+      </MemoryRouter>
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Intro to Computer Science' })).toBeInTheDocument();
+      expect(screen.getAllByRole('heading', { name: 'Intro to Computer Science' }).length).toBeGreaterThan(0);
       expect(screen.getByText('Algorithm Analysis')).toBeInTheDocument();
       expect(screen.getByText('Binary Search Trees')).toBeInTheDocument();
       expect(screen.getByText('Dynamic Programming')).toBeInTheDocument();
@@ -54,18 +58,18 @@ describe('SyllabusPage Integration', () => {
 
   test('optimistically updates topic status and recalculates mastery percentage on chip click', async () => {
     render(
-      <LanguageProvider>
-        <SyllabusPage />
-      </LanguageProvider>
+      <MemoryRouter>
+        <LanguageProvider>
+          <SyllabusPage />
+        </LanguageProvider>
+      </MemoryRouter>
     );
 
     await waitFor(() => {
       expect(screen.getByText('Dynamic Programming')).toBeInTheDocument();
     });
 
-    // Find the radios for Dynamic Programming
     const radios = screen.getAllByRole('radio', { name: /Completed|Hoàn thành/i });
-    // Dynamic programming is 3rd topic
     const dpDoneRadio = radios[2];
 
     fireEvent.click(dpDoneRadio);
@@ -82,9 +86,11 @@ describe('SyllabusPage Integration', () => {
     syllabusApi.updateTopicStatus.mockRejectedValueOnce(new Error('Network disconnected'));
 
     render(
-      <LanguageProvider>
-        <SyllabusPage />
-      </LanguageProvider>
+      <MemoryRouter>
+        <LanguageProvider>
+          <SyllabusPage />
+        </LanguageProvider>
+      </MemoryRouter>
     );
 
     await waitFor(() => {
@@ -104,5 +110,28 @@ describe('SyllabusPage Integration', () => {
 
     // Expect mastery percentage to roll back to 33%
     expect(screen.getByText('33%')).toBeInTheDocument();
+  });
+
+  test('enforces timetable requirement: shows empty constraint view with link to /timetable when no courses exist', async () => {
+    scheduleApi.getCourses.mockResolvedValue({ courses: [] });
+
+    render(
+      <MemoryRouter>
+        <LanguageProvider>
+          <SyllabusPage />
+        </LanguageProvider>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/No Enrolled Courses Found in Timetable|Chưa có môn học nào từ Thời khóa biểu/i)).toBeInTheDocument();
+    });
+
+    const timetableLink = screen.getByRole('link', { name: /Open Timetable|Mở Thời khóa biểu/i });
+    expect(timetableLink).toBeInTheDocument();
+    expect(timetableLink).toHaveAttribute('href', '/timetable');
+
+    // Should NOT render any topics
+    expect(screen.queryByText('Algorithm Analysis')).not.toBeInTheDocument();
   });
 });

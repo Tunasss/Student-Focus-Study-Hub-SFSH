@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { apiFetch, UNAUTHORIZED_EVENT } from './api';
+import { apiFetch, scheduleApi, UNAUTHORIZED_EVENT } from './api';
 import { setToken } from './tokenStorage';
 import { fail, mockFetch, ok } from '../test/utils';
 
@@ -47,5 +47,37 @@ describe('apiFetch', () => {
     expect(listener).toHaveBeenCalledOnce();
     expect(listener.mock.calls[0][0].detail.code).toBe('TOKEN_EXPIRED');
     window.removeEventListener(UNAUTHORIZED_EVENT, listener);
+  });
+
+  test('supports FormData without overriding Content-Type', async () => {
+    setToken('valid.token');
+    const fetchMock = mockFetch(() => [201, ok({ coursesCreated: 1 })]);
+
+    const formData = new FormData();
+    formData.append('test', '123');
+
+    await apiFetch('/api/schedule/import', { method: 'POST', body: formData });
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init.headers['Content-Type']).toBeUndefined();
+    expect(init.body).toBe(formData);
+  });
+});
+
+describe('scheduleApi', () => {
+  test('getSchedule calls GET /api/schedule with formatted query parameters', async () => {
+    const fetchMock = mockFetch(() => [200, ok({ events: [] })]);
+    await scheduleApi.getSchedule('2026-10-26', '2026-11-02', 'Asia/Ho_Chi_Minh');
+
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toContain('/api/schedule?from=2026-10-26&to=2026-11-02&tz=Asia%2FHo_Chi_Minh');
+  });
+
+  test('getCourses calls GET /api/courses', async () => {
+    const fetchMock = mockFetch(() => [200, ok({ courses: [] })]);
+    await scheduleApi.getCourses();
+
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toContain('/api/courses');
   });
 });

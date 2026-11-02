@@ -74,7 +74,8 @@ function scheduleRouter({ prisma }) {
       throw new ApiError(400, 'INVALID_ICS_FORMAT', 'No importable class events found in the calendar');
     }
 
-    const result = await importTimetable(prisma, req.userId, parsed);
+    const replace = req.query.replace === 'true' || req.body?.replace === 'true';
+    const result = await importTimetable(prisma, req.userId, parsed, { replace });
     res.status(201).json(
       ok({
         eventsRead: parsed.eventCount,

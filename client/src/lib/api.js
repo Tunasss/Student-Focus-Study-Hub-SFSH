@@ -15,7 +15,8 @@ export class ApiError extends Error {
 
 export async function apiFetch(path, { method = 'GET', body, auth = true } = {}) {
   const headers = { Accept: 'application/json' };
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+  if (body !== undefined && !isFormData) headers['Content-Type'] = 'application/json';
 
   const token = auth ? getToken() : null;
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -25,7 +26,7 @@ export async function apiFetch(path, { method = 'GET', body, auth = true } = {})
     res = await fetch(`${BASE_URL}${path}`, {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body !== undefined ? (isFormData ? body : JSON.stringify(body)) : undefined,
     });
   } catch {
     throw new ApiError(0, 'NETWORK_ERROR', 'Không kết nối được tới máy chủ');
@@ -45,3 +46,25 @@ export async function apiFetch(path, { method = 'GET', body, auth = true } = {})
 
   return envelope?.data ?? null;
 }
+
+export const scheduleApi = {
+  getSchedule: (from, to, tz = 'Asia/Ho_Chi_Minh') => {
+    const params = new URLSearchParams();
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    if (tz) params.set('tz', tz);
+    const query = params.toString();
+    return apiFetch(`/api/schedule${query ? `?${query}` : ''}`);
+  },
+  getCourses: () => apiFetch('/api/courses'),
+  importIcs: (file, replace = false) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (replace) formData.append('replace', 'true');
+    const query = replace ? '?replace=true' : '';
+    return apiFetch(`/api/schedule/import${query}`, {
+      method: 'POST',
+      body: formData,
+    });
+  },
+};

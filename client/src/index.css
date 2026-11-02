@@ -170,6 +170,134 @@ body {
   animation: dashFlow 1.6s linear infinite;
 }
 
+/* Luma Center Emblem Breathing Animations (60fps GPU Compositor) */
+@keyframes lumaBreathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.94;
+  }
+  50% {
+    transform: scale(1.055);
+    opacity: 1;
+  }
+}
+
+@keyframes lumaBreatheActive {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 16px rgba(219, 239, 144, 0.4));
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.095);
+    filter: drop-shadow(0 0 38px rgba(219, 239, 144, 0.85));
+    opacity: 1;
+  }
+}
+
+.animate-luma-breathe {
+  animation: lumaBreathe 4.5s ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+.animate-luma-breathe-active {
+  animation: lumaBreatheActive 3.2s ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform, filter, opacity;
+}
+
+@keyframes chromaticFade {
+  0%, 100% {
+    opacity: 0.94;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-chromatic-ambient {
+  background: radial-gradient(circle at 50% 38%, rgba(138, 203, 30, 0.18) 0%, transparent 60%),
+              radial-gradient(circle at 15% 20%, rgba(56, 99, 4, 0.10) 0%, transparent 50%),
+              radial-gradient(circle at 85% 80%, rgba(164, 219, 74, 0.18) 0%, transparent 55%),
+              linear-gradient(135deg, #eef4eb 0%, #e2ece0 35%, #e8f1e5 70%, #f4f7f2 100%);
+  background-size: 100% 100%;
+}
+
+.dark .animate-chromatic-ambient {
+  background: radial-gradient(circle at 50% 40%, rgba(219, 239, 144, 0.18) 0%, transparent 60%),
+              radial-gradient(circle at 15% 25%, rgba(36, 49, 0, 0.55) 0%, transparent 55%),
+              radial-gradient(circle at 85% 75%, rgba(85, 110, 15, 0.35) 0%, transparent 60%),
+              linear-gradient(135deg, #070b02 0%, #121a05 35%, #0d1504 70%, #060a01 100%);
+  background-size: 100% 100%;
+}
+
+.smooth-modal-scroll {
+  contain: content;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+@keyframes orbitSpinCW {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbitSpinCCW {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+.animate-orbit-cw {
+  animation: orbitSpinCW 16s linear infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.animate-orbit-ccw {
+  animation: orbitSpinCCW 12s linear infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+@keyframes diamondSparkle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+  }
+}
+
+.animate-diamond-sparkle {
+  animation: diamondSparkle 2s ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 20s linear infinite;
+}
+
 /* WCAG Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {

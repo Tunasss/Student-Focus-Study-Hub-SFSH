@@ -1,0 +1,412 @@
+{
+  "jazzhop": {
+    "id": "jazzhop",
+    "name": "Lo-Fi Jazz Lounge",
+    "genre": "Jazz & Chillhop",
+    "desc": "Smoky Rhodes piano, mellow saxophone & smooth swing beats",
+    "descVi": "Giai điệu Jazz thư thái, tiếng kèn saxophone êm dịu và nhịp trống chill",
+    "icon": "🎷",
+    "bpm": "72 BPM",
+    "limit": 10,
+    "tracks": [
+      {
+        "id": "jazzhop-1",
+        "title": "Ashes in the Coffee Cup",
+        "filename": "ashes-in-the-coffee-cup.mp3",
+        "src": "/audio/lofi/jazzhop/ashes-in-the-coffee-cup.mp3",
+        "category": "jazzhop"
+      },
+      {
+        "id": "jazzhop-2",
+        "title": "Breezy Afternoon Terrace",
+        "filename": "breezy-afternoon-terrace.mp3",
+        "src": "/audio/lofi/jazzhop/breezy-afternoon-terrace.mp3",
+        "category": "jazzhop"
+      },
+      {
+        "id": "jazzhop-3",
+        "title": "Candlelit at 70 BPM",
+        "filename": "candlelit-at-70-bpm.mp3",
+        "src": "/audio/lofi/jazzhop/candlelit-at-70-bpm.mp3",
+        "category": "jazzhop"
+      },
+      {
+        "id": "jazzhop-4",
+        "title": "Dust and Hardcovers",
+        "filename": "dust-and-hardcovers.mp3",
+        "src": "/audio/lofi/jazzhop/dust-and-hardcovers.mp3",
+        "category": "jazzhop"
+      },
+      {
+        "id": "jazzhop-5",
+        "title": "Harbor Before Words",
+        "filename": "harbor-before-words.mp3",
+        "src": "/audio/lofi/jazzhop/harbor-before-words.mp3",
+        "category": "jazzhop"
+      },
+      {
+        "id": "jazzhop-6",
+        "title": "Last Call in C Minor",
+        "filename": "last-call-in-c-minor.mp3",
+        "src": "/audio/lofi/jazzhop/last-call-in-c-minor.mp3",
+        "category": "jazzhop"
+      },
+      {
+        "id": "jazzhop-7",
+        "title": "Linen and Limoncello",
+        "filename": "linen-and-limoncello.mp3",
+        "src": "/audio/lofi/jazzhop/linen-and-limoncello.mp3",
+        "category": "jazzhop"
+      },
+      {
+        "id": "jazzhop-8",
+        "title": "Midnight Amber Room",
+        "filename": "midnight-amber-room.mp3",
+        "src": "/audio/lofi/jazzhop/midnight-amber-room.mp3",
+        "category": "jazzhop"
+      },
+      {
+        "id": "jazzhop-9",
+        "title": "Rain on the Boulevard",
+        "filename": "rain-on-the-boulevard.mp3",
+        "src": "/audio/lofi/jazzhop/rain-on-the-boulevard.mp3",
+        "category": "jazzhop"
+      },
+      {
+        "id": "jazzhop-10",
+        "title": "Saxophone in the Rain",
+        "filename": "saxophone-in-the-rain.mp3",
+        "src": "/audio/lofi/jazzhop/saxophone-in-the-rain.mp3",
+        "category": "jazzhop"
+      }
+    ]
+  },
+  "soul-rnb": {
+    "id": "soul-rnb",
+    "name": "Lo-Fi Soul & R&B",
+    "genre": "Soul & Slow Jam",
+    "desc": "Deep warm 808 bass, silky keys & late-night room vibes",
+    "descVi": "Nhịp R&B ấm áp, âm bass trầm sâu lắng đưa tâm trí vào dòng chảy tập trung",
+    "icon": "☕",
+    "bpm": "68 BPM",
+    "limit": 10,
+    "tracks": [
+      {
+        "id": "soul-rnb-1",
+        "title": "3AM Sink Light",
+        "filename": "3am-sink-light.mp3",
+        "src": "/audio/lofi/soul-rnb/3am-sink-light.mp3",
+        "category": "soul-rnb"
+      },
+      {
+        "id": "soul-rnb-2",
+        "title": "Barefoot in the Kitchen",
+        "filename": "barefoot-in-the-kitchen.mp3",
+        "src": "/audio/lofi/soul-rnb/barefoot-in-the-kitchen.mp3",
+        "category": "soul-rnb"
+      },
+      {
+        "id": "soul-rnb-3",
+        "title": "Candle Wax Heart",
+        "filename": "candle-wax-heart.mp3",
+        "src": "/audio/lofi/soul-rnb/candle-wax-heart.mp3",
+        "category": "soul-rnb"
+      },
+      {
+        "id": "soul-rnb-4",
+        "title": "Envelope on the Bed",
+        "filename": "envelope-on-the-bed.mp3",
+        "src": "/audio/lofi/soul-rnb/envelope-on-the-bed.mp3",
+        "category": "soul-rnb"
+      },
+      {
+        "id": "soul-rnb-5",
+        "title": "Golden Afternoon Groove",
+        "filename": "golden-afternoon-groove.mp3",
+        "src": "/audio/lofi/soul-rnb/golden-afternoon-groove.mp3",
+        "category": "soul-rnb"
+      },
+      {
+        "id": "soul-rnb-6",
+        "title": "Honey on the Speakers",
+        "filename": "honey-on-the-speakers.mp3",
+        "src": "/audio/lofi/soul-rnb/honey-on-the-speakers.mp3",
+        "category": "soul-rnb"
+      },
+      {
+        "id": "soul-rnb-7",
+        "title": "Kitchen After the Party",
+        "filename": "kitchen-after-the-party.mp3",
+        "src": "/audio/lofi/soul-rnb/kitchen-after-the-party.mp3",
+        "category": "soul-rnb"
+      },
+      {
+        "id": "soul-rnb-8",
+        "title": "Lazy Love Letter Afternoon",
+        "filename": "lazy-love-letter-afternoon.mp3",
+        "src": "/audio/lofi/soul-rnb/lazy-love-letter-afternoon.mp3",
+        "category": "soul-rnb"
+      },
+      {
+        "id": "soul-rnb-9",
+        "title": "Midnight Notes on the Floor",
+        "filename": "midnight-notes-on-the-floor.mp3",
+        "src": "/audio/lofi/soul-rnb/midnight-notes-on-the-floor.mp3",
+        "category": "soul-rnb"
+      },
+      {
+        "id": "soul-rnb-10",
+        "title": "Midnight Table Talk",
+        "filename": "midnight-table-talk.mp3",
+        "src": "/audio/lofi/soul-rnb/midnight-table-talk.mp3",
+        "category": "soul-rnb"
+      }
+    ]
+  },
+  "late-night": {
+    "id": "late-night",
+    "name": "Midnight Synthwave",
+    "genre": "Neon & After Hours",
+    "desc": "Deep meditative analog synth pads for after-hours study",
+    "descVi": "Không gian đêm yên tĩnh, âm thanh synth mơ màng cho những đêm thức muộn",
+    "icon": "🌌",
+    "bpm": "70 BPM",
+    "limit": 10,
+    "tracks": [
+      {
+        "id": "late-night-1",
+        "title": "3 AM Echoes",
+        "filename": "3-am-echoes.mp3",
+        "src": "/audio/lofi/late-night/3-am-echoes.mp3",
+        "category": "late-night"
+      },
+      {
+        "id": "late-night-2",
+        "title": "Antenna After Midnight",
+        "filename": "antenna-after-midnight.mp3",
+        "src": "/audio/lofi/late-night/antenna-after-midnight.mp3",
+        "category": "late-night"
+      },
+      {
+        "id": "late-night-3",
+        "title": "Blinds and Headlights",
+        "filename": "blinds-and-headlights.mp3",
+        "src": "/audio/lofi/late-night/blinds-and-headlights.mp3",
+        "category": "late-night"
+      },
+      {
+        "id": "late-night-4",
+        "title": "Electric Puddles",
+        "filename": "electric-puddles.mp3",
+        "src": "/audio/lofi/late-night/electric-puddles.mp3",
+        "category": "late-night"
+      },
+      {
+        "id": "late-night-5",
+        "title": "Elevator To the Moon",
+        "filename": "elevator-to-the-moon.mp3",
+        "src": "/audio/lofi/late-night/elevator-to-the-moon.mp3",
+        "category": "late-night"
+      },
+      {
+        "id": "late-night-6",
+        "title": "Empty Street Static",
+        "filename": "empty-street-static.mp3",
+        "src": "/audio/lofi/late-night/empty-street-static.mp3",
+        "category": "late-night"
+      },
+      {
+        "id": "late-night-7",
+        "title": "Half Empty Coupe",
+        "filename": "half-empty-coupe.mp3",
+        "src": "/audio/lofi/late-night/half-empty-coupe.mp3",
+        "category": "late-night"
+      },
+      {
+        "id": "late-night-8",
+        "title": "Headlights on the Divider",
+        "filename": "headlights-on-the-divider.mp3",
+        "src": "/audio/lofi/late-night/headlights-on-the-divider.mp3",
+        "category": "late-night"
+      },
+      {
+        "id": "late-night-9",
+        "title": "High Rise Haze",
+        "filename": "high-rise-haze.mp3",
+        "src": "/audio/lofi/late-night/high-rise-haze.mp3",
+        "category": "late-night"
+      },
+      {
+        "id": "late-night-10",
+        "title": "Last Call at Table Nine",
+        "filename": "last-call-at-table-nine.mp3",
+        "src": "/audio/lofi/late-night/last-call-at-table-nine.mp3",
+        "category": "late-night"
+      }
+    ]
+  },
+  "ambient-lofi": {
+    "id": "ambient-lofi",
+    "name": "Peaceful Study Piano",
+    "genre": "Minimalist Piano & Ambient",
+    "desc": "Gentle felt piano chords and soft morning light ambiance",
+    "descVi": "Tiếng đàn piano êm đềm, tạo khoảng lặng trong trẻo để ghi nhớ kiến thức",
+    "icon": "🎹",
+    "bpm": "65 BPM",
+    "limit": 10,
+    "tracks": [
+      {
+        "id": "ambient-lofi-1",
+        "title": "Almost Floating",
+        "filename": "almost-floating.mp3",
+        "src": "/audio/lofi/ambient-lofi/almost-floating.mp3",
+        "category": "ambient-lofi"
+      },
+      {
+        "id": "ambient-lofi-2",
+        "title": "Aurora on Mute",
+        "filename": "aurora-on-mute.mp3",
+        "src": "/audio/lofi/ambient-lofi/aurora-on-mute.mp3",
+        "category": "ambient-lofi"
+      },
+      {
+        "id": "ambient-lofi-3",
+        "title": "Blue Below the Surface",
+        "filename": "blue-below-the-surface.mp3",
+        "src": "/audio/lofi/ambient-lofi/blue-below-the-surface.mp3",
+        "category": "ambient-lofi"
+      },
+      {
+        "id": "ambient-lofi-4",
+        "title": "Cathedral Hiss",
+        "filename": "cathedral-hiss.mp3",
+        "src": "/audio/lofi/ambient-lofi/cathedral-hiss.mp3",
+        "category": "ambient-lofi"
+      },
+      {
+        "id": "ambient-lofi-5",
+        "title": "Deep Space Loop",
+        "filename": "deep-space-loop.mp3",
+        "src": "/audio/lofi/ambient-lofi/deep-space-loop.mp3",
+        "category": "ambient-lofi"
+      },
+      {
+        "id": "ambient-lofi-6",
+        "title": "Drifting Through Fog",
+        "filename": "drifting-through-fog.mp3",
+        "src": "/audio/lofi/ambient-lofi/drifting-through-fog.mp3",
+        "category": "ambient-lofi"
+      },
+      {
+        "id": "ambient-lofi-7",
+        "title": "First Light on the Ridge",
+        "filename": "first-light-on-the-ridge.mp3",
+        "src": "/audio/lofi/ambient-lofi/first-light-on-the-ridge.mp3",
+        "category": "ambient-lofi"
+      },
+      {
+        "id": "ambient-lofi-8",
+        "title": "Ghosts on the Hillside",
+        "filename": "ghosts-on-the-hillside.mp3",
+        "src": "/audio/lofi/ambient-lofi/ghosts-on-the-hillside.mp3",
+        "category": "ambient-lofi"
+      },
+      {
+        "id": "ambient-lofi-9",
+        "title": "Glasshouse Ghosts",
+        "filename": "glasshouse-ghosts.mp3",
+        "src": "/audio/lofi/ambient-lofi/glasshouse-ghosts.mp3",
+        "category": "ambient-lofi"
+      },
+      {
+        "id": "ambient-lofi-10",
+        "title": "Green After Midnight",
+        "filename": "green-after-midnight.mp3",
+        "src": "/audio/lofi/ambient-lofi/green-after-midnight.mp3",
+        "category": "ambient-lofi"
+      }
+    ]
+  },
+  "funk-soul": {
+    "id": "funk-soul",
+    "name": "Warm Acoustic & Groove",
+    "genre": "Funk, Acoustic & Soul",
+    "desc": "Delicate fingerpicked strings and warm organic groove",
+    "descVi": "Giai điệu acoustic và soul ấm áp, giữ nhịp độ làm việc bền bỉ",
+    "icon": "🎸",
+    "bpm": "75 BPM",
+    "limit": 10,
+    "tracks": [
+      {
+        "id": "funk-soul-1",
+        "title": "Basement Groove 86",
+        "filename": "basement-groove-86.mp3",
+        "src": "/audio/lofi/funk-soul/basement-groove-86.mp3",
+        "category": "funk-soul"
+      },
+      {
+        "id": "funk-soul-2",
+        "title": "Block Party Slow Jam",
+        "filename": "block-party-slow-jam.mp3",
+        "src": "/audio/lofi/funk-soul/block-party-slow-jam.mp3",
+        "category": "funk-soul"
+      },
+      {
+        "id": "funk-soul-3",
+        "title": "Burnt Sunset Groove",
+        "filename": "burnt-sunset-groove.mp3",
+        "src": "/audio/lofi/funk-soul/burnt-sunset-groove.mp3",
+        "category": "funk-soul"
+      },
+      {
+        "id": "funk-soul-4",
+        "title": "Cassette Basement Bounce",
+        "filename": "cassette-basement-bounce.mp3",
+        "src": "/audio/lofi/funk-soul/cassette-basement-bounce.mp3",
+        "category": "funk-soul"
+      },
+      {
+        "id": "funk-soul-5",
+        "title": "Dust on the Needle",
+        "filename": "dust-on-the-needle.mp3",
+        "src": "/audio/lofi/funk-soul/dust-on-the-needle.mp3",
+        "category": "funk-soul"
+      },
+      {
+        "id": "funk-soul-6",
+        "title": "Dusty Jukebox Heart",
+        "filename": "dusty-jukebox-heart.mp3",
+        "src": "/audio/lofi/funk-soul/dusty-jukebox-heart.mp3",
+        "category": "funk-soul"
+      },
+      {
+        "id": "funk-soul-7",
+        "title": "Grandmas Kitchen on Sunday",
+        "filename": "grandmas-kitchen-on-sunday.mp3",
+        "src": "/audio/lofi/funk-soul/grandmas-kitchen-on-sunday.mp3",
+        "category": "funk-soul"
+      },
+      {
+        "id": "funk-soul-8",
+        "title": "Mirrorball Slow Roll",
+        "filename": "mirrorball-slow-roll.mp3",
+        "src": "/audio/lofi/funk-soul/mirrorball-slow-roll.mp3",
+        "category": "funk-soul"
+      },
+      {
+        "id": "funk-soul-9",
+        "title": "Motel Soul Radio",
+        "filename": "motel-soul-radio.mp3",
+        "src": "/audio/lofi/funk-soul/motel-soul-radio.mp3",
+        "category": "funk-soul"
+      },
+      {
+        "id": "funk-soul-10",
+        "title": "Neon on the Diner Floor",
+        "filename": "neon-on-the-diner-floor.mp3",
+        "src": "/audio/lofi/funk-soul/neon-on-the-diner-floor.mp3",
+        "category": "funk-soul"
+      }
+    ]
+  }
+}

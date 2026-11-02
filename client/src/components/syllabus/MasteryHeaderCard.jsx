@@ -135,3 +135,4 @@ export function MasteryHeaderCard({ course, topics = [] }) {
     </div>
   );
 }
+

@@ -64,3 +64,4 @@ export function CourseTabs({ courses = [], activeCourseId, onSelectCourse }) {
     </div>
   );
 }
+

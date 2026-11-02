@@ -43,3 +43,4 @@ describe('MasteryHeaderCard', () => {
     expect(screen.getByText('0%')).toBeInTheDocument();
   });
 });
+

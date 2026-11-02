@@ -39,3 +39,4 @@ export function ToastNotification({ message, type = 'error', onClose, duration =
     </div>
   );
 }
+

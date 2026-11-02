@@ -69,3 +69,4 @@ describe('AddTopicModal', () => {
     expect(screen.getByText(/Title is required|Vui lòng nhập tên chương/i)).toBeInTheDocument();
   });
 });
+

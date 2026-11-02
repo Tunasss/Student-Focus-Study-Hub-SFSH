@@ -16,13 +16,19 @@ export function LofiRadioModal({ isOpen, onClose }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Keep state synced when track changes or music plays
+  // Keep state synced reactively on track/genre events without polling
   useEffect(() => {
-    if (!isOpen) return;
-    const interval = setInterval(() => {
+    if (!isOpen) return undefined;
+    const unsubTrack = audioMixer.onTrackChange(() => {
       setMixerState(audioMixer.getState());
-    }, 500);
-    return () => clearInterval(interval);
+    });
+    const unsubGenre = audioMixer.onGenreSwitch(() => {
+      setMixerState(audioMixer.getState());
+    });
+    return () => {
+      unsubTrack?.();
+      unsubGenre?.();
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -74,9 +80,9 @@ export function LofiRadioModal({ isOpen, onClose }) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="lofi-radio-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-in fade-in duration-150"
     >
-      <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-border bg-[#141d06]/95 backdrop-blur-2xl shadow-2xl flex flex-col max-h-[92vh] text-text">
+      <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-border/80 bg-[#121905] shadow-2xl flex flex-col max-h-[92vh] text-text">
         {/* Decorative ambient aura behind modal header */}
         <div className="absolute -top-16 -left-16 w-56 h-56 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -top-16 -right-16 w-56 h-56 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
@@ -322,3 +328,4 @@ export function LofiRadioModal({ isOpen, onClose }) {
     </div>
   );
 }
+

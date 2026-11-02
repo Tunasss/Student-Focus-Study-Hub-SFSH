@@ -251,7 +251,6 @@ export function AudioMixerModal({ isOpen, onClose }) {
             <div className="space-y-2.5">
               {Object.values(mixerState.tracks).map((track) => {
                 const isPlaying = track.isPlaying;
-                const isReal = !!track.src;
 
                 return (
                   <div
@@ -280,11 +279,6 @@ export function AudioMixerModal({ isOpen, onClose }) {
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
                             <p className="text-xs font-bold text-text truncate">{track.name}</p>
-                            {isReal && (
-                              <span className="text-[9px] font-mono font-semibold px-1 py-0.2 rounded bg-primary/15 text-primary">
-                                REAL
-                              </span>
-                            )}
                           </div>
                           <p className="text-[10px] text-muted truncate">
                             {lang === 'vi' ? track.subtitleVi || track.subtitle : track.subtitle}

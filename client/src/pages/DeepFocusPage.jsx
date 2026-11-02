@@ -117,9 +117,30 @@ export function DeepFocusPage() {
   const [isRadioOpen, setIsRadioOpen] = useState(false);
   const [isAmbientOpen, setIsAmbientOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(
+    () => typeof document !== 'undefined' && !!document.fullscreenElement
+  );
   const [activeSoundCount, setActiveSoundCount] = useState(0);
   const [mixerState, setMixerState] = useState(() => audioMixer.getState());
   const [genreSwitchNotification, setGenreSwitchNotification] = useState(null);
+
+  // Sync fullscreen state
+  useEffect(() => {
+    function onFullscreenChange() {
+      setIsFullscreen(typeof document !== 'undefined' && !!document.fullscreenElement);
+    }
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, []);
+
+  function toggleFullscreen() {
+    if (typeof document === 'undefined') return;
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(() => {});
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  }
 
   // Sync active audio tracks indicator & subscribe to events
   useEffect(() => {
@@ -314,29 +335,52 @@ export function DeepFocusPage() {
   return (
     <div
       ref={containerRef}
-      className="relative min-h-[calc(100vh-65px)] lg:h-[calc(100vh-65px)] w-full animate-chromatic-ambient text-text px-4 sm:px-8 pt-3 pb-1 flex flex-col justify-between overflow-x-hidden font-sans"
+      className="relative h-screen min-h-screen w-full animate-chromatic-ambient text-text px-4 sm:px-8 pt-3 pb-2 flex flex-col justify-between overflow-hidden font-sans"
     >
-      {/* Top Bar with Prominent Gradient Title */}
-      <div className="flex items-center justify-between z-20 gap-3 shrink-0">
-        <button
-          type="button"
-          onClick={() => navigate('/')}
-          className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 px-4 py-2 text-xs font-semibold text-muted hover:text-text hover:border-primary/50 transition-colors shadow-xs cursor-pointer backdrop-blur-md"
-        >
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-surface-2 text-xs">
-            ‹
-          </span>
-          <span>{t.back}</span>
-        </button>
-
-        {/* Prominent Gradient Title (Per User Request) */}
+      {/* Top Bar with Center-Aligned Gradient Title & Fullscreen Toggle */}
+      <div className="relative flex items-center justify-between z-20 gap-3 shrink-0 w-full">
+        {/* Left Side: Back to Overview + Fullscreen Toggle */}
         <div className="flex items-center gap-2">
-          <span className="text-xl sm:text-2xl font-black tracking-wider uppercase bg-gradient-to-r from-white via-primary to-[#d5f458] bg-clip-text text-transparent drop-shadow-sm font-sans select-none">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 px-3.5 py-1.5 text-xs font-semibold text-muted hover:text-text hover:border-primary/50 transition-colors shadow-xs cursor-pointer backdrop-blur-md"
+          >
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-surface-2 text-xs">
+              ‹
+            </span>
+            <span>{t.back}</span>
+          </button>
+
+          {/* Fullscreen Toggle Button (Per User Request) */}
+          <button
+            type="button"
+            data-testid="toggle-fullscreen-btn"
+            onClick={toggleFullscreen}
+            title={isFullscreen ? (lang === 'vi' ? 'Thoát toàn màn hình' : 'Exit Fullscreen') : (lang === 'vi' ? 'Toàn màn hình' : 'Fullscreen')}
+            aria-label={isFullscreen ? (lang === 'vi' ? 'Thoát toàn màn hình' : 'Exit Fullscreen') : (lang === 'vi' ? 'Toàn màn hình' : 'Fullscreen')}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors shadow-xs cursor-pointer backdrop-blur-md ${
+              isFullscreen
+                ? 'border-primary/60 bg-primary/20 text-primary'
+                : 'border-border bg-surface/80 text-muted hover:text-text hover:bg-surface-2'
+            }`}
+          >
+            <span className="text-sm leading-none">{isFullscreen ? '⤢' : '⛶'}</span>
+            <span className="hidden sm:inline">
+              {isFullscreen ? (lang === 'vi' ? 'Thu nhỏ' : 'Exit') : (lang === 'vi' ? 'Toàn màn hình' : 'Fullscreen')}
+            </span>
+          </button>
+        </div>
+
+        {/* Dead Center Title: Absolutely centered regardless of left/right widths */}
+        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 pointer-events-none select-none text-center">
+          <span className="text-xl sm:text-2xl font-black tracking-wider uppercase bg-gradient-to-r from-white via-primary to-[#d5f458] bg-clip-text text-transparent drop-shadow-sm font-sans whitespace-nowrap">
             FOCUS STUDIO
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Right Side: Lo-Fi Radio + Soundscapes + Settings */}
+        <div className="flex items-center gap-2 ml-auto">
           {/* Lo-Fi Radio Pill */}
           <button
             type="button"

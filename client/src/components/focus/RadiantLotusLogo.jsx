@@ -1,8 +1,8 @@
 /**
  * Radiant Lotus Emblem
  * Implements the authentic Luma faceted lotus emblem from Behance
- * with luxurious multi-layer gradients, delicate facet highlights,
- * and rhythmic "Breath In / Breath Out" organic animation.
+ * with continuous gyroscopic orbit rings, radiant energy ripples,
+ * pulsating diamond heart, and dynamic breathing motion.
  */
 
 export function RadiantLotusLogo({
@@ -19,30 +19,36 @@ export function RadiantLotusLogo({
         isCenter ? breatheClass : ''
       }`}
     >
-      {/* Dynamic Multi-layered Breathing Aura */}
+      {/* Continuous Multi-Layered Resonance Glow */}
       {glow && (
         <>
-          {/* Outermost soft ambient glow */}
+          {/* Outermost ambient aura */}
           <div
-            className={`absolute inset-0 rounded-full blur-3xl pointer-events-none transition-all duration-1000 ${
+            className={`absolute inset-0 rounded-full blur-3xl pointer-events-none transition-all duration-700 ${
               isPlaying
-                ? 'bg-gradient-to-r from-primary/45 via-[#d4f55b]/30 to-[#a7cb2e]/40 scale-150 animate-pulse'
-                : 'bg-primary/20 scale-120'
+                ? 'bg-gradient-to-r from-primary/50 via-[#d4f55b]/40 to-[#a7cb2e]/45 scale-150 animate-pulse'
+                : 'bg-primary/25 scale-120'
             }`}
           />
 
-          {/* Concentric luminous ripple ring when active */}
+          {/* Continuous outward radiating ripples when active */}
           {isPlaying && (
-            <div
-              className="absolute -inset-4 rounded-full border border-primary/25 animate-ping pointer-events-none"
-              style={{ animationDuration: '3.2s' }}
-            />
+            <>
+              <div
+                className="absolute -inset-2 rounded-full border border-primary/35 animate-ping pointer-events-none"
+                style={{ animationDuration: '2.8s' }}
+              />
+              <div
+                className="absolute -inset-8 rounded-full border border-primary/20 animate-ping pointer-events-none delay-700"
+                style={{ animationDuration: '3.6s' }}
+              />
+            </>
           )}
         </>
       )}
 
       <svg
-        className="w-full h-full relative z-10 filter drop-shadow-[0_8px_24px_rgba(219,239,144,0.35)]"
+        className="w-full h-full relative z-10 filter drop-shadow-[0_10px_28px_rgba(219,239,144,0.4)]"
         viewBox="0 0 200 200"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -51,8 +57,8 @@ export function RadiantLotusLogo({
         <defs>
           {/* Main Crown Petal Gradient */}
           <linearGradient id="luma-crown-grad" x1="100" y1="24" x2="100" y2="120" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95" />
-            <stop offset="25%" stopColor="#E9F7A8" />
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.98" />
+            <stop offset="25%" stopColor="#EEF9B2" />
             <stop offset="70%" stopColor="#DBEF90" />
             <stop offset="100%" stopColor="#9AB82C" />
           </linearGradient>
@@ -88,30 +94,66 @@ export function RadiantLotusLogo({
 
           {/* Glass facet specular sheen */}
           <linearGradient id="luma-facet-sheen" x1="80" y1="30" x2="120" y2="150" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.6" />
-            <stop offset="40%" stopColor="#FFFFFF" stopOpacity="0.1" />
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.7" />
+            <stop offset="40%" stopColor="#FFFFFF" stopOpacity="0.15" />
             <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
           </linearGradient>
         </defs>
 
-        {/* Center Stage Dotted Orbit Ring */}
+        {/* Center Stage Gyroscopic Continuous Orbital Rings */}
         {isCenter && (
           <>
+            {/* Background disc */}
             <circle
               cx="100"
               cy="104"
               r="86"
-              className="fill-black/30 stroke-primary/30"
-              strokeWidth="1.5"
-              strokeDasharray="6 6"
-            />
-            <circle
-              cx="100"
-              cy="104"
-              r="80"
-              className="fill-none stroke-primary/15"
+              className="fill-[#0c1303]/60 stroke-primary/20"
               strokeWidth="1"
             />
+
+            {/* Outer Continuous Rotating Dotted Orbit Ring (Clockwise) */}
+            <g
+              className={isPlaying ? 'animate-orbit-cw' : 'animate-orbit-cw'}
+              style={{
+                transformOrigin: '100px 104px',
+                animationDuration: isPlaying ? '14s' : '36s',
+              }}
+            >
+              <circle
+                cx="100"
+                cy="104"
+                r="86"
+                className="fill-none stroke-primary/50"
+                strokeWidth="1.8"
+                strokeDasharray="6 8"
+                strokeLinecap="round"
+              />
+              {/* Satellite focus node on orbit */}
+              <circle cx="100" cy="18" r="3" className="fill-primary filter drop-shadow-[0_0_6px_#DBEF90]" />
+              <circle cx="100" cy="190" r="2" className="fill-primary/60" />
+            </g>
+
+            {/* Inner Counter-Rotating Orbit Ring (Counter-Clockwise) */}
+            <g
+              className={isPlaying ? 'animate-orbit-ccw' : 'animate-orbit-ccw'}
+              style={{
+                transformOrigin: '100px 104px',
+                animationDuration: isPlaying ? '10s' : '28s',
+              }}
+            >
+              <circle
+                cx="100"
+                cy="104"
+                r="78"
+                className="fill-none stroke-primary/25"
+                strokeWidth="1.2"
+                strokeDasharray="3 10"
+                strokeLinecap="round"
+              />
+              <circle cx="22" cy="104" r="2.5" className="fill-primary/80" />
+              <circle cx="178" cy="104" r="2.5" className="fill-primary/80" />
+            </g>
           </>
         )}
 
@@ -120,13 +162,12 @@ export function RadiantLotusLogo({
           d="M66 76 C46 95 38 120 54 142 C70 131 80 113 78 94 Z"
           fill="url(#luma-left-grad)"
         />
-        {/* Subtle facet line on outer left wing */}
         <path
           d="M66 76 C56 95 50 116 54 142"
           stroke="url(#luma-facet-sheen)"
-          strokeWidth="1"
+          strokeWidth="1.2"
           strokeLinecap="round"
-          opacity="0.6"
+          opacity="0.7"
         />
 
         {/* Outer Right Wing Petal */}
@@ -134,13 +175,12 @@ export function RadiantLotusLogo({
           d="M134 76 C154 95 162 120 146 142 C130 131 120 113 122 94 Z"
           fill="url(#luma-right-grad)"
         />
-        {/* Subtle facet line on outer right wing */}
         <path
           d="M134 76 C144 95 150 116 146 142"
           stroke="url(#luma-facet-sheen)"
-          strokeWidth="1"
+          strokeWidth="1.2"
           strokeLinecap="round"
-          opacity="0.6"
+          opacity="0.7"
         />
 
         {/* Inner Left Petal */}
@@ -160,14 +200,13 @@ export function RadiantLotusLogo({
           d="M100 24 C89 54 89 88 100 118 C111 88 111 54 100 24 Z"
           fill="url(#luma-crown-grad)"
         />
-        {/* Crown Spine Facet Sheen */}
         <line
           x1="100"
           y1="28"
           x2="100"
           y2="114"
           stroke="url(#luma-facet-sheen)"
-          strokeWidth="1.5"
+          strokeWidth="1.8"
           strokeLinecap="round"
         />
 
@@ -177,14 +216,18 @@ export function RadiantLotusLogo({
           fill="url(#luma-cradle-grad)"
         />
 
-        {/* Central Luminous Focus Core Spark */}
-        <g className="filter drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]">
+        {/* Continuous Pulsing Sacred Diamond Spark */}
+        <g
+          className={isPlaying ? 'animate-diamond-sparkle' : ''}
+          style={{ transformOrigin: '100px 108px' }}
+        >
           <polygon
-            points="100,98 106,108 100,118 94,108"
+            points="100,96 107,108 100,120 93,108"
             fill="#FFFFFF"
             opacity="0.95"
+            className="filter drop-shadow-[0_0_10px_#DBEF90]"
           />
-          <circle cx="100" cy="108" r="2.5" fill="#243100" />
+          <circle cx="100" cy="108" r="2.8" fill="#243100" />
         </g>
       </svg>
     </div>

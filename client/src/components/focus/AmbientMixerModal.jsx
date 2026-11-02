@@ -64,9 +64,9 @@ export function AmbientMixerModal({ isOpen, onClose }) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="ambient-mixer-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-in fade-in duration-150"
     >
-      <div className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-border bg-[#141d06]/95 backdrop-blur-2xl shadow-2xl flex flex-col max-h-[92vh] text-text">
+      <div className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-border/80 bg-[#121905] shadow-2xl flex flex-col max-h-[92vh] text-text">
         {/* Decorative subtle aura */}
         <div className="absolute -top-16 -right-16 w-56 h-56 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
 
@@ -131,11 +131,6 @@ export function AmbientMixerModal({ isOpen, onClose }) {
                         <span className="text-xs font-bold text-white truncate">
                           {track.name}
                         </span>
-                        {track.src && (
-                          <span className="text-[9px] font-mono font-extrabold text-primary bg-primary/20 px-1.5 py-0.2 rounded uppercase">
-                            REAL
-                          </span>
-                        )}
                       </div>
                       <p className="text-[11px] text-muted truncate">
                         {isVi ? (track.subtitleVi || track.subtitle) : track.subtitle}

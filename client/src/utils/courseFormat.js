@@ -9,7 +9,7 @@
  */
 
 const PRACTICE_CODE_SUFFIX_RE = /[._](?:\d+|TH\d*|th\d*)$/i;
-const PRACTICE_NAME_KEYWORDS_RE = /\s*[([\\-–]\s*(?:Thực hành|thực hành|TH|Lab)\s*[)\]]?/gi;
+const PRACTICE_TITLE_TAG_RE = /\s*(?:[-–]\s*|\(\s*|\[\s*)(?:Thực hành|thực hành|TH\d*|Lab)\s*[)\]]?\s*$/i;
 
 /**
  * Strips practice group suffix (.1, .2, .TH) to get the base theory course code.
@@ -37,7 +37,7 @@ export function isPracticeCourse(course) {
   const parenMatch = rawName.match(/\(([^()]+)\)$/);
   if (parenMatch && PRACTICE_CODE_SUFFIX_RE.test(parenMatch[1])) return true;
 
-  if (PRACTICE_NAME_KEYWORDS_RE.test(rawName)) return true;
+  if (PRACTICE_TITLE_TAG_RE.test(rawName)) return true;
 
   return false;
 }
@@ -48,7 +48,7 @@ export function isPracticeCourse(course) {
  */
 export function cleanTheoryCourseName(rawName) {
   if (!rawName) return '';
-  return String(rawName).replace(PRACTICE_NAME_KEYWORDS_RE, '').trim();
+  return String(rawName).replace(PRACTICE_TITLE_TAG_RE, '').trim();
 }
 
 /**

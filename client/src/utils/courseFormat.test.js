@@ -98,3 +98,4 @@ describe('courseFormat utilities', () => {
     });
   });
 });
+

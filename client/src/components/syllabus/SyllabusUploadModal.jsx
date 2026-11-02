@@ -7,7 +7,7 @@ export function SyllabusUploadModal({
   isOpen,
   course,
   currentTopicsCount = 0,
-  minScanDelayMs = 1200,
+  minScanDelayMs = import.meta.env.MODE === 'test' ? 0 : 1200,
   onClose,
   onImportSuccess,
 }) {

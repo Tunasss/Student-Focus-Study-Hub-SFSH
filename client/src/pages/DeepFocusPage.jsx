@@ -24,7 +24,7 @@ import {
   startPomodoroSession,
   tickPomodoroSession,
 } from '../utils/pomodoro';
-import { LOFI_GENRES, audioMixer } from '../utils/audioMixer';
+import { audioMixer } from '../utils/audioMixer';
 
 const FOCUS_COPY = {
   en: {
@@ -254,24 +254,28 @@ export function DeepFocusPage() {
         persistSession(next);
         return next;
       });
+      audioMixer.pauseMusic();
     } else if (session.status === 'paused') {
       setSession((s) => {
         const next = resumePomodoroSession(s);
         persistSession(next);
         return next;
       });
+      audioMixer.playMusic();
     } else if (session.status === 'completed') {
       setSession((s) => {
         const next = startPomodoroSession(skipToNextPhase(s, settings));
         persistSession(next);
         return next;
       });
+      audioMixer.playMusic();
     } else {
       setSession((s) => {
         const next = startPomodoroSession(s);
         persistSession(next);
         return next;
       });
+      audioMixer.playMusic();
     }
   }
 
@@ -328,7 +332,6 @@ export function DeepFocusPage() {
     phaseTitle = t.titleLongBreak;
   }
 
-  const currentGenre = LOFI_GENRES[mixerState.activeMusicId] || Object.values(LOFI_GENRES)[0];
   const isMusicPlaying = mixerState.isMusicPlaying;
   const isLotusBreathing = isMusicPlaying || session.status === 'running';
 
@@ -379,61 +382,8 @@ export function DeepFocusPage() {
           </span>
         </div>
 
-        {/* Right Side: Lo-Fi Radio + Soundscapes + Settings */}
+        {/* Right Side: Settings button only (Per User Request) */}
         <div className="flex items-center gap-2 ml-auto">
-          {/* Lo-Fi Radio Pill */}
-          <button
-            type="button"
-            data-testid="open-radio-btn"
-            onClick={() => setIsRadioOpen(true)}
-            aria-label={t.radioBtn}
-            className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-bold transition-all shadow-xs cursor-pointer backdrop-blur-md ${
-              isMusicPlaying
-                ? 'border-primary/60 bg-primary/20 text-white shadow-sm'
-                : 'border-border bg-surface/80 text-muted hover:text-text hover:bg-surface-2'
-            }`}
-          >
-            <span className="text-sm">📻</span>
-            <span className="hidden sm:inline">{t.radioBtn}</span>
-            {isMusicPlaying && (
-              <span className="flex items-end gap-0.5 h-2.5">
-                <span className="w-0.5 bg-primary rounded-full animate-pulse h-2.5" />
-                <span className="w-0.5 bg-primary rounded-full animate-pulse delay-75 h-1.5" />
-                <span className="w-0.5 bg-primary rounded-full animate-pulse delay-150 h-2" />
-              </span>
-            )}
-          </button>
-
-          {/* Ambient Soundscapes Pill */}
-          <button
-            type="button"
-            data-testid="open-mixer-btn"
-            onClick={() => setIsMixerOpen(true)}
-            aria-label={t.soundscapesBtn}
-            className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-bold transition-all shadow-xs cursor-pointer backdrop-blur-md ${
-              activeSoundCount > 0
-                ? 'border-primary/60 bg-primary/20 text-primary shadow-sm'
-                : 'border-border bg-surface/80 text-muted hover:text-text hover:bg-surface-2'
-            }`}
-          >
-            <span className="relative flex h-2 w-2">
-              {activeSoundCount > 0 && (
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-              )}
-              <span
-                className={`relative inline-flex rounded-full h-2 w-2 ${
-                  activeSoundCount > 0 ? 'bg-primary' : 'bg-muted/40'
-                }`}
-              />
-            </span>
-            <span>{t.soundscapesBtn}</span>
-            {activeSoundCount > 0 && (
-              <span className="text-[10px] bg-primary/30 px-1.5 py-0.2 rounded-full font-mono">
-                {activeSoundCount}
-              </span>
-            )}
-          </button>
-
           {/* Settings button */}
           <button
             type="button"
@@ -514,77 +464,8 @@ export function DeepFocusPage() {
             />
           </div>
 
-          {/* Interactive Audio Deck (Replaces Deep Focus text lines per Hình 5) */}
-          <div className="mt-2 w-full max-w-md flex items-center justify-center gap-2.5 flex-wrap z-20">
-            {/* Quick Lo-Fi Radio Pill */}
-            <button
-              type="button"
-              data-testid="open-radio-deck-btn"
-              onClick={() => setIsRadioOpen(true)}
-              aria-label={lang === 'vi' ? 'Đài Lo-Fi' : 'Lo-Fi Radio'}
-              className={`group flex items-center gap-2.5 rounded-2xl border px-3.5 py-2 text-xs font-bold transition-all shadow-md cursor-pointer backdrop-blur-md ${
-                isMusicPlaying
-                  ? 'border-primary/80 bg-primary/20 text-white shadow-primary/20'
-                  : 'border-border/80 bg-surface/80 text-muted hover:text-white hover:border-primary/50'
-              }`}
-            >
-              <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/25 text-primary text-sm shrink-0">
-                {isMusicPlaying ? (
-                  <span className="flex items-end gap-0.5 h-3">
-                    <span className="w-0.5 bg-primary rounded-full animate-pulse h-3" />
-                    <span className="w-0.5 bg-primary rounded-full animate-pulse delay-75 h-1.5" />
-                    <span className="w-0.5 bg-primary rounded-full animate-pulse delay-150 h-2.5" />
-                  </span>
-                ) : (
-                  <span>📻</span>
-                )}
-              </div>
-              <div className="text-left min-w-0 max-w-[130px] sm:max-w-[160px]">
-                <p className="text-[10px] font-mono uppercase tracking-wider text-primary leading-none font-bold">
-                  {isMusicPlaying ? (lang === 'vi' ? 'Đang phát' : 'Playing') : (lang === 'vi' ? 'Đài Lo-Fi' : 'Lo-Fi Radio')}
-                </p>
-                <p className="text-xs font-bold text-white truncate mt-0.5">
-                  {currentGenre?.name || 'Jazz Lounge'}
-                </p>
-              </div>
-              <span className="text-xs text-muted group-hover:text-primary transition-colors">›</span>
-            </button>
-
-            {/* Quick Ambient Soundscapes Pill */}
-            <button
-              type="button"
-              data-testid="open-ambient-deck-btn"
-              onClick={() => setIsAmbientOpen(true)}
-              aria-label={lang === 'vi' ? 'Bộ trộn âm môi trường' : 'Ambient Soundscapes'}
-              className={`group flex items-center gap-2.5 rounded-2xl border px-3.5 py-2 text-xs font-bold transition-all shadow-md cursor-pointer backdrop-blur-md ${
-                activeSoundCount > 0
-                  ? 'border-primary/80 bg-primary/20 text-white shadow-primary/20'
-                  : 'border-border/80 bg-surface/80 text-muted hover:text-white hover:border-primary/50'
-              }`}
-            >
-              <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-surface-2 text-muted group-hover:text-primary text-sm shrink-0">
-                {activeSoundCount > 0 ? (
-                  <span className="text-primary animate-pulse">🌿</span>
-                ) : (
-                  <span>🎛️</span>
-                )}
-              </div>
-              <div className="text-left min-w-0 max-w-[130px] sm:max-w-[160px]">
-                <p className="text-[10px] font-mono uppercase tracking-wider text-muted group-hover:text-primary leading-none font-bold">
-                  {lang === 'vi' ? 'Âm thanh nền' : 'Soundscapes'}
-                </p>
-                <p className="text-xs font-bold text-white truncate mt-0.5">
-                  {activeSoundCount > 0
-                    ? (lang === 'vi' ? `${activeSoundCount} âm đang bật` : `${activeSoundCount} layers active`)
-                    : (lang === 'vi' ? 'Mưa, cafe, lửa...' : 'Rain, cafe, fire...')}
-                </p>
-              </div>
-              <span className="text-xs text-muted group-hover:text-primary transition-colors">›</span>
-            </button>
-          </div>
-
           {/* Pomodoro Timeline Scrubber */}
-          <div className="w-full max-w-sm mt-4 space-y-1.5">
+          <div className="w-full max-w-sm mt-8 space-y-1.5">
             <div className="relative h-2.5 w-full rounded-full bg-surface-2 border border-border overflow-hidden">
               <div
                 className="h-full bg-primary rounded-full transition-all duration-300"
@@ -599,76 +480,99 @@ export function DeepFocusPage() {
             </div>
           </div>
 
-          {/* Media Player Controls */}
-          <div className="flex items-center gap-4 mt-4">
-            {/* Ambient Sound Mode button */}
+          {/* Media Player Controls (Exact Requested Order: Radio, Restart, Play, Forward, Soundscape) */}
+          <div className="flex items-center justify-center gap-4 mt-6">
+            {/* 1. Lo-Fi Radio button */}
             <button
               type="button"
-              data-testid="control-mixer-btn"
-              onClick={() => setIsMixerOpen(true)}
-              title={t.soundscapesBtn}
-              className={`flex h-11 w-11 items-center justify-center rounded-full border transition-colors shadow-xs cursor-pointer backdrop-blur-md ${
-                activeSoundCount > 0
-                  ? 'bg-primary/20 border-primary text-primary'
-                  : 'bg-surface border-border text-muted hover:text-text hover:bg-surface-2'
+              data-testid="open-radio-btn"
+              onClick={() => setIsRadioOpen(true)}
+              title={t.radioBtn}
+              aria-label={t.radioBtn}
+              className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer backdrop-blur-md ${
+                isMusicPlaying
+                  ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
+                  : 'bg-surface border-border text-muted hover:text-white hover:bg-surface-2 hover:border-primary/50'
               }`}
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z"
-                />
-              </svg>
+              <span className="text-base">📻</span>
             </button>
 
-            {/* Play/Pause Button */}
-            <button
-              type="button"
-              data-testid="play-pause-btn"
-              onClick={handlePlayPause}
-              aria-label={session.status === 'running' ? t.pause : t.start}
-              className="flex h-14 w-14 items-center justify-center rounded-full bg-text text-bg dark:bg-white dark:text-black shadow-xl luma-radiant-glow hover:scale-105 active:scale-95 transition-transform cursor-pointer"
-            >
-              {session.status === 'running' ? (
-                <svg className="h-6 w-6 fill-current" viewBox="0 0 24 24">
-                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                </svg>
-              ) : (
-                <svg className="h-6 w-6 fill-current ml-0.5" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              )}
-            </button>
-
-            {/* Skip to Next Phase Button */}
-            <button
-              type="button"
-              data-testid="skip-phase-btn"
-              title={t.skip}
-              onClick={handleSkip}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-surface border border-border text-muted hover:text-text hover:bg-surface-2 transition-colors shadow-xs cursor-pointer backdrop-blur-md"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-              </svg>
-            </button>
-
-            {/* Reset Pomodoro Button */}
+            {/* 2. Restart Pomodoro Button */}
             <button
               type="button"
               data-testid="reset-timer-btn"
               title={t.reset}
+              aria-label={t.reset}
               onClick={handleReset}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-surface border border-border text-muted hover:text-text hover:bg-surface-2 transition-colors shadow-xs cursor-pointer backdrop-blur-md"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-surface border border-border text-muted hover:text-white hover:bg-surface-2 transition-colors shadow-xs cursor-pointer backdrop-blur-md"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                 />
               </svg>
+            </button>
+
+            {/* 3. Center Play/Pause Button */}
+            <button
+              type="button"
+              data-testid="play-pause-btn"
+              onClick={handlePlayPause}
+              aria-label={session.status === 'running' ? t.pause : t.start}
+              className="flex h-15 w-15 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-white text-black shadow-2xl luma-radiant-glow hover:scale-105 active:scale-95 transition-transform cursor-pointer"
+            >
+              {session.status === 'running' ? (
+                <svg className="h-7 w-7 fill-current" viewBox="0 0 24 24">
+                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                </svg>
+              ) : (
+                <svg className="h-7 w-7 fill-current ml-0.5" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              )}
+            </button>
+
+            {/* 4. Skip to Next Phase Button (Forward) */}
+            <button
+              type="button"
+              data-testid="skip-phase-btn"
+              title={t.skip}
+              aria-label={t.skip}
+              onClick={handleSkip}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-surface border border-border text-muted hover:text-white hover:bg-surface-2 transition-colors shadow-xs cursor-pointer backdrop-blur-md"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            </button>
+
+            {/* 5. Ambient Soundscape Mixer button */}
+            <button
+              type="button"
+              data-testid="open-mixer-btn"
+              onClick={() => setIsMixerOpen(true)}
+              title={t.soundscapesBtn}
+              aria-label={t.soundscapesBtn}
+              className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer backdrop-blur-md ${
+                activeSoundCount > 0
+                  ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
+                  : 'bg-surface border-border text-muted hover:text-white hover:bg-surface-2 hover:border-primary/50'
+              }`}
+            >
+              {activeSoundCount > 0 ? (
+                <span className="text-base text-primary animate-pulse">🌿</span>
+              ) : (
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z"
+                  />
+                </svg>
+              )}
             </button>
           </div>
         </div>

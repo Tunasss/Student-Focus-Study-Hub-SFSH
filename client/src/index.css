@@ -170,6 +170,43 @@ body {
   animation: dashFlow 1.6s linear infinite;
 }
 
+/* Luma Center Emblem Breathing Animations (60fps GPU Compositor) */
+@keyframes lumaBreathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.94;
+  }
+  50% {
+    transform: scale(1.055);
+    opacity: 1;
+  }
+}
+
+@keyframes lumaBreatheActive {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 16px rgba(219, 239, 144, 0.4));
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.095);
+    filter: drop-shadow(0 0 38px rgba(219, 239, 144, 0.85));
+    opacity: 1;
+  }
+}
+
+.animate-luma-breathe {
+  animation: lumaBreathe 4.5s ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+.animate-luma-breathe-active {
+  animation: lumaBreatheActive 3.2s ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform, filter, opacity;
+}
+
 /* WCAG Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {

@@ -94,26 +94,60 @@ const FOCUS_COPY = {
   },
 };
 
-// Glowing organic radiant shield matching Luma Behance styling
-function RadiantShield({ className = '', glow = true, isPlaying = false }) {
+// Glowing authentic Luma Lotus Emblem with GPU-accelerated breathing animation
+export function RadiantShield({ className = '', glow = true, isPlaying = false, isCenter = false }) {
+  const breatheClass = isPlaying ? 'animate-luma-breathe-active' : 'animate-luma-breathe';
+
   return (
-    <div className={`relative flex items-center justify-center ${className}`}>
+    <div
+      className={`relative flex items-center justify-center ${className} ${
+        isCenter ? breatheClass : ''
+      }`}
+    >
       {glow && (
         <div
-          className={`absolute inset-0 rounded-full bg-primary/20 blur-3xl scale-125 pointer-events-none transition-all duration-700 ${
-            isPlaying ? 'animate-pulse scale-150 bg-primary/30' : ''
+          className={`absolute inset-0 rounded-full blur-3xl pointer-events-none transition-all duration-700 ${
+            isPlaying ? 'bg-primary/35 scale-150 animate-pulse' : 'bg-primary/20 scale-125'
           }`}
         />
       )}
       <svg
-        className="w-full h-full text-primary drop-shadow-[0_0_35px_rgba(138,203,30,0.4)] dark:drop-shadow-[0_0_40px_rgba(219,239,144,0.45)]"
+        className="w-full h-full text-primary relative z-10 transition-transform duration-300"
         viewBox="0 0 200 200"
         fill="currentColor"
         aria-hidden="true"
       >
-        <path d="M100 20 L138 68 L185 85 L165 145 L100 178 L35 145 L15 85 L62 68 Z" />
-        <circle cx="100" cy="112" r="32" className="fill-bg/40 dark:fill-black/45" />
-        <circle cx="100" cy="112" r="14" className="fill-primary" />
+        {isCenter && (
+          <circle
+            cx="100"
+            cy="108"
+            r="82"
+            className="fill-surface/40 dark:fill-black/50 stroke-primary/30"
+            strokeWidth="1.5"
+            strokeDasharray="6 6"
+          />
+        )}
+        {/* Central Crown Petal */}
+        <path d="M100 32 C91 58 91 88 100 115 C109 88 109 58 100 32 Z" fill="currentColor" />
+
+        {/* Inner Left Petal */}
+        <path d="M88 54 C72 68 62 90 74 118 C88 110 98 92 94 72 Z" fill="currentColor" opacity="0.9" />
+
+        {/* Inner Right Petal */}
+        <path d="M112 54 C128 68 138 90 126 118 C112 110 102 92 106 72 Z" fill="currentColor" opacity="0.9" />
+
+        {/* Outer Left Wing Petal */}
+        <path d="M70 78 C52 95 45 118 60 140 C75 130 84 114 82 96 Z" fill="currentColor" opacity="0.75" />
+
+        {/* Outer Right Wing Petal */}
+        <path d="M130 78 C148 95 155 118 140 140 C125 130 116 114 118 96 Z" fill="currentColor" opacity="0.75" />
+
+        {/* Base Cradle Petal */}
+        <path d="M52 142 C74 168 126 168 148 142 C134 160 66 160 52 142 Z" fill="currentColor" opacity="0.85" />
+
+        {/* Radiant Inner Focus Spark */}
+        <polygon points="100,98 105,108 100,118 95,108" className="fill-bg dark:fill-primary-fg" />
+        <circle cx="100" cy="108" r="3" className="fill-primary" />
       </svg>
     </div>
   );
@@ -232,15 +266,6 @@ export function DeepFocusPage() {
           { x: 0, autoAlpha: 1, stagger: 0.05, duration: 0.45, clearProps: 'opacity,visibility,transform' },
           '-=0.35'
         );
-
-      gsap.to('.radiant-lotus-aura', {
-        scale: 1.05,
-        rotation: 2,
-        duration: 4,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      });
     }, containerRef);
 
     return () => ctx.revert();
@@ -487,6 +512,7 @@ export function DeepFocusPage() {
               className="radiant-lotus-aura w-48 sm:w-56 h-48 sm:h-56"
               glow={true}
               isPlaying={session.status === 'running'}
+              isCenter={true}
             />
           </div>
 

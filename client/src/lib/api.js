@@ -72,12 +72,8 @@ export const scheduleApi = {
 
 export const syllabusApi = {
   getCourseTopics: async (courseId) => {
-    try {
-      const data = await apiFetch(`/api/courses/${courseId}/topics`);
-      return data?.topics ?? data ?? [];
-    } catch {
-      return [];
-    }
+    const data = await apiFetch(`/api/courses/${courseId}/topics`);
+    return data?.topics ?? data ?? [];
   },
   updateTopicStatus: async (topicId, status) => {
     const data = await apiFetch(`/api/topics/${topicId}`, {
@@ -110,3 +106,4 @@ export const syllabusApi = {
     }
   },
 };
+

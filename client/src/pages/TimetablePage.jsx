@@ -60,7 +60,9 @@ export function TimetablePage() {
   const containerRef = useRef(null);
   const [pivotDate, setPivotDate] = useState(() => new Date());
   const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(
+    () => !(typeof localStorage !== 'undefined' && localStorage.getItem('sfsh_timetable_cleared') === 'true')
+  );
   const [error, setError] = useState(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
@@ -99,6 +101,10 @@ export function TimetablePage() {
 
   useEffect(() => {
     let cancelled = false;
+
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('sfsh_timetable_cleared') === 'true') {
+      return;
+    }
 
     scheduleApi
       .getSchedule(range.from, range.to)
@@ -169,6 +175,12 @@ export function TimetablePage() {
   }
 
   function handleUploadSuccess(result) {
+    try {
+      localStorage.removeItem('sfsh_timetable_cleared');
+      window.dispatchEvent(new CustomEvent('sfsh:timetable_imported'));
+    } catch {
+      // ignore
+    }
     const count = result?.schedulesImported || result?.eventsRead || 0;
     setToastMessage(t.toastSuccess(count));
     setLoading(true);
@@ -179,6 +191,12 @@ export function TimetablePage() {
   function handleConfirmClear() {
     setEvents([]);
     setIsClearConfirmOpen(false);
+    try {
+      localStorage.setItem('sfsh_timetable_cleared', 'true');
+      window.dispatchEvent(new CustomEvent('sfsh:timetable_cleared'));
+    } catch {
+      // ignore
+    }
     setToastMessage(t.toastClearSuccess);
     setTimeout(() => setToastMessage(null), 4000);
   }

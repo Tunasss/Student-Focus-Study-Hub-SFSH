@@ -7,6 +7,7 @@ import { AuthPage } from './pages/AuthPage';
 import { DeepFocusPage } from './pages/DeepFocusPage';
 import { HomePage } from './pages/HomePage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
+import { SyllabusPage } from './pages/SyllabusPage';
 import { TimetablePage } from './pages/TimetablePage';
 
 function RootEntryRoute() {
@@ -78,16 +79,7 @@ export function App() {
             }
           />
           <Route path="timetable" element={<TimetablePage />} />
-          <Route
-            path="syllabus"
-            element={
-              <PlaceholderPage
-                pageKey="syllabus"
-                title="Syllabus"
-                description="Structured chapter breakdown and course mastery tracking."
-              />
-            }
-          />
+          <Route path="syllabus" element={<SyllabusPage />} />
           <Route
             path="deadlines"
             element={
@@ -98,10 +90,43 @@ export function App() {
               />
             }
           />
-          <Route path="focus" element={<DeepFocusPage />} />
+          <Route
+            path="notes"
+            element={
+              <PlaceholderPage
+                pageKey="notes"
+                title="Quick Notes"
+                description="Course notes and scratchpad."
+              />
+            }
+          />
+          <Route
+            path="resources"
+            element={
+              <PlaceholderPage
+                pageKey="resources"
+                title="Resources"
+                description="Lecture slides, reference PDFs and links."
+              />
+            }
+          />
+          <Route
+            path="profile"
+            element={
+              <PlaceholderPage
+                pageKey="profile"
+                title="Profile"
+                description="Account settings and preferences."
+              />
+            }
+          />
         </Route>
+
+        {/* Deep Focus Studio: Full-screen distraction-free layout (outside AppShell) */}
+        <Route path="focus" element={<DeepFocusPage />} />
       </Route>
 
+      {/* Catch-all 404 redirect to root */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

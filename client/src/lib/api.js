@@ -1,4 +1,5 @@
 import { getToken } from './tokenStorage';
+import { simulateSyllabusExtraction } from '../utils/syllabusMock';
 
 const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/$/, '');
 
@@ -91,5 +92,21 @@ export const syllabusApi = {
       body: topicData,
     });
     return data?.topic ?? data;
+  },
+  extractSyllabus: async (courseId, file, courseName = '') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const data = await apiFetch(`/api/courses/${courseId}/syllabus/extract`, {
+        method: 'POST',
+        body: formData,
+      });
+      return data?.topics || (Array.isArray(data) ? data : []);
+    } catch (err) {
+      if (err?.status === 404 || err?.code === 'NETWORK_ERROR' || err?.status === 501) {
+        return simulateSyllabusExtraction(courseName, file.name);
+      }
+      throw err;
+    }
   },
 };

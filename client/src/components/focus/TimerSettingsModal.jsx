@@ -237,3 +237,4 @@ export function TimerSettingsModal({ isOpen, settings, onSave, onClose }) {
     </div>
   );
 }
+

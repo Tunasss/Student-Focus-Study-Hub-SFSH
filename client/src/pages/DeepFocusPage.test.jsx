@@ -203,7 +203,7 @@ describe('DeepFocusPage Integration Tests', () => {
 
     // Modal should be open
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText(/Ambient Focus Mixer|Bộ trộn âm thanh học tập/i)).toBeInTheDocument();
+    expect(screen.getByText(/Lo-Fi Radio & Ambient Mixer|Đài Lo-Fi & Bộ trộn âm thanh môi trường/i)).toBeInTheDocument();
     expect(screen.getByText(/432Hz Binaural Beats|Sóng não 432Hz/i)).toBeInTheDocument();
 
     // Close modal via close button

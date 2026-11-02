@@ -261,3 +261,4 @@ export function loadPersistedSession(_settings = DEFAULT_TIMER_SETTINGS) {
     return null;
   }
 }
+

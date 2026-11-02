@@ -1,67 +1,36 @@
 /**
  * High-Fidelity Lo-Fi Music & Real Environmental Ambience Audio Mixer
  * Implements Section 6.4 (Audio Mixer) of Project Master v4:
- *   - 5 Lo-Fi Music Genres (Jazz, Soul/R&B, Acoustic Guitar, Midnight Synthwave, Piano)
+ *   - 5 Lo-Fi Music Genres from OpenLoFi (Jazz Lounge, Soul & R&B, Midnight Synthwave, Piano, Acoustic)
+ *   - 10 full-length tracks per genre (50 tracks total) with automatic sequential chaining.
+ *   - Auto-genre transition when 10 tracks of a category complete with popup notification.
  *   - 5 Real Environmental Soundscapes (Gentle Rain, Campus Cafe, Cozy Fireplace, Forest Birds, Ocean Waves)
  *   - Procedural 432Hz Binaural Beats and 528Hz Solfeggio completion chime.
  *   - Independent channel volume faders, master volume, and global mute.
- *   - Automatic loop playback with localStorage persistence.
+ *   - Automatic loop/chain playback with localStorage persistence.
  */
+
+import { LOFI_MANIFEST } from './lofiManifest';
 
 export const AUDIO_MIXER_STORAGE_KEY = 'sfsh_audio_mixer_state';
 
+// Primary 5 genres with 10 tracks each
 export const LOFI_GENRES = {
-  jazz: {
-    id: 'jazz',
-    name: 'Lo-Fi Jazz Lounge',
-    genre: 'Jazz & Chillhop',
-    desc: 'Smoky Rhodes piano, mellow saxophone & smooth swing beats',
-    descVi: 'Giai điệu Jazz thư thái, tiếng kèn saxophone êm dịu và nhịp trống chill',
-    icon: '🎷',
-    src: '/audio/tracks/lofi-jazz.mp3',
-    bpm: '72 BPM',
-  },
-  rnb: {
-    id: 'rnb',
-    name: 'Lo-Fi Soul & R&B',
-    genre: 'Soul & Slow Jam',
-    desc: 'Deep warm 808 bass, silky keys & late-night room vibes',
-    descVi: 'Nhịp R&B ấm áp, âm bass trầm sâu lắng đưa tâm trí vào dòng chảy tập trung',
-    icon: '☕',
-    src: '/audio/tracks/lofi-rnb.mp3',
-    bpm: '68 BPM',
-  },
-  acoustic: {
-    id: 'acoustic',
-    name: 'Lo-Fi Acoustic Guitar',
-    genre: 'Acoustic & Folk',
-    desc: 'Delicate fingerpicked nylon strings and nostalgic warmth',
-    descVi: 'Tiếng đàn guitar mộc mạc, nhẹ nhàng thanh lọc tâm trí',
-    icon: '🎸',
-    src: '/audio/tracks/lofi-acoustic.mp3',
-    bpm: '75 BPM',
-  },
-  night: {
-    id: 'night',
-    name: 'Midnight Synthwave',
-    genre: 'Synth & Chillwave',
-    desc: 'Deep meditative analog synth pads for after-hours study',
-    descVi: 'Không gian đêm yên tĩnh, âm thanh synth mơ màng cho những đêm thức muộn',
-    icon: '🌌',
-    src: '/audio/tracks/lofi-night.mp3',
-    bpm: '70 BPM',
-  },
-  piano: {
-    id: 'piano',
-    name: 'Peaceful Study Piano',
-    genre: 'Minimalist Piano',
-    desc: 'Gentle felt piano chords and soft morning light ambiance',
-    descVi: 'Tiếng đàn piano êm đềm, tạo khoảng lặng trong trẻo để ghi nhớ kiến thức',
-    icon: '🎹',
-    src: '/audio/tracks/lofi-piano.mp3',
-    bpm: '65 BPM',
-  },
+  jazz: { ...LOFI_MANIFEST.jazzhop, id: 'jazz', src: '/audio/tracks/lofi-jazz.mp3' },
+  rnb: { ...LOFI_MANIFEST['soul-rnb'], id: 'rnb', src: '/audio/tracks/lofi-rnb.mp3' },
+  night: { ...LOFI_MANIFEST['late-night'], id: 'night', src: '/audio/tracks/lofi-night.mp3' },
+  piano: { ...LOFI_MANIFEST['ambient-lofi'], id: 'piano', src: '/audio/tracks/lofi-piano.mp3' },
+  acoustic: { ...LOFI_MANIFEST['funk-soul'], id: 'acoustic', src: '/audio/tracks/lofi-acoustic.mp3' },
 };
+
+// Aliases for modern category names (non-enumerable so Object.values() has exactly 5 unique genres)
+Object.defineProperty(LOFI_GENRES, 'jazzhop', { enumerable: false, get: () => LOFI_GENRES.jazz });
+Object.defineProperty(LOFI_GENRES, 'soul-rnb', { enumerable: false, get: () => LOFI_GENRES.rnb });
+Object.defineProperty(LOFI_GENRES, 'late-night', { enumerable: false, get: () => LOFI_GENRES.night });
+Object.defineProperty(LOFI_GENRES, 'ambient-lofi', { enumerable: false, get: () => LOFI_GENRES.piano });
+Object.defineProperty(LOFI_GENRES, 'funk-soul', { enumerable: false, get: () => LOFI_GENRES.acoustic });
+
+export const GENRE_ORDER = ['jazz', 'rnb', 'night', 'piano', 'acoustic'];
 
 export const DEFAULT_AUDIO_TRACKS = {
   binaural: {
@@ -140,7 +109,6 @@ function createAudioElement(src) {
   if (typeof Audio === 'undefined') return null;
   try {
     const audio = new Audio(src);
-    audio.loop = true;
     audio.preload = 'auto';
     return audio;
   } catch {
@@ -153,11 +121,14 @@ export function createAudioMixer() {
   const activeNodes = {};
   const activeAudios = {};
   let musicAudio = null;
+  const genreSwitchListeners = new Set();
+  const trackChangeListeners = new Set();
 
   let state = {
     masterVolume: 0.8,
     isMuted: false,
     activeMusicId: 'jazz',
+    currentTrackIndex: 0,
     isMusicPlaying: false,
     musicVolume: 0.7,
     tracks: { ...DEFAULT_AUDIO_TRACKS },
@@ -173,6 +144,9 @@ export function createAudioMixer() {
         state.isMuted = !!parsed.isMuted;
         if (parsed.activeMusicId && LOFI_GENRES[parsed.activeMusicId]) {
           state.activeMusicId = parsed.activeMusicId;
+        }
+        if (typeof parsed.currentTrackIndex === 'number' && parsed.currentTrackIndex >= 0 && parsed.currentTrackIndex < 10) {
+          state.currentTrackIndex = parsed.currentTrackIndex;
         }
         if (typeof parsed.musicVolume === 'number') {
           state.musicVolume = parsed.musicVolume;
@@ -206,6 +180,7 @@ export function createAudioMixer() {
             masterVolume: state.masterVolume,
             isMuted: state.isMuted,
             activeMusicId: state.activeMusicId,
+            currentTrackIndex: state.currentTrackIndex,
             musicVolume: state.musicVolume,
             tracks: state.tracks,
           })
@@ -248,6 +223,120 @@ export function createAudioMixer() {
       if (activeAudios[id] && state.tracks[id]) {
         applyVolume(activeAudios[id], state.tracks[id].volume);
       }
+    });
+  }
+
+  function notifyGenreSwitch(payload) {
+    genreSwitchListeners.forEach((fn) => {
+      try {
+        fn(payload);
+      } catch {
+        // ignore
+      }
+    });
+  }
+
+  function notifyTrackChange(payload) {
+    trackChangeListeners.forEach((fn) => {
+      try {
+        fn(payload);
+      } catch {
+        // ignore
+      }
+    });
+  }
+
+  function getTrackSrc(genreId, index) {
+    const genre = LOFI_GENRES[genreId] || LOFI_GENRES.jazzhop;
+    if (genre.tracks && genre.tracks[index]) {
+      return genre.tracks[index].src;
+    }
+    return genre.src || '/audio/tracks/lofi-jazz.mp3';
+  }
+
+  function getTrackTitle(genreId, index) {
+    const genre = LOFI_GENRES[genreId] || LOFI_GENRES.jazzhop;
+    if (genre.tracks && genre.tracks[index]) {
+      return genre.tracks[index].title;
+    }
+    return `Track ${index + 1}`;
+  }
+
+  // Bind audio element with end-of-track auto-chaining logic
+  function setupMusicAudioElement(src) {
+    if (musicAudio) {
+      try {
+        musicAudio.pause();
+        musicAudio.onended = null;
+        musicAudio.onerror = null;
+      } catch {
+        // ignore
+      }
+    }
+
+    const audio = createAudioElement(src);
+    if (!audio) return null;
+
+    audio.loop = false; // Never loop single track - chain sequentially!
+    applyVolume(audio, state.musicVolume);
+
+    audio.onended = () => {
+      const currentGenreKey = state.activeMusicId;
+      const genre = LOFI_GENRES[currentGenreKey] || LOFI_GENRES.jazzhop;
+      const trackCount = genre.tracks?.length || 10;
+
+      if (state.currentTrackIndex < trackCount - 1) {
+        // Sequential next track in the same genre
+        const nextIndex = state.currentTrackIndex + 1;
+        playTrackInternal(currentGenreKey, nextIndex);
+      } else {
+        // Reached track 10! Auto-advance to next genre and notify user!
+        const currentIdxInOrder = GENRE_ORDER.indexOf(currentGenreKey);
+        const nextOrderIdx = currentIdxInOrder >= 0 ? (currentIdxInOrder + 1) % GENRE_ORDER.length : 0;
+        const nextGenreKey = GENRE_ORDER[nextOrderIdx];
+        const prevGenreName = genre.name;
+        const nextGenreName = LOFI_GENRES[nextGenreKey]?.name || nextGenreKey;
+        const nextTrackTitle = getTrackTitle(nextGenreKey, 0);
+
+        playTrackInternal(nextGenreKey, 0);
+
+        // Notify subscribers to show high-profile popup
+        notifyGenreSwitch({
+          previousGenreId: currentGenreKey,
+          previousGenreName: prevGenreName,
+          nextGenreId: nextGenreKey,
+          nextGenreName: nextGenreName,
+          trackTitle: nextTrackTitle,
+        });
+      }
+    };
+
+    return audio;
+  }
+
+  function playTrackInternal(genreId, trackIndex) {
+    state.activeMusicId = genreId;
+    state.currentTrackIndex = trackIndex;
+    const src = getTrackSrc(genreId, trackIndex);
+
+    musicAudio = setupMusicAudioElement(src);
+    if (musicAudio) {
+      applyVolume(musicAudio, state.musicVolume);
+      try {
+        const p = musicAudio.play();
+        if (p && typeof p.catch === 'function') {
+          p.catch(() => {});
+        }
+      } catch {
+        // ignore
+      }
+    }
+    state.isMusicPlaying = true;
+    persist();
+    notifyTrackChange({
+      genreId,
+      trackIndex,
+      trackTitle: getTrackTitle(genreId, trackIndex),
     });
   }
 
@@ -334,44 +423,60 @@ export function createAudioMixer() {
   return {
     getState: () => ({
       ...state,
+      currentTrackTitle: getTrackTitle(state.activeMusicId, state.currentTrackIndex),
       tracks: { ...state.tracks },
       effects: { ...state.tracks },
     }),
 
-    // --- LO-FI MUSIC CONTROLS ---
-    selectMusic: function (genreId) {
-      if (!LOFI_GENRES[genreId]) return;
+    onGenreSwitch: (fn) => {
+      genreSwitchListeners.add(fn);
+      return () => genreSwitchListeners.delete(fn);
+    },
 
-      if (state.activeMusicId === genreId && state.isMusicPlaying) {
-        this.pauseMusic();
+    onTrackChange: (fn) => {
+      trackChangeListeners.add(fn);
+      return () => trackChangeListeners.delete(fn);
+    },
+
+    // --- LO-FI MUSIC CONTROLS ---
+    selectMusic: function (genreId, trackIndex = 0) {
+      if (!LOFI_GENRES[genreId]) return;
+      playTrackInternal(genreId, trackIndex);
+    },
+
+    playTrack: function (genreId, trackIndex) {
+      if (!LOFI_GENRES[genreId]) return;
+      playTrackInternal(genreId, trackIndex);
+    },
+
+    nextTrack: function () {
+      const currentGenreKey = state.activeMusicId;
+      const genre = LOFI_GENRES[currentGenreKey] || LOFI_GENRES.jazzhop;
+      const trackCount = genre.tracks?.length || 10;
+
+      if (state.currentTrackIndex < trackCount - 1) {
+        playTrackInternal(currentGenreKey, state.currentTrackIndex + 1);
+      } else {
+        const currentIdxInOrder = GENRE_ORDER.indexOf(currentGenreKey);
+        const nextOrderIdx = currentIdxInOrder >= 0 ? (currentIdxInOrder + 1) % GENRE_ORDER.length : 0;
+        const nextGenreKey = GENRE_ORDER[nextOrderIdx];
+        playTrackInternal(nextGenreKey, 0);
+      }
+    },
+
+    prevTrack: function () {
+      const currentGenreKey = state.activeMusicId;
+      if (musicAudio && musicAudio.currentTime > 3) {
+        musicAudio.currentTime = 0;
         return;
       }
-
-      state.activeMusicId = genreId;
-      if (musicAudio) {
-        try {
-          musicAudio.pause();
-          musicAudio.currentTime = 0;
-        } catch {
-          // ignore
-        }
+      if (state.currentTrackIndex > 0) {
+        playTrackInternal(currentGenreKey, state.currentTrackIndex - 1);
+      } else {
+        const genre = LOFI_GENRES[currentGenreKey] || LOFI_GENRES.jazzhop;
+        const maxIdx = (genre.tracks?.length || 10) - 1;
+        playTrackInternal(currentGenreKey, maxIdx);
       }
-
-      const genre = LOFI_GENRES[genreId];
-      musicAudio = createAudioElement(genre.src);
-      if (musicAudio) {
-        applyVolume(musicAudio, state.musicVolume);
-        try {
-          const p = musicAudio.play();
-          if (p && typeof p.catch === 'function') {
-            p.catch(() => {});
-          }
-        } catch {
-          // ignore
-        }
-      }
-      state.isMusicPlaying = true;
-      persist();
     },
 
     toggleMusic: function () {
@@ -384,8 +489,8 @@ export function createAudioMixer() {
 
     playMusic: function () {
       if (!musicAudio) {
-        const genre = LOFI_GENRES[state.activeMusicId] || LOFI_GENRES.jazz;
-        musicAudio = createAudioElement(genre.src);
+        const src = getTrackSrc(state.activeMusicId, state.currentTrackIndex);
+        musicAudio = setupMusicAudioElement(src);
       }
       if (musicAudio) {
         applyVolume(musicAudio, state.musicVolume);
@@ -441,7 +546,11 @@ export function createAudioMixer() {
       if (track.src) {
         // Real MP3 audio file
         if (!activeAudios[id]) {
-          activeAudios[id] = createAudioElement(track.src);
+          const aud = createAudioElement(track.src);
+          if (aud) {
+            aud.loop = true;
+            activeAudios[id] = aud;
+          }
         }
         const audio = activeAudios[id];
         if (audio) {

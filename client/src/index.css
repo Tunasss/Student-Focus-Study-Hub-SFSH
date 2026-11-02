@@ -207,6 +207,43 @@ body {
   will-change: transform, filter, opacity;
 }
 
+@keyframes chromaticFade {
+  0% {
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    background-position: 100% 50%;
+    filter: hue-rotate(18deg);
+  }
+  100% {
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg);
+  }
+}
+
+.animate-chromatic-ambient {
+  background: radial-gradient(circle at 50% 45%, rgba(219, 239, 144, 0.16) 0%, transparent 65%),
+              radial-gradient(circle at 15% 25%, rgba(36, 49, 0, 0.5) 0%, transparent 55%),
+              radial-gradient(circle at 85% 75%, rgba(85, 110, 15, 0.3) 0%, transparent 60%),
+              linear-gradient(135deg, #070b02 0%, #121a05 35%, #0d1504 70%, #060a01 100%);
+  background-size: 200% 200%;
+  animation: chromaticFade 18s ease-in-out infinite;
+}
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 20s linear infinite;
+}
+
 /* WCAG Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {

@@ -6,10 +6,26 @@ import { getToken, setToken } from './lib/tokenStorage';
 
 const USER = { id: 1, email: 'student@sfsh.dev', createdAt: '2026-10-25T00:00:00.000Z' };
 
-describe('auth flow', () => {
+describe('auth flow & bilingual home', () => {
+  test('shows Home page in English by default, switches to Vietnamese, and navigates to /login', async () => {
+    renderApp('/');
+    expect(await screen.findByRole('heading', { name: /One experience/i })).toBeInTheDocument();
+
+    // Switch language to VI
+    await userEvent.click(screen.getByRole('button', { name: 'VI' }));
+    expect(await screen.findByRole('heading', { name: /Một trải nghiệm/i })).toBeInTheDocument();
+
+    // Switch back to EN
+    await userEvent.click(screen.getByRole('button', { name: 'EN' }));
+    expect(await screen.findByRole('heading', { name: /One experience/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getAllByRole('link', { name: /^Sign In$/i })[0]);
+    expect(await screen.findByRole('heading', { name: /Sign In|Đăng nhập/i })).toBeInTheDocument();
+  });
+
   test('redirects guests from a protected page to /login', async () => {
     renderApp('/deadlines');
-    expect(await screen.findByRole('heading', { name: 'Đăng nhập' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Sign In|Đăng nhập/i })).toBeInTheDocument();
   });
 
   test('logs in, stores the token and shows the app shell', async () => {
@@ -18,11 +34,11 @@ describe('auth flow', () => {
     );
     renderApp('/login');
 
-    await userEvent.type(screen.getByLabelText('Email'), USER.email);
-    await userEvent.type(screen.getByLabelText('Mật khẩu'), 'Password123!');
-    await userEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
+    await userEvent.type(screen.getByLabelText(/Email/i), USER.email);
+    await userEvent.type(screen.getByLabelText(/Password|Mật khẩu/i), 'Password123!');
+    await userEvent.click(screen.getByRole('button', { name: /Sign In|Đăng nhập/i }));
 
-    expect(await screen.findByRole('heading', { name: 'Tổng quan' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Deep Focus|Overview|Program|Tập trung sâu|Tổng quan/i })).toBeInTheDocument();
     expect(getToken()).toBe('jwt-token');
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ email: USER.email, password: 'Password123!' });
   });
@@ -31,11 +47,11 @@ describe('auth flow', () => {
     const fetchMock = mockFetch(() => [500, {}]);
     renderApp('/register');
 
-    await userEvent.type(screen.getByLabelText('Email'), 'new@sfsh.dev');
-    await userEvent.type(screen.getByLabelText(/Mật khẩu/), 'short');
-    await userEvent.click(screen.getByRole('button', { name: 'Đăng ký' }));
+    await userEvent.type(screen.getByLabelText(/Email/i), 'new@sfsh.dev');
+    await userEvent.type(screen.getByLabelText(/Password|Mật khẩu/i), 'short');
+    await userEvent.click(screen.getByRole('button', { name: /Sign Up|Đăng ký/i }));
 
-    expect(screen.getByRole('alert')).toHaveTextContent('ít nhất 8 ký tự');
+    expect(screen.getByRole('alert')).toHaveTextContent(/at least 8 characters|ít nhất 8 ký tự/i);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -52,18 +68,19 @@ describe('auth flow', () => {
     mockFetch(() => [401, fail('TOKEN_EXPIRED', 'expired')]);
     renderApp('/');
 
-    expect(await screen.findByText(/Phiên đăng nhập đã hết hạn/)).toBeInTheDocument();
+    expect(await screen.findByText(/session has expired|Phiên đăng nhập đã hết hạn/i)).toBeInTheDocument();
     await waitFor(() => expect(getToken()).toBeNull());
   });
 
-  test('logout clears the token', async () => {
+  test('logout clears the token and returns to home page', async () => {
     setToken('stored-token');
     mockFetch(() => [200, ok({ user: USER })]);
     renderApp('/');
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Đăng xuất' }));
+    await userEvent.click(await screen.findByRole('button', { name: /Sign Out|Đăng xuất/i }));
 
-    expect(await screen.findByRole('heading', { name: 'Đăng nhập' })).toBeInTheDocument();
+    // Verifies redirect directly to Home page
+    expect(await screen.findByRole('heading', { name: /One experience|Một trải nghiệm/i })).toBeInTheDocument();
     expect(getToken()).toBeNull();
   });
 });

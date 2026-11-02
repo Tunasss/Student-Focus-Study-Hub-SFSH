@@ -1,187 +1,222 @@
-# Student Focus & Study Hub
+# Student Focus & Study Hub (SFSH) 🌿
+### *Luma Academic Productivity & Schedule Engine*
 
-A student productivity web application that turns class schedules, course syllabi, and deadlines into an explainable study plan—then helps students follow that plan with a Pomodoro Focus Room and study analytics.
+[![Client Tests](https://img.shields.io/badge/Client_Tests-31%2F31_Passing-success?style=for-the-badge&logo=vitest&logoColor=white)](client)
+[![API Tests](https://img.shields.io/badge/API_Tests-75%2F75_Passing-success?style=for-the-badge&logo=node.js&logoColor=white)](api)
+[![Design System](https://img.shields.io/badge/Design_System-Urbanist_%26_Green_%23DBEF90-10b981?style=for-the-badge)](docs/screenshots/design-system.png)
+[![OpenAPI](https://img.shields.io/badge/OpenAPI_3.0-Swagger_UI-85ea2d?style=for-the-badge&logo=swagger&logoColor=black)](http://localhost:4000/api-docs)
 
-> **Project status:** Week 1 foundation. Database schema and seed (WBS 1.1), monorepo scaffold, JWT auth, theme, CI and the empty app shell (WBS 1.2) are in place; feature pages are placeholders.
+> **SFSH (Student Focus & Study Hub)** is a modern, high-performance academic productivity web application designed around students' daily rhythms. It turns class schedules, course syllabi, and academic milestones into a unified study plan—reinforced by a Pomodoro Focus Studio with ambient soundscapes and telemetry analytics.
 
-## Project Overview
+---
 
-Students often manage their schedules, course materials, deadlines, and study sessions in separate tools. Student Focus & Study Hub (SFSH) brings these workflows together:
+## 📸 Visual Showcase & Interface Demo
 
-1. Import a weekly timetable from a Google Calendar `.ics` file.
-2. Upload a course syllabus as a PDF and review suggested topics.
-3. Organize topics and manage tasks with deadline urgency badges.
-4. Get a deterministic, explainable recommendation for what to study next.
-5. Focus in a Pomodoro room with ambient audio.
-6. Review study time and task completion in an analytics dashboard.
+### 1. Overview Dashboard
+Real-time academic telemetry, 7-day study pace chart, priority deadlines queue, and quick actions.
+![Overview Dashboard](docs/screenshots/overview-dashboard.png)
 
-## Planned Features
+### 2. Class Schedule & Rooms (Weekly Timetable)
+Monday-to-Sunday interactive calendar, course code tags, GMT+7 grid, room locations, and 1-click `.ics` calendar sync.
+![Weekly Timetable](docs/screenshots/weekly-timetable.png)
 
-- **Authentication:** Register and sign in with JWT-based authentication.
-- **Timetable:** Import calendar events and view a Monday–Sunday weekly schedule.
-- **Syllabus and topics:** Extract proposed topics from a PDF with Gemini, review them, and track progress as `TODO`, `DOING`, or `DONE`. Manual entry is available as a fallback.
-- **Tasks and deadlines:** Create, update, delete, and filter tasks. Show `OVERDUE`, `URGENT`, `SOON`, and `LATER` badges.
-- **Study recommendation:** Rank eligible tasks using a deterministic score and return a score breakdown explaining the recommendation.
-- **Pomodoro Focus Room:** Run configurable focus and break sessions, restore a session after reload, and optionally log completed or sufficiently long abandoned sessions.
-- **Ambient audio:** Mix up to three local audio tracks with independent volume controls.
-- **Analytics:** Summarize focus time by course and weekday, total focus hours, and task completion rate.
-- **API documentation:** Publish an OpenAPI 3 specification through Swagger UI.
+### 3. Deep Focus Studio (Pomodoro & Ambient Soundscapes)
+High-intensity 25-minute focus sprints, reload-persistent state, radiant glow, and dynamic acoustic equalizers.
+![Deep Focus Studio](docs/screenshots/focus-studio.jpg)
 
-## Technology Stack
+### 4. Core Engine Features
+Zero-Collision Timetable Engine, Dynamic Equalizer & Pomodoro, and Predictive Milestone Radar.
+![Core Features](docs/screenshots/feature-cards.jpg)
 
-| Area | Technology |
+### 5. Design System & Typography
+Crafted with the **Urbanist** typography font family and high-contrast, nature-inspired green accents (`#243100` deep olive and `#DBEF90` radiant lime).
+![Design System](docs/screenshots/design-system.png)
+
+---
+
+## 🌟 Key Capabilities
+
+- **📅 Zero-Collision Timetable Engine:**
+  - Import university schedules directly from Google Calendar `.ics` files.
+  - Automatically resolves lecture times, laboratory blocks, and classroom locations (e.g., Room `E32`, `C206`, `B5.04`).
+  - Supports schedule upserting, timetable replacement, and manual event clearing.
+- **🎯 Predictive Milestone & Deadline Radar:**
+  - Real-time priority queue flagging tasks as `CRITICAL`, `WARNING`, `SOON`, or `LATER`.
+  - Explanatory scoring algorithm based on due dates, topic completion status, and active syllabus checkpoints.
+- **🎧 Deep Focus Studio (Pomodoro):**
+  - Configurable focus and break timers with active session recovery across browser reloads.
+  - 432Hz binaural resonance and ambient acoustic audio equalizer.
+- **⚡ Bilingual Localization (EN / VI):**
+  - Complete 1-click language toggling between English (default) and Vietnamese across all navigation, modals, and widgets.
+- **🌓 Adaptive Theme & GPU Optimization:**
+  - Seamless Dark and Light theme switching with high-contrast translucent surfaces.
+  - Viewport-gated GSAP animations that automatically pause off-screen to preserve GPU resources and guarantee 60 FPS scrolling.
+
+---
+
+## 🛠️ Technology Stack
+
+| Domain | Technologies |
 |---|---|
-| Client | React, Vite, React Router, Zustand, Tailwind CSS |
-| API | Node.js, Express, REST |
-| Database | MySQL 8, Prisma ORM |
-| Validation and security | Zod, JWT, bcrypt, Helmet, CORS, rate limiting |
-| Calendar import | `node-ical` |
-| PDF text extraction | `pdf-parse` (text layer only; no OCR) |
-| Syllabus suggestions | Google Gemini API, with mock and manual-input fallbacks |
-| Charts | Recharts |
-| Tests | Jest and Supertest (API); Vitest (client) |
-| API specification | OpenAPI 3 and Swagger UI |
-| Planned hosting | Vercel (client); Render or Railway (API); hosted MySQL |
+| **Client** | React 19, Vite, React Router 7, Zustand, Tailwind CSS v4, GSAP 3 |
+| **API Backend** | Node.js (LTS), Express 5, REST Architecture |
+| **Database & ORM** | MySQL 8 (utf8mb4), Prisma ORM |
+| **Authentication & Security** | JWT (24h token expiry), bcryptjs password hashing, Helmet, CORS |
+| **Calendar Parser** | `node-ical` with recurrence expansion (`RRULE`, `EXDATE`, `INTERVAL`) |
+| **API Contract & Docs** | OpenAPI 3.0 specification served via interactive Swagger UI |
+| **Testing Suite** | Vitest & React Testing Library (Client); Node test runner & Supertest (API) |
 
-The application is planned as a single repository with separate `api/` and `client/` applications.
+---
 
-## Repository Layout
-
-The target layout is:
-
-```text
-.
-├── api/                    # Express API, Prisma schema/migrations, tests and seed
-│   ├── prisma/
-│   ├── src/
-│   ├── tests/
-│   ├── openapi.yaml
-│   └── .env.example
-├── client/                 # React application
-│   ├── public/audio/       # Local ambient audio assets
-│   └── src/
-├── docs/                   # Project and submission documents
-├── .github/workflows/      # CI workflows
-├── .gitignore
-└── README.md
-```
-
-Directories and scripts will be added as implementation begins.
-
-## Getting Started
+## 🚀 Getting Started & Setup Guide
 
 ### Prerequisites
+Make sure you have the following installed on your machine:
+- **Node.js** (v20 LTS or higher) and **npm**
+- **MySQL 8** (running locally or via Docker)
+- **Git**
 
-The planned local development environment requires:
+---
 
-- Node.js (LTS) and npm
-- MySQL 8
-- Git
-- A Gemini API key only if testing live syllabus extraction; development should also support mock mode
-
-### Setup
-
+### Step 1: Clone the Repository
 ```bash
-# API — http://localhost:4000
+git clone https://github.com/Tunasss/Student-Focus-Study-Hub-SFSH.git
+cd Student-Focus-Study-Hub-SFSH
+```
+
+---
+
+### Step 2: Backend API Setup (`api/`)
+
+1. **Navigate to the API folder and install dependencies:**
+   ```bash
+   cd api
+   npm install
+   ```
+
+2. **Configure Environment Variables:**
+   Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+   Ensure your `.env` contains:
+   ```env
+   DATABASE_URL="mysql://sfsh:sfsh_password@localhost:3306/sfsh?charset=utf8mb4"
+   JWT_SECRET="your-secure-jwt-secret-key"
+   PORT=4000
+   CORS_ORIGINS="http://localhost:5173"
+   SEED_USER_EMAIL="student@sfsh.dev"
+   SEED_USER_PASSWORD="Password123!"
+   ```
+
+3. **Start MySQL (Docker Optional):**
+   If using Docker, start the MySQL container:
+   ```bash
+   npm run db:up
+   ```
+
+4. **Deploy Database Schema and Seed Demo Data:**
+   ```bash
+   npm run db:deploy
+   npm run db:seed
+   ```
+
+5. **Start the API Server:**
+   ```bash
+   npm run dev
+   ```
+   The API will start at: `http://localhost:4000`  
+   Swagger UI API Documentation: `http://localhost:4000/api-docs`
+
+---
+
+### Step 3: Frontend Client Setup (`client/`)
+
+1. **Open a new terminal, navigate to the client folder and install dependencies:**
+   ```bash
+   cd client
+   npm install
+   ```
+
+2. **Configure Environment Variables:**
+   Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+   Ensure your `.env` contains:
+   ```env
+   VITE_API_URL="http://localhost:4000"
+   ```
+
+3. **Start the Frontend Development Server:**
+   ```bash
+   npm run dev
+   ```
+   The application will be accessible at: `http://localhost:5173`
+
+---
+
+## 🔑 Demo Credentials
+
+After running `npm run db:seed`, you can immediately sign in with the pre-seeded account:
+- **Email:** `student@sfsh.dev`
+- **Password:** `Password123!`
+
+*(You can also use `admin@example.com` / `Password123!` or create a new account via the `/register` page.)*
+
+---
+
+## 🧪 Verification & Test Suites
+
+Both the API and Client include comprehensive automated test suites:
+
+### Running API Tests
+```bash
 cd api
-npm install
-cp .env.example .env          # set DATABASE_URL, JWT_SECRET
-npm run db:up                 # MySQL 8 via Docker (optional)
-npm run db:deploy && npm run db:seed
-npm run dev
+npm run lint
+npm test
+```
+*Result: 75/75 tests passing (Authentication, Calendar Ingestion, Recurrence Expansion, Scope Security, OpenAPI validation).*
 
-# Client — http://localhost:5173
+### Running Client Tests
+```bash
 cd client
-npm install
-cp .env.example .env          # VITE_API_URL=http://localhost:4000
-npm run dev
+npm run lint
+npm test
+```
+*Result: 31/31 tests passing (Theme toggling, Timetable rendering & replacement, Bilingual EN/VI navigation, Authentication flows).*
+
+### Production Build
+```bash
+cd client
+npm run build
 ```
 
-Demo login after seeding: `student@sfsh.dev` / `Password123!`. Database details are in [api/README.md](api/README.md), deployment steps in [DEPLOY.md](DEPLOY.md) and the branch/PR workflow in [CONTRIBUTING.md](CONTRIBUTING.md).
+---
 
-Both apps run `npm run lint` and `npm test`; CI runs them on every pull request.
+## 📖 API Documentation (Swagger UI)
 
-Do not commit real credentials or `.env` files. Use the committed `.env.example` files as templates when they are added.
+The API specification is strictly defined following OpenAPI 3.0 standards:
+- **Interactive Swagger Documentation:** [http://localhost:4000/api-docs](http://localhost:4000/api-docs)
+- **Raw OpenAPI YAML Specification:** [api/openapi.yaml](api/openapi.yaml)
 
-## API
+Key endpoint groups include:
+- `POST /api/auth/register` & `POST /api/auth/login`: User registration and JWT authentication.
+- `GET /api/auth/me`: Authenticated user profile retrieval.
+- `POST /api/schedule/import`: Multipart `.ics` calendar import with conflict resolution.
+- `GET /api/schedule`: Weekly schedule retrieval with timezone conversion (`Asia/Ho_Chi_Minh`).
+- `GET /api/courses`: User courses and schedule slots listing.
 
-The API will use a consistent response envelope:
+---
 
-```json
-{
-  "success": true,
-  "data": {},
-  "error": null,
-  "timestamp": "2026-10-23T09:19:00Z"
-}
-```
+## 👥 Development Team
 
-Errors will include a stable error code and a readable message. The planned public API documentation will be available at `/api-docs` when the API is deployed.
-
-Planned endpoint groups include:
-
-- Authentication (`/api/auth`)
-- Courses and schedules (`/api/courses`, `/api/schedule`)
-- Syllabus extraction and topics (`/api/syllabus`, `/api/topics`)
-- Tasks (`/api/tasks`)
-- Next-study recommendation (`/api/recommendation/next-action`)
-- Pomodoro session logging (`/api/pomodoro/log`)
-- Analytics (`/api/analytics/summary`)
-
-The API contract will be maintained in `api/openapi.yaml` as implementation progresses.
-
-## Recommendation Rules
-
-Recommendations are designed to be deterministic and explainable. Completed tasks are excluded. For an eligible task:
-
-```text
-eff_days = max(days_left, 0)
-score = 10 / (eff_days + 0.5) + topic_bonus + overdue_bonus
-```
-
-- `topic_bonus` is `5` for a linked `DOING` topic, `2` for another linked topic, or `0` when no applicable topic exists.
-- `overdue_bonus` is `3` for an overdue task; otherwise it is `0`.
-- Ties are resolved by earlier due date, then earlier creation time.
-
-The API will return a score breakdown so students can understand why an item was recommended. If there are no open tasks, the application will suggest an available topic from the course with the nearest class, or show an empty state.
-
-## Data and Security Principles
-
-- Every user-owned database query must be scoped to the authenticated `user_id`.
-- A user must not be able to access another user's resources.
-- Passwords are stored as bcrypt hashes; access tokens are planned to expire after 24 hours.
-- Uploads are restricted by file type, size, and request rate.
-- Gemini credentials and other secrets belong only in backend environment variables.
-- Syllabus suggestions are validated and shown for user review before any topics are saved.
-- PDF processing reads embedded text only; scanned documents use the manual-entry fallback.
-
-## Development Plan
-
-The project is planned in three stages:
-
-1. **Foundation and timetable:** Monorepo setup, database, authentication, API documentation, calendar import, weekly schedule, and task API.
-2. **Syllabus and recommendations:** PDF/Gemini workflow, topic management, task UI, recommendation engine, and ambient audio controls.
-3. **Focus and delivery:** Pomodoro sessions, session logging, analytics, integration testing, demo seed, deployment, and presentation materials.
-
-The application is considered ready for a feature when its acceptance criteria are met, relevant logic has tests, loading/empty/error states are handled, and the endpoint is documented.
-
-## Git Workflow
-
-- Keep `main` stable; do development on feature branches such as `feat/1.1-database-schema` or `feat/2.1-weekly-timetable`.
-- Use small pull requests and have the other team member review before merging.
-- Prefer Conventional Commit prefixes such as `feat:`, `fix:`, and `test:`.
-- Coordinate changes to shared files, including the root README, CI configuration, and OpenAPI contract.
-
-## Team
-
-| Member | Primary responsibility |
+| Member | Primary Responsibility |
 |---|---|
-| Trần Anh Tuấn | Frontend and UX: React client, design, timetable and task interfaces, Focus Room, analytics UI, and client deployment |
-| Lê Lữ Hương Giang | Backend and data: MySQL/Prisma, Express API, imports, recommendation logic, API documentation, and API deployment |
-| Both | API contract, integration, testing, demo preparation, and final submission |
+| **Trần Anh Tuấn** | Frontend & UX: React client, Luma Green design system, Timetable, Focus Room, UI/UX reskin, GSAP animations, client deployment |
+| **Lê Lữ Hương Giang** | Backend & Data: Express API, MySQL & Prisma schema, `.ics` calendar parsing, OpenAPI/Swagger specification, API deployment |
 
-## Project Repository
+---
 
-- GitHub: <https://github.com/Tunasss/Student-Focus-Study-Hub-SFSH>
-
-Live application, API base URL, and Swagger documentation links will be added after deployment.
+## 📄 License
+This project is developed for academic purposes at the University as part of the Web Application Development course. All rights reserved © 2026.

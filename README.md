@@ -1,36 +1,16 @@
 # Student Focus & Study Hub (SFSH) 🌿
 ### *Luma Academic Productivity & Schedule Engine*
 
-[![Client Tests](https://img.shields.io/badge/Client_Tests-31%2F31_Passing-success?style=for-the-badge&logo=vitest&logoColor=white)](client)
+[![Client Tests](https://img.shields.io/badge/Client_Tests-Passing-success?style=for-the-badge&logo=vitest&logoColor=white)](client)
 [![API Tests](https://img.shields.io/badge/API_Tests-75%2F75_Passing-success?style=for-the-badge&logo=node.js&logoColor=white)](api)
-[![Design System](https://img.shields.io/badge/Design_System-Urbanist_%26_Green_%23DBEF90-10b981?style=for-the-badge)](docs/screenshots/design-system.png)
+[![Design System](https://img.shields.io/badge/Design_System-Urbanist_%26_Green_%23DBEF90-10b981?style=for-the-badge)](#)
 [![OpenAPI](https://img.shields.io/badge/OpenAPI_3.0-Swagger_UI-85ea2d?style=for-the-badge&logo=swagger&logoColor=black)](http://localhost:4000/api-docs)
 
-> **SFSH (Student Focus & Study Hub)** is a modern, high-performance academic productivity web application designed around students' daily rhythms. It turns class schedules, course syllabi, and academic milestones into a unified study plan—reinforced by a Pomodoro Focus Studio with ambient soundscapes and telemetry analytics.
+<p align="center">
+  <img src="docs/screenshots/sfsh-banner.jpg" alt="Student Focus & Study Hub Banner" width="100%" />
+</p>
 
----
-
-## 📸 Visual Showcase & Interface Demo
-
-### 1. Overview Dashboard
-Real-time academic telemetry, 7-day study pace chart, priority deadlines queue, and quick actions.
-![Overview Dashboard](docs/screenshots/overview-dashboard.png)
-
-### 2. Class Schedule & Rooms (Weekly Timetable)
-Monday-to-Sunday interactive calendar, course code tags, GMT+7 grid, room locations, and 1-click `.ics` calendar sync.
-![Weekly Timetable](docs/screenshots/weekly-timetable.png)
-
-### 3. Deep Focus Studio (Pomodoro & Ambient Soundscapes)
-High-intensity 25-minute focus sprints, reload-persistent state, radiant glow, and dynamic acoustic equalizers.
-![Deep Focus Studio](docs/screenshots/focus-studio.jpg)
-
-### 4. Core Engine Features
-Zero-Collision Timetable Engine, Dynamic Equalizer & Pomodoro, and Predictive Milestone Radar.
-![Core Features](docs/screenshots/feature-cards.jpg)
-
-### 5. Design System & Typography
-Crafted with the **Urbanist** typography font family and high-contrast, nature-inspired green accents (`#243100` deep olive and `#DBEF90` radiant lime).
-![Design System](docs/screenshots/design-system.png)
+> **SFSH (Student Focus & Study Hub)** is a modern, high-performance academic productivity web application designed around university students' daily rhythms. It turns class schedules, course syllabi, and academic milestones into a unified study plan—reinforced by a Deep Focus Studio with ambient acoustic soundscapes, telemetry analytics, and explainable recommendations.
 
 ---
 
@@ -40,17 +20,21 @@ Crafted with the **Urbanist** typography font family and high-contrast, nature-i
   - Import university schedules directly from Google Calendar `.ics` files.
   - Automatically resolves lecture times, laboratory blocks, and classroom locations (e.g., Room `E32`, `C206`, `B5.04`).
   - Supports schedule upserting, timetable replacement, and manual event clearing.
+- **📖 Intelligent Syllabus & Topic Tree (AI Extractor):**
+  - Interactive chapter tree breakdown with progressive mastery tracking (`TODO`, `DOING`, `DONE`).
+  - NotebookLM-inspired AI syllabus extractor modal supporting `.pdf`, `.docx`, `.pptx`, and `.txt` uploads with preview & chapter reorganization.
+  - Automatic normalization and deduplication of theory and practical classes (`.1`, `.2`, `.TH`).
 - **🎯 Predictive Milestone & Deadline Radar:**
-  - Real-time priority queue flagging tasks as `CRITICAL`, `WARNING`, `SOON`, or `LATER`.
-  - Explanatory scoring algorithm based on due dates, topic completion status, and active syllabus checkpoints.
+  - Priority queue flagging academic tasks as `CRITICAL`, `WARNING`, `SOON`, or `LATER`.
+  - Deterministic scoring algorithm factoring due dates, topic completion status, and active syllabus checkpoints.
 - **🎧 Deep Focus Studio (Pomodoro):**
-  - Configurable focus and break timers with active session recovery across browser reloads.
+  - Configurable focus and break timers with session recovery across browser reloads.
   - 432Hz binaural resonance and ambient acoustic audio equalizer.
 - **⚡ Bilingual Localization (EN / VI):**
-  - Complete 1-click language toggling between English (default) and Vietnamese across all navigation, modals, and widgets.
+  - 1-click language toggling between English (default) and Vietnamese across all navigation, modals, and widgets.
 - **🌓 Adaptive Theme & GPU Optimization:**
-  - Seamless Dark and Light theme switching with high-contrast translucent surfaces.
-  - Viewport-gated GSAP animations that automatically pause off-screen to preserve GPU resources and guarantee 60 FPS scrolling.
+  - Seamless Dark and Light theme switching with high-contrast translucent glassmorphic surfaces.
+  - Viewport-gated GSAP animations that guarantee 60 FPS scrolling and preserve battery.
 
 ---
 
@@ -62,7 +46,7 @@ Crafted with the **Urbanist** typography font family and high-contrast, nature-i
 | **API Backend** | Node.js (LTS), Express 5, REST Architecture |
 | **Database & ORM** | MySQL 8 (utf8mb4), Prisma ORM |
 | **Authentication & Security** | JWT (24h token expiry), bcryptjs password hashing, Helmet, CORS |
-| **Calendar Parser** | `node-ical` with recurrence expansion (`RRULE`, `EXDATE`, `INTERVAL`) |
+| **Calendar & File Parser** | `node-ical` with recurrence expansion (`RRULE`, `EXDATE`, `INTERVAL`) |
 | **API Contract & Docs** | OpenAPI 3.0 specification served via interactive Swagger UI |
 | **Testing Suite** | Vitest & React Testing Library (Client); Node test runner & Supertest (API) |
 
@@ -125,28 +109,24 @@ cd Student-Focus-Study-Hub-SFSH
    ```bash
    npm run dev
    ```
-   The API will start at: `http://localhost:4000`  
-   Swagger UI API Documentation: `http://localhost:4000/api-docs`
+   The API will be available at: `http://localhost:4000`  
+   Interactive API docs (Swagger UI): `http://localhost:4000/api-docs`
 
 ---
 
 ### Step 3: Frontend Client Setup (`client/`)
 
-1. **Open a new terminal, navigate to the client folder and install dependencies:**
+1. **Navigate to the Client folder and install dependencies:**
    ```bash
-   cd client
+   cd ../client
    npm install
    ```
 
-2. **Configure Environment Variables:**
-   Copy the example environment file:
+2. **Configure Client Environment:**
    ```bash
    cp .env.example .env
    ```
-   Ensure your `.env` contains:
-   ```env
-   VITE_API_URL="http://localhost:4000"
-   ```
+   Default `VITE_API_URL` is `http://localhost:4000`.
 
 3. **Start the Frontend Development Server:**
    ```bash
@@ -184,7 +164,7 @@ cd client
 npm run lint
 npm test
 ```
-*Result: 31/31 tests passing (Theme toggling, Timetable rendering & replacement, Bilingual EN/VI navigation, Authentication flows).*
+*Result: Full test suite passing across all modules (Theme toggling, Timetable rendering, Course deduplication, Syllabus AI Extractor, Navigation).*
 
 ### Production Build
 ```bash
@@ -213,8 +193,8 @@ Key endpoint groups include:
 
 | Member | Primary Responsibility |
 |---|---|
-| **Trần Anh Tuấn** | Frontend & UX: React client, Luma Green design system, Timetable, Focus Room, UI/UX reskin, GSAP animations, client deployment |
-| **Lê Lữ Hương Giang** | Backend & Data: Express API, MySQL & Prisma schema, `.ics` calendar parsing, OpenAPI/Swagger specification, API deployment |
+| **Trần Anh Tuấn** | Frontend & UX: React client, Luma Green design system, Timetable, Syllabus, Focus Room, Task UI, GSAP animations, client deployment |
+| **Lê Lữ Hương Giang** | Backend & Data: Express API, MySQL & Prisma schema, `.ics` calendar parsing, Gemini AI extraction pipeline, OpenAPI/Swagger specification, API deployment |
 
 ---
 

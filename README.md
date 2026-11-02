@@ -1,5 +1,5 @@
-# Student Focus & Study Hub (SFSH) 🌿
-### *Luma Academic Productivity & Schedule Engine*
+# Luma — Student Focus & Study Hub 🌿
+### *Academic Productivity & Schedule Engine*
 
 [![Client Tests](https://img.shields.io/badge/Client_Tests-Passing-success?style=for-the-badge&logo=vitest&logoColor=white)](client)
 [![API Tests](https://img.shields.io/badge/API_Tests-75%2F75_Passing-success?style=for-the-badge&logo=node.js&logoColor=white)](api)
@@ -7,10 +7,10 @@
 [![OpenAPI](https://img.shields.io/badge/OpenAPI_3.0-Swagger_UI-85ea2d?style=for-the-badge&logo=swagger&logoColor=black)](http://localhost:4000/api-docs)
 
 <p align="center">
-  <img src="docs/screenshots/sfsh-banner.jpg" alt="Student Focus & Study Hub Banner" width="100%" />
+  <img src="docs/screenshots/sfsh-banner.jpg" alt="Luma - Student Focus & Study Hub Banner" width="100%" />
 </p>
 
-> **SFSH (Student Focus & Study Hub)** is a modern, high-performance academic productivity web application designed around university students' daily rhythms. It turns class schedules, course syllabi, and academic milestones into a unified study plan—reinforced by a Deep Focus Studio with ambient acoustic soundscapes, telemetry analytics, and explainable recommendations.
+> **Luma (Student Focus & Study Hub)** is a modern, high-performance academic productivity web application designed around university students' daily rhythms. It turns class schedules, course syllabi, and academic milestones into a unified study plan—reinforced by a Deep Focus Studio with ambient acoustic soundscapes, telemetry analytics, and explainable recommendations.
 
 ---
 

@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLanguage } from '../../i18n/languageContext';
 
-export function AddTopicModal({ isOpen, courseId, nextSortOrder = 1, onClose, onCreated }) {
+export function AddTopicModal({ isOpen, _courseId, nextSortOrder = 1, onClose, onCreated }) {
   const { lang } = useLanguage();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -55,24 +55,23 @@ export function AddTopicModal({ isOpen, courseId, nextSortOrder = 1, onClose, on
     titleRequired: 'Title is required',
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      setTitle('');
-      setDescription('');
-      setStatus('TODO');
-      setError('');
-    }
-  }, [isOpen]);
+  const handleCloseModal = useCallback(() => {
+    setTitle('');
+    setDescription('');
+    setStatus('TODO');
+    setError('');
+    onClose?.();
+  }, [onClose]);
 
   useEffect(() => {
     function handleKeyDown(e) {
       if (e.key === 'Escape' && isOpen) {
-        onClose?.();
+        handleCloseModal();
       }
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, handleCloseModal]);
 
   if (!isOpen) return null;
 
@@ -90,6 +89,7 @@ export function AddTopicModal({ isOpen, courseId, nextSortOrder = 1, onClose, on
       sortOrder: nextSortOrder,
       status,
     });
+    handleCloseModal();
   }
 
   return (
@@ -112,7 +112,7 @@ export function AddTopicModal({ isOpen, courseId, nextSortOrder = 1, onClose, on
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleCloseModal}
             aria-label="Close"
             className="rounded-full p-2 text-muted hover:text-text hover:bg-surface/60 transition-colors cursor-pointer"
           >
@@ -181,7 +181,7 @@ export function AddTopicModal({ isOpen, courseId, nextSortOrder = 1, onClose, on
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-border/40">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleCloseModal}
               className="rounded-full px-5 py-2.5 text-xs font-bold text-muted hover:text-text hover:bg-surface/80 transition-colors cursor-pointer"
             >
               {t.cancel}

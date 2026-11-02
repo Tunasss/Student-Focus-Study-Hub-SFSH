@@ -7,6 +7,7 @@ import { AuthPage } from './pages/AuthPage';
 import { DeepFocusPage } from './pages/DeepFocusPage';
 import { HomePage } from './pages/HomePage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
+import { SyllabusPage } from './pages/SyllabusPage';
 import { TimetablePage } from './pages/TimetablePage';
 
 function RootEntryRoute() {
@@ -78,16 +79,7 @@ export function App() {
             }
           />
           <Route path="timetable" element={<TimetablePage />} />
-          <Route
-            path="syllabus"
-            element={
-              <PlaceholderPage
-                pageKey="syllabus"
-                title="Syllabus"
-                description="Structured chapter breakdown and course mastery tracking."
-              />
-            }
-          />
+          <Route path="syllabus" element={<SyllabusPage />} />
           <Route
             path="deadlines"
             element={

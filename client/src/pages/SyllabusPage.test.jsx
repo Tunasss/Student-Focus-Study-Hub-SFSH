@@ -13,6 +13,7 @@ vi.mock('../lib/api', () => ({
     getCourseTopics: vi.fn(),
     updateTopicStatus: vi.fn(),
     createTopic: vi.fn(),
+    extractSyllabus: vi.fn(),
   },
 }));
 
@@ -133,5 +134,61 @@ describe('SyllabusPage Integration', () => {
 
     // Should NOT render any topics
     expect(screen.queryByText('Algorithm Analysis')).not.toBeInTheDocument();
+  });
+
+  test('opens AI Syllabus Extractor modal and imports topics into course syllabus', async () => {
+    const mockExtracted = [
+      { id: 'ext-1', title: 'Chapter 4: Advanced Graphs', description: 'Dijkstra and A*', sortOrder: 4, status: 'TODO' },
+    ];
+    syllabusApi.extractSyllabus.mockResolvedValue(mockExtracted);
+
+    render(
+      <MemoryRouter>
+        <LanguageProvider>
+          <SyllabusPage />
+        </LanguageProvider>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Algorithm Analysis')).toBeInTheDocument();
+    });
+
+    const aiBtn = screen.getByRole('button', { name: /AI Extract Syllabus|Nạp đề cương bằng AI/i });
+    fireEvent.click(aiBtn);
+
+    // Modal should now be open
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText(/Upload Course Syllabus Document|Tải lên đề cương môn học/i)).toBeInTheDocument();
+
+    // Select file and click extract
+    const fileInput = document.querySelector('input[type="file"]');
+    const fakeFile = new File(['mock content'], 'syllabus_cs.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [fakeFile] } });
+
+    const startExtractBtn = screen.getByRole('button', {
+      name: /Extract Topics with Gemini AI|Phân tích chương mục bằng Gemini AI/i,
+    });
+    fireEvent.click(startExtractBtn);
+
+    // Wait for preview step
+    await waitFor(
+      () => {
+        expect(screen.getByDisplayValue('Chapter 4: Advanced Graphs')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+
+    // Click confirm import
+    const confirmBtn = screen.getByRole('button', {
+      name: /Import 1 Topic to Syllabus|Thêm 1 chương vào Giáo trình/i,
+    });
+    fireEvent.click(confirmBtn);
+
+    // Modal closes and new topic is visible in page list
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(screen.getByText('Chapter 4: Advanced Graphs')).toBeInTheDocument();
+    });
   });
 });

@@ -119,5 +119,32 @@ describe('syllabusApi', () => {
     expect(JSON.parse(init.body)).toEqual(newTopic);
     expect(result).toEqual(created);
   });
+
+  test('extractSyllabus calls POST /api/courses/:id/syllabus/extract with FormData file', async () => {
+    const mockExtracted = [
+      { title: 'Chapter 1: Intro', description: 'Basics', sortOrder: 1, status: 'TODO' },
+    ];
+    const fetchMock = mockFetch(() => [200, ok({ topics: mockExtracted })]);
+
+    const fakeFile = new File(['dummy content'], 'syllabus.pdf', { type: 'application/pdf' });
+    const result = await syllabusApi.extractSyllabus(1, fakeFile, 'Database');
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toContain('/api/courses/1/syllabus/extract');
+    expect(init.method).toBe('POST');
+    expect(init.body).toBeInstanceOf(FormData);
+    expect(result).toEqual(mockExtracted);
+  });
+
+  test('extractSyllabus falls back to simulation when backend returns 404', async () => {
+    mockFetch(() => [404, fail('NOT_FOUND', 'Endpoint not implemented yet')]);
+
+    const fakeFile = new File(['dummy content'], 'csdl.pdf', { type: 'application/pdf' });
+    const result = await syllabusApi.extractSyllabus(1, fakeFile, 'Hệ thống Cơ sở dữ liệu');
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBeGreaterThan(0);
+    expect(result[0].title).toContain('CSDL');
+  });
 });
 

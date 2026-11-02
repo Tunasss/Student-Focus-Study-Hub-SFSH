@@ -5,6 +5,7 @@ import { CourseTabs } from '../components/syllabus/CourseTabs';
 import { MasteryHeaderCard } from '../components/syllabus/MasteryHeaderCard';
 import { TopicCard } from '../components/syllabus/TopicCard';
 import { AddTopicModal } from '../components/syllabus/AddTopicModal';
+import { SyllabusUploadModal } from '../components/syllabus/SyllabusUploadModal';
 import { ToastNotification } from '../components/syllabus/ToastNotification';
 import { useLanguage } from '../i18n/languageContext';
 import { scheduleApi, syllabusApi } from '../lib/api';
@@ -71,12 +72,15 @@ export function SyllabusPage() {
   const [updatingTopicId, setUpdatingTopicId] = useState(null);
   const [toast, setToast] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   const t = {
     en: {
       pageTitle: 'Course Syllabi & Topics',
       pageSubtitle: 'Structured chapter breakdown and progressive mastery tracking for your enrolled courses.',
       addTopicBtn: '+ Add Topic',
+      extractAiBtn: '✨ AI Extract Syllabus',
+      importSuccess: (count) => `Successfully imported ${count} chapters via Gemini AI.`,
       noTopicsTitle: 'No Topics for this Course Yet',
       noTopicsDesc: 'Start breaking down this course by adding your first chapter topic or uploading a syllabus.',
       loadingText: 'Loading syllabus topics…',
@@ -95,6 +99,8 @@ export function SyllabusPage() {
       pageTitle: 'Giáo trình & Chủ đề môn học',
       pageSubtitle: 'Phân rã chương trình và theo dõi tiến độ hoàn thành kiến thức từng môn học.',
       addTopicBtn: '+ Thêm chương mới',
+      extractAiBtn: '✨ Nạp đề cương bằng AI',
+      importSuccess: (count) => `Đã nạp thành công ${count} chương vào giáo trình bằng Gemini AI.`,
       noTopicsTitle: 'Chưa có chương mục nào',
       noTopicsDesc: 'Bắt đầu theo dõi môn học bằng cách thêm chương đầu tiên hoặc nạp đề cương môn học.',
       loadingText: 'Đang tải danh sách chương…',
@@ -113,6 +119,8 @@ export function SyllabusPage() {
     pageTitle: 'Course Syllabi & Topics',
     pageSubtitle: 'Structured chapter breakdown and progressive mastery tracking for each enrolled course.',
     addTopicBtn: '+ Add Topic',
+    extractAiBtn: '✨ AI Extract Syllabus',
+    importSuccess: (count) => `Successfully imported ${count} chapters.`,
     noTopicsTitle: 'No Topics for this Course Yet',
     noTopicsDesc: 'Start breaking down this course by adding your first chapter topic or uploading a syllabus.',
     loadingText: 'Loading syllabus topics…',
@@ -289,6 +297,16 @@ export function SyllabusPage() {
     }
   }
 
+  // Handle bulk syllabus import from AI extractor
+  function handleImportTopics(importedTopics) {
+    if (!importedTopics || importedTopics.length === 0) return;
+    setTopics((prev) => [...prev, ...importedTopics]);
+    setToast({
+      message: t.importSuccess(importedTopics.length),
+      type: 'success',
+    });
+  }
+
   const activeCourse = courses.find((c) => c.id === activeCourseId) || courses[0];
   const nextSortOrder = topics.length > 0 ? Math.max(...topics.map((t) => t.sortOrder || 0)) + 1 : 1;
 
@@ -353,13 +371,23 @@ export function SyllabusPage() {
           <p className="text-xs sm:text-sm text-muted mt-1 max-w-2xl">{t.pageSubtitle}</p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsAddModalOpen(true)}
-          className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-bold text-primary-fg shadow-xs hover:opacity-90 transition-opacity self-start sm:self-auto cursor-pointer"
-        >
-          <span>{t.addTopicBtn}</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setIsUploadModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-primary/25 to-primary/10 border border-primary/40 px-4 py-2.5 text-xs font-bold text-primary hover:border-primary hover:bg-primary/20 transition-all cursor-pointer shadow-xs"
+          >
+            <span>✨</span>
+            <span>{t.extractAiBtn}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsAddModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-bold text-primary-fg shadow-xs hover:opacity-90 transition-opacity cursor-pointer"
+          >
+            <span>{t.addTopicBtn}</span>
+          </button>
+        </div>
       </div>
 
       {/* Course Switcher Bar */}
@@ -395,11 +423,19 @@ export function SyllabusPage() {
             </div>
             <h4 className="text-base font-bold text-text">{t.noTopicsTitle}</h4>
             <p className="text-xs text-muted max-w-md mx-auto">{t.noTopicsDesc}</p>
-            <div className="pt-2">
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsUploadModalOpen(true)}
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-bold text-primary-fg shadow-md hover:opacity-90 transition-all cursor-pointer"
+              >
+                <span>✨</span>
+                <span>{t.extractAiBtn}</span>
+              </button>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center gap-2 rounded-full bg-primary/20 border border-primary/40 px-5 py-2 text-xs font-bold text-primary hover:bg-primary hover:text-primary-fg transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-full bg-surface border border-border px-4 py-2 text-xs font-semibold text-text hover:border-primary/50 transition-all cursor-pointer"
               >
                 <span>{t.addTopicBtn}</span>
               </button>
@@ -427,6 +463,15 @@ export function SyllabusPage() {
         nextSortOrder={nextSortOrder}
         onClose={() => setIsAddModalOpen(false)}
         onCreated={handleCreateTopic}
+      />
+
+      {/* AI Syllabus Extractor Modal (NotebookLM-style) */}
+      <SyllabusUploadModal
+        isOpen={isUploadModalOpen}
+        course={activeCourse}
+        currentTopicsCount={topics.length}
+        onClose={() => setIsUploadModalOpen(false)}
+        onImportSuccess={handleImportTopics}
       />
 
       {/* Toast Notification */}

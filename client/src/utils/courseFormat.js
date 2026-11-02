@@ -6,3 +6,4 @@ export function formatCourseInfo(course) {
   const cleanName = parenMatch ? course.name.replace(/\s*\([^()]+\)$/, '').trim() : course.name;
   return { code: code || 'COURSE', name: cleanName };
 }
+

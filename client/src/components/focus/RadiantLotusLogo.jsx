@@ -110,38 +110,32 @@ export function RadiantLotusLogo({
       ref={rootRef}
       className={`relative flex items-center justify-center select-none ${className}`}
     >
-      {/* Continuous Multi-Layered Resonance Glow */}
+      {/* Continuous Multi-Layered Resonance Glow (GPU Compositor only, zero layout/paint cost) */}
       {glow && (
         <>
           {/* Outermost ambient aura */}
           <div
             ref={auraRef}
-            className={`absolute inset-0 rounded-full blur-3xl pointer-events-none transition-colors duration-700 ${
+            className={`absolute inset-0 rounded-full blur-2xl pointer-events-none transition-colors duration-700 ${
               isPlaying
-                ? 'bg-gradient-to-r from-primary/50 via-[#d4f55b]/40 to-[#a7cb2e]/45'
+                ? 'bg-gradient-to-r from-primary/45 via-[#d4f55b]/35 to-[#a7cb2e]/40'
                 : 'bg-primary/20'
             }`}
             style={{ willChange: 'transform, opacity' }}
           />
 
-          {/* Continuous outward radiating ripples when active */}
+          {/* Concentric subtle guide rings */}
           {isPlaying && (
-            <>
-              <div
-                className="absolute -inset-3 rounded-full border border-primary/35 animate-ping pointer-events-none"
-                style={{ animationDuration: '2.5s' }}
-              />
-              <div
-                className="absolute -inset-9 rounded-full border border-primary/20 animate-ping pointer-events-none delay-500"
-                style={{ animationDuration: '3.5s' }}
-              />
-            </>
+            <div
+              className="absolute -inset-4 rounded-full border border-primary/25 pointer-events-none transition-opacity duration-500"
+              style={{ willChange: 'opacity' }}
+            />
           )}
         </>
       )}
 
       <svg
-        className="w-full h-full relative z-10 filter drop-shadow-[0_10px_30px_rgba(219,239,144,0.45)]"
+        className="w-full h-full relative z-10"
         viewBox="0 0 200 200"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

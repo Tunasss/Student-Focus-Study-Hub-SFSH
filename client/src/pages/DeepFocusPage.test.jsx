@@ -257,4 +257,24 @@ describe('DeepFocusPage Integration Tests', () => {
     // Remaining seconds: 1500 - 60 = 1440 = 24:00
     expect(screen.getByTestId('timer-display')).toHaveTextContent('24:00');
   });
+
+  test('interacts with Quick Master Volume button and hover slider', async () => {
+    await renderDeepFocus();
+
+    const volumeBtn = screen.getByTestId('quick-volume-btn');
+    expect(volumeBtn).toBeInTheDocument();
+
+    // Hover reveals slider popover
+    fireEvent.mouseEnter(volumeBtn.parentElement);
+    expect(screen.getByLabelText(/Master Volume Slider/i)).toBeInTheDocument();
+
+    // Change slider value
+    const slider = screen.getByLabelText(/Master Volume Slider/i);
+    fireEvent.change(slider, { target: { value: '0.45' } });
+    expect(screen.getByText('45%')).toBeInTheDocument();
+
+    // Clicking volume button toggles mute
+    fireEvent.click(volumeBtn);
+    expect(screen.getByText('MUTE')).toBeInTheDocument();
+  });
 });

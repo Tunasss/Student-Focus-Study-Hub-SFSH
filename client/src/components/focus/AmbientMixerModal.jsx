@@ -67,15 +67,12 @@ export function AmbientMixerModal({ isOpen, onClose }) {
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-in fade-in duration-150"
     >
       <div className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-border/80 bg-[#121905] shadow-2xl flex flex-col max-h-[92vh] text-text">
-        {/* Decorative subtle aura */}
-        <div className="absolute -top-16 -right-16 w-56 h-56 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
-
         {/* Modal Header */}
         <div className="relative z-10 flex items-center justify-between border-b border-border/80 px-6 py-4.5 shrink-0">
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/15 border border-primary/30 text-[10px] font-mono font-extrabold uppercase tracking-wider text-primary">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              <span>{isVi ? 'Không gian âm thanh học tập' : 'Atmospheric Soundscapes'}</span>
+              <span>{isVi ? 'Không gian âm thanh học tập' : 'Lo-Fi Radio & Ambient Mixer'}</span>
             </div>
             <h2 id="ambient-mixer-title" className="text-xl font-extrabold tracking-tight text-white mt-1">
               {isVi ? 'Bộ trộn âm thanh môi trường' : 'Ambient Soundscape Mixer'}
@@ -108,8 +105,8 @@ export function AmbientMixerModal({ isOpen, onClose }) {
           </div>
         </div>
 
-        {/* Modal Scrollable Track Sliders */}
-        <div className="relative z-10 flex-1 overflow-y-auto px-6 py-5 space-y-3">
+        {/* Modal Scrollable Track Sliders with GPU Content Containment */}
+        <div className="relative z-10 flex-1 overflow-y-auto px-6 py-5 space-y-3 smooth-modal-scroll">
           {tracksList.map((track) => {
             const isPlaying = track.isPlaying;
             const vol = track.volume ?? 0.5;

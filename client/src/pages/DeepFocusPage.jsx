@@ -123,6 +123,22 @@ export function DeepFocusPage() {
   const [activeSoundCount, setActiveSoundCount] = useState(0);
   const [mixerState, setMixerState] = useState(() => audioMixer.getState());
   const [genreSwitchNotification, setGenreSwitchNotification] = useState(null);
+  const [isVolumeHovered, setIsVolumeHovered] = useState(false);
+  const volumeCloseTimerRef = useRef(null);
+
+  function handleVolumeMouseEnter() {
+    if (volumeCloseTimerRef.current) {
+      clearTimeout(volumeCloseTimerRef.current);
+      volumeCloseTimerRef.current = null;
+    }
+    setIsVolumeHovered(true);
+  }
+
+  function handleVolumeMouseLeave() {
+    volumeCloseTimerRef.current = setTimeout(() => {
+      setIsVolumeHovered(false);
+    }, 250);
+  }
 
   // Sync fullscreen state
   useEffect(() => {
@@ -411,9 +427,9 @@ export function DeepFocusPage() {
       </div>
 
       {/* Main Grid: Left Academic Widgets | Center Lotus Stage | Right Study Sprints */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto py-2 z-10">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch flex-1 min-h-0 py-2 z-10">
         {/* Left Academic Widgets: Subject Picker + Live Real-World Clock (Per Hình 2) */}
-        <div className="lg:col-span-3 flex flex-col gap-4 order-3 lg:order-1">
+        <div className="lg:col-span-3 flex flex-col justify-center gap-4 order-3 lg:order-1">
           <FocusSubjectPicker
             activeCourseId={session.activeCourseId}
             activeTopicId={session.activeTopicId}
@@ -440,12 +456,12 @@ export function DeepFocusPage() {
         </div>
 
         {/* Center Stage: Radiant Lotus Emblem + Audio Deck + Pomodoro Scrubber */}
-        <div className="center-radiant-stage lg:col-span-6 flex flex-col items-center justify-center text-center order-1 lg:order-2">
+        <div className="center-radiant-stage lg:col-span-6 flex flex-col items-center justify-between h-full py-1 order-1 lg:order-2">
           {/* Accessible Semantic Title */}
           <h1 className="sr-only">{phaseTitle}</h1>
 
-          {/* Phase Badge */}
-          <div className="mb-1 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 border border-primary/30 text-primary text-[11px] font-mono font-extrabold tracking-wider uppercase backdrop-blur-md">
+          {/* Phase Badge: Shifted UP to sit directly below FOCUS STUDIO header */}
+          <div className="mt-1 mb-2 inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-primary/15 border border-primary/30 text-primary text-[11px] font-mono font-extrabold tracking-wider uppercase backdrop-blur-md shrink-0">
             <span
               className={`h-2 w-2 rounded-full ${
                 session.status === 'running' ? 'bg-primary animate-ping' : 'bg-primary'
@@ -455,7 +471,7 @@ export function DeepFocusPage() {
           </div>
 
           {/* Radiant Lotus Core Emblem with Breath In / Breath Out Motion (Per Hình 3) */}
-          <div className="relative flex h-52 sm:h-60 w-52 sm:w-60 items-center justify-center">
+          <div className="relative flex h-52 sm:h-60 w-52 sm:w-60 items-center justify-center my-auto shrink-0">
             <RadiantLotusLogo
               className="radiant-lotus-aura w-44 sm:w-52 h-44 sm:h-52"
               glow={true}
@@ -464,121 +480,186 @@ export function DeepFocusPage() {
             />
           </div>
 
-          {/* Pomodoro Timeline Scrubber */}
-          <div className="w-full max-w-sm mt-8 space-y-1.5">
-            <div className="relative h-2.5 w-full rounded-full bg-surface-2 border border-border overflow-hidden">
-              <div
-                className="h-full bg-primary rounded-full transition-all duration-300"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-xs font-mono font-bold text-muted px-0.5">
-              <span data-testid="timer-display" className="text-text font-black text-sm">
-                {formatTime(session.remainingSeconds)}
-              </span>
-              <span data-testid="timer-duration">{formatTime(session.durationSeconds)}</span>
-            </div>
-          </div>
-
-          {/* Media Player Controls (Exact Requested Order: Radio, Restart, Play, Forward, Soundscape) */}
-          <div className="flex items-center justify-center gap-4 mt-6">
-            {/* 1. Lo-Fi Radio button */}
-            <button
-              type="button"
-              data-testid="open-radio-btn"
-              onClick={() => setIsRadioOpen(true)}
-              title={t.radioBtn}
-              aria-label={t.radioBtn}
-              className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer backdrop-blur-md ${
-                isMusicPlaying
-                  ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
-                  : 'bg-surface border-border text-muted hover:text-white hover:bg-surface-2 hover:border-primary/50'
-              }`}
-            >
-              <span className="text-base">📻</span>
-            </button>
-
-            {/* 2. Restart Pomodoro Button */}
-            <button
-              type="button"
-              data-testid="reset-timer-btn"
-              title={t.reset}
-              aria-label={t.reset}
-              onClick={handleReset}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-surface border border-border text-muted hover:text-white hover:bg-surface-2 transition-colors shadow-xs cursor-pointer backdrop-blur-md"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          {/* Bottom Section: Scrubber & Controls pulled down towards bottom edge */}
+          <div className="w-full flex flex-col items-center mt-auto pb-1 shrink-0">
+            {/* Pomodoro Timeline Scrubber */}
+            <div className="w-full max-w-sm space-y-1.5">
+              <div className="relative h-2.5 w-full rounded-full bg-surface-2 border border-border overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full transition-all duration-300"
+                  style={{ width: `${progressPercent}%` }}
                 />
-              </svg>
-            </button>
+              </div>
+              <div className="flex justify-between text-xs font-mono font-bold text-muted px-0.5">
+                <span data-testid="timer-display" className="text-text font-black text-sm">
+                  {formatTime(session.remainingSeconds)}
+                </span>
+                <span data-testid="timer-duration">{formatTime(session.durationSeconds)}</span>
+              </div>
+            </div>
 
-            {/* 3. Center Play/Pause Button */}
-            <button
-              type="button"
-              data-testid="play-pause-btn"
-              onClick={handlePlayPause}
-              aria-label={session.status === 'running' ? t.pause : t.start}
-              className="flex h-15 w-15 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-white text-black shadow-2xl luma-radiant-glow hover:scale-105 active:scale-95 transition-transform cursor-pointer"
-            >
-              {session.status === 'running' ? (
-                <svg className="h-7 w-7 fill-current" viewBox="0 0 24 24">
-                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                </svg>
-              ) : (
-                <svg className="h-7 w-7 fill-current ml-0.5" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              )}
-            </button>
+            {/* Media Player Controls (Order: Radio, Restart, Play, Forward, Quick Volume, Soundscape) */}
+            <div className="flex items-center justify-center gap-3 sm:gap-4 mt-5">
+              {/* 1. Lo-Fi Radio button */}
+              <button
+                type="button"
+                data-testid="open-radio-btn"
+                onClick={() => setIsRadioOpen(true)}
+                title={t.radioBtn}
+                aria-label={t.radioBtn}
+                className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer backdrop-blur-md ${
+                  isMusicPlaying
+                    ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
+                    : 'bg-surface border-border text-muted hover:text-white hover:bg-surface-2 hover:border-primary/50'
+                }`}
+              >
+                <span className="text-base">📻</span>
+              </button>
 
-            {/* 4. Skip to Next Phase Button (Forward) */}
-            <button
-              type="button"
-              data-testid="skip-phase-btn"
-              title={t.skip}
-              aria-label={t.skip}
-              onClick={handleSkip}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-surface border border-border text-muted hover:text-white hover:bg-surface-2 transition-colors shadow-xs cursor-pointer backdrop-blur-md"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-              </svg>
-            </button>
-
-            {/* 5. Ambient Soundscape Mixer button */}
-            <button
-              type="button"
-              data-testid="open-mixer-btn"
-              onClick={() => setIsMixerOpen(true)}
-              title={t.soundscapesBtn}
-              aria-label={t.soundscapesBtn}
-              className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer backdrop-blur-md ${
-                activeSoundCount > 0
-                  ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
-                  : 'bg-surface border-border text-muted hover:text-white hover:bg-surface-2 hover:border-primary/50'
-              }`}
-            >
-              {activeSoundCount > 0 ? (
-                <span className="text-base text-primary animate-pulse">🌿</span>
-              ) : (
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              {/* 2. Restart Pomodoro Button */}
+              <button
+                type="button"
+                data-testid="reset-timer-btn"
+                title={t.reset}
+                aria-label={t.reset}
+                onClick={handleReset}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-surface border border-border text-muted hover:text-white hover:bg-surface-2 transition-colors shadow-xs cursor-pointer backdrop-blur-md"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                   />
                 </svg>
-              )}
-            </button>
+              </button>
+
+              {/* 3. Center Play/Pause Button */}
+              <button
+                type="button"
+                data-testid="play-pause-btn"
+                onClick={handlePlayPause}
+                aria-label={session.status === 'running' ? t.pause : t.start}
+                className="flex h-15 w-15 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-white text-black shadow-2xl luma-radiant-glow hover:scale-105 active:scale-95 transition-transform cursor-pointer"
+              >
+                {session.status === 'running' ? (
+                  <svg className="h-7 w-7 fill-current" viewBox="0 0 24 24">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                  </svg>
+                ) : (
+                  <svg className="h-7 w-7 fill-current ml-0.5" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                )}
+              </button>
+
+              {/* 4. Skip to Next Phase Button (Forward) */}
+              <button
+                type="button"
+                data-testid="skip-phase-btn"
+                title={t.skip}
+                aria-label={t.skip}
+                onClick={handleSkip}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-surface border border-border text-muted hover:text-white hover:bg-surface-2 transition-colors shadow-xs cursor-pointer backdrop-blur-md"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              {/* 5. Quick Master Volume Button with Auto-Hover Popover Slider */}
+              <div
+                className="relative flex items-center justify-center"
+                onMouseEnter={handleVolumeMouseEnter}
+                onMouseLeave={handleVolumeMouseLeave}
+              >
+                {/* Popover Slider on Hover */}
+                {isVolumeHovered && (
+                  <div
+                    className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 p-3 rounded-2xl bg-[#141d06] border border-primary/40 shadow-2xl backdrop-blur-md min-w-[54px] animate-in fade-in slide-in-from-bottom-2 duration-150"
+                    onMouseEnter={handleVolumeMouseEnter}
+                    onMouseLeave={handleVolumeMouseLeave}
+                  >
+                    <span className="text-[10px] font-mono font-black text-primary tracking-wide">
+                      {mixerState.isMuted ? 'MUTE' : `${Math.round(mixerState.masterVolume * 100)}%`}
+                    </span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.02"
+                      aria-label="Master Volume Slider"
+                      value={mixerState.isMuted ? 0 : mixerState.masterVolume}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        audioMixer.setMasterVolume(val);
+                        setMixerState(audioMixer.getState());
+                      }}
+                      style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
+                      className="h-24 w-2 accent-primary cursor-pointer"
+                    />
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  data-testid="quick-volume-btn"
+                  onClick={() => {
+                    audioMixer.toggleMasterMute();
+                    setMixerState(audioMixer.getState());
+                  }}
+                  title={mixerState.isMuted ? 'Unmute' : 'Master Volume (Hover to adjust)'}
+                  aria-label={mixerState.isMuted ? 'Unmute' : 'Master Volume'}
+                  className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer backdrop-blur-md ${
+                    mixerState.isMuted
+                      ? 'border-red-500/50 bg-red-500/10 text-red-400'
+                      : isVolumeHovered
+                        ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
+                        : 'bg-surface border-border text-muted hover:text-white hover:bg-surface-2 hover:border-primary/50'
+                  }`}
+                >
+                  {mixerState.isMuted ? (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                    </svg>
+                  ) : (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
+
+              {/* 6. Dedicated Soundscapes Button (Rightmost button per user request) */}
+              <button
+                type="button"
+                data-testid="open-mixer-btn"
+                onClick={() => setIsAmbientOpen(true)}
+                title={t.soundscapesBtn}
+                aria-label={t.soundscapesBtn}
+                className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer backdrop-blur-md ${
+                  activeSoundCount > 0
+                    ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
+                    : 'bg-surface border-border text-muted hover:text-white hover:bg-surface-2 hover:border-primary/50'
+                }`}
+              >
+                {activeSoundCount > 0 ? (
+                  <span className="text-base text-primary animate-pulse">🌿</span>
+                ) : (
+                  <span className="text-base grayscale opacity-75 hover:grayscale-0 hover:opacity-100 transition-all">🌿</span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Right Side: Study Sprints Progression List */}
-        <div className="lg:col-span-3 flex flex-col order-2 lg:order-3">
+        <div className="lg:col-span-3 flex flex-col justify-center order-2 lg:order-3">
           <div className="mb-4">
             <h2 className="text-base font-extrabold text-text">{t.practiceHeader}</h2>
             <p className="text-xs text-muted">{t.sprintSubtitle}</p>

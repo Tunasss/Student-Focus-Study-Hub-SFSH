@@ -208,28 +208,26 @@ body {
 }
 
 @keyframes chromaticFade {
-  0% {
-    background-position: 0% 50%;
-    opacity: 0.95;
+  0%, 100% {
+    opacity: 0.94;
   }
   50% {
-    background-position: 100% 50%;
     opacity: 1;
-  }
-  100% {
-    background-position: 0% 50%;
-    opacity: 0.95;
   }
 }
 
 .animate-chromatic-ambient {
-  background: radial-gradient(circle at 50% 45%, rgba(219, 239, 144, 0.16) 0%, transparent 65%),
-              radial-gradient(circle at 15% 25%, rgba(36, 49, 0, 0.5) 0%, transparent 55%),
-              radial-gradient(circle at 85% 75%, rgba(85, 110, 15, 0.3) 0%, transparent 60%),
+  background: radial-gradient(circle at 50% 40%, rgba(219, 239, 144, 0.18) 0%, transparent 60%),
+              radial-gradient(circle at 15% 25%, rgba(36, 49, 0, 0.55) 0%, transparent 55%),
+              radial-gradient(circle at 85% 75%, rgba(85, 110, 15, 0.35) 0%, transparent 60%),
               linear-gradient(135deg, #070b02 0%, #121a05 35%, #0d1504 70%, #060a01 100%);
-  background-size: 150% 150%;
-  animation: chromaticFade 20s ease-in-out infinite;
-  will-change: background-position, opacity;
+  background-size: 100% 100%;
+}
+
+.smooth-modal-scroll {
+  contain: content;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 @keyframes orbitSpinCW {

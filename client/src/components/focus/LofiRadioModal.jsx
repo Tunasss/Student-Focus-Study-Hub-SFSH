@@ -83,10 +83,6 @@ export function LofiRadioModal({ isOpen, onClose }) {
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-in fade-in duration-150"
     >
       <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-border/80 bg-[#121905] shadow-2xl flex flex-col max-h-[92vh] text-text">
-        {/* Decorative ambient aura behind modal header */}
-        <div className="absolute -top-16 -left-16 w-56 h-56 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -top-16 -right-16 w-56 h-56 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-
         {/* Modal Header */}
         <div className="relative z-10 flex items-center justify-between border-b border-border/80 px-6 py-4.5 shrink-0">
           <div>
@@ -114,8 +110,8 @@ export function LofiRadioModal({ isOpen, onClose }) {
           </button>
         </div>
 
-        {/* Modal Scrollable Body */}
-        <div className="relative z-10 flex-1 overflow-y-auto px-6 py-5 space-y-5">
+        {/* Modal Scrollable Body with GPU Content Containment */}
+        <div className="relative z-10 flex-1 overflow-y-auto px-6 py-5 space-y-5 smooth-modal-scroll">
           {/* Genre Selection Carousel / Tabs */}
           <div>
             <div className="flex items-center justify-between mb-2">

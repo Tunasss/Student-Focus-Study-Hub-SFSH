@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { apiFetch, scheduleApi, UNAUTHORIZED_EVENT } from './api';
+import { apiFetch, scheduleApi, syllabusApi, UNAUTHORIZED_EVENT } from './api';
 import { setToken } from './tokenStorage';
 import { fail, mockFetch, ok } from '../test/utils';
 
@@ -81,3 +81,70 @@ describe('scheduleApi', () => {
     expect(url).toContain('/api/courses');
   });
 });
+
+describe('syllabusApi', () => {
+  test('getCourseTopics calls GET /api/courses/:id/topics', async () => {
+    const mockTopics = [
+      { id: 1, courseId: 1, sortOrder: 1, title: 'Chapter 1: Intro', status: 'DONE' },
+      { id: 2, courseId: 1, sortOrder: 2, title: 'Chapter 2: Methods', status: 'TODO' },
+    ];
+    const fetchMock = mockFetch(() => [200, ok({ topics: mockTopics })]);
+
+    const result = await syllabusApi.getCourseTopics(1);
+    expect(fetchMock.mock.calls[0][0]).toContain('/api/courses/1/topics');
+    expect(result).toEqual(mockTopics);
+  });
+
+  test('updateTopicStatus calls PATCH /api/topics/:id with status body', async () => {
+    const updated = { id: 2, status: 'DOING' };
+    const fetchMock = mockFetch(() => [200, ok({ topic: updated })]);
+
+    const result = await syllabusApi.updateTopicStatus(2, 'DOING');
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toContain('/api/topics/2');
+    expect(init.method).toBe('PATCH');
+    expect(JSON.parse(init.body)).toEqual({ status: 'DOING' });
+    expect(result).toEqual(updated);
+  });
+
+  test('createTopic calls POST /api/courses/:id/topics with topicData', async () => {
+    const newTopic = { title: 'Chapter 3: Advanced', description: 'Deep dive', sortOrder: 3 };
+    const created = { id: 3, courseId: 1, ...newTopic, status: 'TODO' };
+    const fetchMock = mockFetch(() => [201, ok({ topic: created })]);
+
+    const result = await syllabusApi.createTopic(1, newTopic);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toContain('/api/courses/1/topics');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual(newTopic);
+    expect(result).toEqual(created);
+  });
+
+  test('extractSyllabus calls POST /api/courses/:id/syllabus/extract with FormData file', async () => {
+    const mockExtracted = [
+      { title: 'Chapter 1: Intro', description: 'Basics', sortOrder: 1, status: 'TODO' },
+    ];
+    const fetchMock = mockFetch(() => [200, ok({ topics: mockExtracted })]);
+
+    const fakeFile = new File(['dummy content'], 'syllabus.pdf', { type: 'application/pdf' });
+    const result = await syllabusApi.extractSyllabus(1, fakeFile, 'Database');
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toContain('/api/courses/1/syllabus/extract');
+    expect(init.method).toBe('POST');
+    expect(init.body).toBeInstanceOf(FormData);
+    expect(result).toEqual(mockExtracted);
+  });
+
+  test('extractSyllabus falls back to simulation when backend returns 404', async () => {
+    mockFetch(() => [404, fail('NOT_FOUND', 'Endpoint not implemented yet')]);
+
+    const fakeFile = new File(['dummy content'], 'csdl.pdf', { type: 'application/pdf' });
+    const result = await syllabusApi.extractSyllabus(1, fakeFile, 'Hệ thống Cơ sở dữ liệu');
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBeGreaterThan(0);
+    expect(result[0].title).toContain('CSDL');
+  });
+});
+

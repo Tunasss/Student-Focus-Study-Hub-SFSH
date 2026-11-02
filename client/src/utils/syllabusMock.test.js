@@ -36,3 +36,4 @@ describe('simulateSyllabusExtraction', () => {
     expect(chapters[0].title).toContain('Chương 1: Tổng quan');
   });
 });
+

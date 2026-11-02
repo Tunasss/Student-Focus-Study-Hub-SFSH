@@ -117,7 +117,21 @@ export function RadiantLotusLogo({
       }
     }, rootRef);
 
-    return () => ctx.revert();
+    function handleVisibilityChange() {
+      if (typeof document !== 'undefined') {
+        if (document.hidden) {
+          ctx.pause?.();
+        } else {
+          ctx.resume?.();
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      ctx.revert();
+    };
   }, [isPlaying, isCenter]);
 
   return (

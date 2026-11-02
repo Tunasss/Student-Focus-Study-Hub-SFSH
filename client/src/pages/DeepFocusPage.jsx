@@ -490,7 +490,7 @@ export function DeepFocusPage() {
             </div>
 
             {/* Media Player Controls (Exact Requested Order: Soundscape, Radio, Reset, Play, Forward, Volume, Setting) */}
-            <div className="flex items-center justify-center gap-2.5 sm:gap-3.5 mt-5">
+            <div className="flex items-center justify-center gap-2.5 sm:gap-3.5 mt-5 flex-nowrap shrink-0">
               {/* 1. Soundscapes Button */}
               <button
                 type="button"
@@ -498,17 +498,16 @@ export function DeepFocusPage() {
                 onClick={() => setIsAmbientOpen(true)}
                 title={t.soundscapesBtn}
                 aria-label={t.soundscapesBtn}
-                className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer backdrop-blur-md ${
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                   activeSoundCount > 0
                     ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
-                    : 'bg-surface border-border text-muted hover:text-white hover:bg-surface-2 hover:border-primary/50'
+                    : 'bg-[#141d06]/90 border-border text-zinc-300 hover:text-white hover:bg-surface-2 hover:border-primary/50'
                 }`}
               >
-                {activeSoundCount > 0 ? (
-                  <span className="text-base text-primary animate-pulse">🌿</span>
-                ) : (
-                  <span className="text-base grayscale opacity-75 hover:grayscale-0 hover:opacity-100 transition-all">🌿</span>
-                )}
+                <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18m0-18C8.5 7.5 4 9 4 14a8 8 0 0016 0c0-5-4.5-6.5-8-11z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 12c-2.5 0-4.5 1-4.5 2.5" />
+                </svg>
               </button>
 
               {/* 2. Lo-Fi Radio Button */}
@@ -518,13 +517,17 @@ export function DeepFocusPage() {
                 onClick={() => setIsRadioOpen(true)}
                 title={t.radioBtn}
                 aria-label={t.radioBtn}
-                className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer backdrop-blur-md ${
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                   isMusicPlaying
                     ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
-                    : 'bg-surface border-border text-muted hover:text-white hover:bg-surface-2 hover:border-primary/50'
+                    : 'bg-[#141d06]/90 border-border text-zinc-300 hover:text-white hover:bg-surface-2 hover:border-primary/50'
                 }`}
               >
-                <span className="text-base">📻</span>
+                <svg className="w-4.5 h-4.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 9h16a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2v-7a2 2 0 012-2zm4-4l4 4m6 5a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <circle cx="16" cy="14" r="1.5" fill="currentColor" />
+                  <path strokeLinecap="round" d="M7 13h3m-3 2.5h3" />
+                </svg>
               </button>
 
               {/* 3. Reset Pomodoro Button */}
@@ -534,9 +537,9 @@ export function DeepFocusPage() {
                 title={t.reset}
                 aria-label={t.reset}
                 onClick={handleReset}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-surface border border-border text-muted hover:text-white hover:bg-surface-2 transition-colors shadow-xs cursor-pointer backdrop-blur-md"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#141d06]/90 border border-border text-zinc-300 hover:text-white hover:bg-surface-2 hover:border-primary/50 transition-colors shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -551,14 +554,14 @@ export function DeepFocusPage() {
                 data-testid="play-pause-btn"
                 onClick={handlePlayPause}
                 aria-label={session.status === 'running' ? t.pause : t.start}
-                className="flex h-15 w-15 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-white text-black shadow-2xl luma-radiant-glow hover:scale-105 active:scale-95 transition-transform cursor-pointer"
+                className="flex h-15 w-15 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-full bg-white text-black shadow-2xl luma-radiant-glow hover:scale-105 active:scale-95 transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black"
               >
                 {session.status === 'running' ? (
-                  <svg className="h-7 w-7 fill-current" viewBox="0 0 24 24">
+                  <svg className="h-7 w-7 fill-current shrink-0" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                   </svg>
                 ) : (
-                  <svg className="h-7 w-7 fill-current ml-0.5" viewBox="0 0 24 24">
+                  <svg className="h-7 w-7 fill-current ml-0.5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 )}
@@ -571,23 +574,23 @@ export function DeepFocusPage() {
                 title={t.skip}
                 aria-label={t.skip}
                 onClick={handleSkip}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-surface border border-border text-muted hover:text-white hover:bg-surface-2 transition-colors shadow-xs cursor-pointer backdrop-blur-md"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#141d06]/90 border border-border text-zinc-300 hover:text-white hover:bg-surface-2 hover:border-primary/50 transition-colors shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
                 </svg>
               </button>
 
               {/* 6. Quick Master Volume Button with Auto-Hover Popover Slider */}
               <div
-                className="relative flex items-center justify-center"
+                className="relative flex items-center justify-center shrink-0"
                 onMouseEnter={handleVolumeMouseEnter}
                 onMouseLeave={handleVolumeMouseLeave}
               >
                 {/* Popover Slider on Hover */}
                 {isVolumeHovered && (
                   <div
-                    className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 p-3 rounded-2xl bg-[#141d06] border border-primary/40 shadow-2xl backdrop-blur-md min-w-[54px] animate-in fade-in slide-in-from-bottom-2 duration-150"
+                    className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 p-3 rounded-2xl bg-[#141d06] border border-primary/40 shadow-2xl min-w-[54px] animate-in fade-in slide-in-from-bottom-2 duration-150"
                     onMouseEnter={handleVolumeMouseEnter}
                     onMouseLeave={handleVolumeMouseLeave}
                   >
@@ -600,6 +603,9 @@ export function DeepFocusPage() {
                       max="1"
                       step="0.02"
                       aria-label="Master Volume Slider"
+                      aria-valuenow={Math.round((mixerState.isMuted ? 0 : mixerState.masterVolume) * 100)}
+                      aria-valuemin="0"
+                      aria-valuemax="100"
                       value={mixerState.isMuted ? 0 : mixerState.masterVolume}
                       onChange={(e) => {
                         const val = parseFloat(e.target.value);
@@ -621,21 +627,21 @@ export function DeepFocusPage() {
                   }}
                   title={mixerState.isMuted ? 'Unmute' : 'Master Volume (Hover to adjust)'}
                   aria-label={mixerState.isMuted ? 'Unmute' : 'Master Volume'}
-                  className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer backdrop-blur-md ${
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                     mixerState.isMuted
                       ? 'border-red-500/50 bg-red-500/10 text-red-400'
                       : isVolumeHovered
                         ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
-                        : 'bg-surface border-border text-muted hover:text-white hover:bg-surface-2 hover:border-primary/50'
+                        : 'bg-[#141d06]/90 border-border text-zinc-300 hover:text-white hover:bg-surface-2 hover:border-primary/50'
                   }`}
                 >
                   {mixerState.isMuted ? (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
                     </svg>
                   ) : (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -653,9 +659,9 @@ export function DeepFocusPage() {
                 onClick={() => setIsSettingsOpen(true)}
                 title={t.settingsBtn}
                 aria-label={t.settingsBtn}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-surface border border-border text-muted hover:text-white hover:bg-surface-2 hover:border-primary/50 transition-colors shadow-xs cursor-pointer backdrop-blur-md"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#141d06]/90 border border-border text-zinc-300 hover:text-white hover:bg-surface-2 hover:border-primary/50 transition-colors shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -742,10 +748,9 @@ export function DeepFocusPage() {
         </div>
       </div>
 
-      {/* Footer Info - Flushes to absolute bottom edge (Per Hình 1) */}
-      <div className="flex items-center justify-between text-xs text-muted pt-2.5 pb-0 border-t border-border/60 gap-2 z-10 w-full mt-auto mb-0 shrink-0">
-        <span>SFSH Focus Studio · Urbanist Typography & Solfeggio 528Hz</span>
-        <span className="font-mono text-[11px] text-muted/70 hidden sm:inline">Luma Flow Ecosystem</span>
+      {/* Footer Info - Flushes to absolute bottom edge (Per User Request) */}
+      <div className="flex items-center justify-center text-xs text-muted pt-2.5 pb-0 border-t border-border/60 z-10 w-full mt-auto mb-0 shrink-0">
+        <span>SFSH Focus Studio</span>
       </div>
 
       {/* Modals & Popups */}

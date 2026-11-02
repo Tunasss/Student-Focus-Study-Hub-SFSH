@@ -37,10 +37,7 @@ export function RealWorldClock({ className = '' }) {
       className={`left-widget-card glass-card rounded-3xl p-5 shadow-xl border border-border/70 hover:border-primary/40 transition-all ${className}`}
     >
       <div className="flex items-center gap-2 mb-2">
-        <span className="relative flex h-2.5 w-2.5">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary" />
-        </span>
+        <span className="relative flex h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_#DBEF90]" />
         <p className="text-[11px] font-mono font-extrabold uppercase tracking-wider text-primary">
           {t.badge}
         </p>

@@ -43,9 +43,9 @@ export function RealWorldClock({ className = '' }) {
         </p>
       </div>
 
-      {/* Large, prominent, crystal-clear digital clock */}
+      {/* Large, prominent, crystal-clear digital clock (High contrast in Light & Dark mode) */}
       <div className="flex items-baseline gap-1 my-1">
-        <span className="text-4xl sm:text-5xl font-black font-mono tracking-tight text-white drop-shadow-sm">
+        <span className="text-4xl sm:text-5xl font-black font-mono tracking-tight text-text dark:text-white drop-shadow-sm">
           {hours}:{minutes}
         </span>
         <span className="text-2xl sm:text-3xl font-extrabold font-mono text-primary ml-1">

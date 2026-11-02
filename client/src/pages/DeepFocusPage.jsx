@@ -391,7 +391,7 @@ export function DeepFocusPage() {
 
         {/* Dead Center Title: Absolutely centered regardless of left/right widths */}
         <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 pointer-events-none select-none text-center">
-          <span className="text-xl sm:text-2xl font-black tracking-wider uppercase bg-gradient-to-r from-white via-primary to-[#d5f458] bg-clip-text text-transparent drop-shadow-sm font-sans whitespace-nowrap">
+          <span className="text-xl sm:text-2xl font-black tracking-wider uppercase bg-gradient-to-r from-[#1a2802] via-primary to-[#608b15] dark:from-white dark:via-primary dark:to-[#d5f458] bg-clip-text text-transparent drop-shadow-sm font-sans whitespace-nowrap">
             FOCUS STUDIO
           </span>
         </div>
@@ -473,24 +473,32 @@ export function DeepFocusPage() {
 
           {/* Bottom Section: Scrubber & Controls pulled down towards bottom edge */}
           <div className="w-full flex flex-col items-center mt-auto pb-1 shrink-0">
-            {/* Pomodoro Timeline Scrubber */}
-            <div className="w-full max-w-sm space-y-1.5">
-              <div className="relative h-2.5 w-full rounded-full bg-surface-2 border border-border overflow-hidden">
+            {/* Pomodoro Timeline Scrubber with Large, Prominent, Clear Digits */}
+            <div className="w-full max-w-md space-y-2">
+              <div className="relative h-3 w-full rounded-full bg-surface-2 border border-border/80 overflow-hidden shadow-inner">
                 <div
                   className="h-full bg-primary rounded-full transition-all duration-300"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
-              <div className="flex justify-between text-xs font-mono font-bold text-muted px-0.5">
-                <span data-testid="timer-display" className="text-text font-black text-sm">
+              <div className="flex justify-between items-baseline px-1 font-mono">
+                <span
+                  data-testid="timer-display"
+                  className="text-text dark:text-white font-mono font-black text-lg sm:text-xl tracking-wider tabular-nums drop-shadow-xs"
+                >
                   {formatTime(session.remainingSeconds)}
                 </span>
-                <span data-testid="timer-duration">{formatTime(session.durationSeconds)}</span>
+                <span
+                  data-testid="timer-duration"
+                  className="text-primary dark:text-[#dbef90] font-mono font-bold text-sm sm:text-base tracking-wide tabular-nums"
+                >
+                  {formatTime(session.durationSeconds)}
+                </span>
               </div>
             </div>
 
             {/* Media Player Controls (Exact Requested Order: Soundscape, Radio, Reset, Play, Forward, Volume, Setting) */}
-            <div className="flex items-center justify-center gap-2.5 sm:gap-3.5 mt-5 flex-nowrap shrink-0">
+            <div className="w-full max-w-md flex items-center justify-between sm:justify-center sm:gap-3.5 mt-5 px-1 shrink-0">
               {/* 1. Soundscapes Button */}
               <button
                 type="button"
@@ -498,10 +506,10 @@ export function DeepFocusPage() {
                 onClick={() => setIsAmbientOpen(true)}
                 title={t.soundscapesBtn}
                 aria-label={t.soundscapesBtn}
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black ${
                   activeSoundCount > 0
                     ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
-                    : 'bg-[#141d06]/90 border-border text-zinc-300 hover:text-white hover:bg-surface-2 hover:border-primary/50'
+                    : 'bg-surface border-border text-muted hover:text-text hover:bg-surface-2 hover:border-primary/50 dark:bg-[#141d06]/90 dark:border-border dark:text-zinc-300 dark:hover:text-white'
                 }`}
               >
                 <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
@@ -517,13 +525,13 @@ export function DeepFocusPage() {
                 onClick={() => setIsRadioOpen(true)}
                 title={t.radioBtn}
                 aria-label={t.radioBtn}
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black ${
                   isMusicPlaying
                     ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
-                    : 'bg-[#141d06]/90 border-border text-zinc-300 hover:text-white hover:bg-surface-2 hover:border-primary/50'
+                    : 'bg-surface border-border text-muted hover:text-text hover:bg-surface-2 hover:border-primary/50 dark:bg-[#141d06]/90 dark:border-border dark:text-zinc-300 dark:hover:text-white'
                 }`}
               >
-                <svg className="w-4.5 h-4.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 9h16a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2v-7a2 2 0 012-2zm4-4l4 4m6 5a2 2 0 11-4 0 2 2 0 014 0z" />
                   <circle cx="16" cy="14" r="1.5" fill="currentColor" />
                   <path strokeLinecap="round" d="M7 13h3m-3 2.5h3" />
@@ -537,9 +545,9 @@ export function DeepFocusPage() {
                 title={t.reset}
                 aria-label={t.reset}
                 onClick={handleReset}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#141d06]/90 border border-border text-zinc-300 hover:text-white hover:bg-surface-2 hover:border-primary/50 transition-colors shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface border border-border text-muted hover:text-text hover:bg-surface-2 hover:border-primary/50 dark:bg-[#141d06]/90 dark:border-border dark:text-zinc-300 dark:hover:text-white transition-colors shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black"
               >
-                <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <svg className="h-4.5 w-4.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -554,14 +562,14 @@ export function DeepFocusPage() {
                 data-testid="play-pause-btn"
                 onClick={handlePlayPause}
                 aria-label={session.status === 'running' ? t.pause : t.start}
-                className="flex h-15 w-15 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-full bg-white text-black shadow-2xl luma-radiant-glow hover:scale-105 active:scale-95 transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                className="flex h-14 w-14 sm:h-15 sm:w-15 shrink-0 items-center justify-center rounded-full bg-[#243100] text-white shadow-xl hover:bg-[#386304] dark:bg-white dark:text-black dark:shadow-2xl dark:luma-radiant-glow hover:scale-105 active:scale-95 transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black"
               >
                 {session.status === 'running' ? (
-                  <svg className="h-7 w-7 fill-current shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg className="h-6.5 w-6.5 fill-current shrink-0" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                   </svg>
                 ) : (
-                  <svg className="h-7 w-7 fill-current ml-0.5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg className="h-6.5 w-6.5 fill-current ml-0.5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 )}
@@ -574,23 +582,23 @@ export function DeepFocusPage() {
                 title={t.skip}
                 aria-label={t.skip}
                 onClick={handleSkip}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#141d06]/90 border border-border text-zinc-300 hover:text-white hover:bg-surface-2 hover:border-primary/50 transition-colors shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface border border-border text-muted hover:text-text hover:bg-surface-2 hover:border-primary/50 dark:bg-[#141d06]/90 dark:border-border dark:text-zinc-300 dark:hover:text-white transition-colors shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black"
               >
-                <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <svg className="h-4.5 w-4.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
                 </svg>
               </button>
 
               {/* 6. Quick Master Volume Button with Auto-Hover Popover Slider */}
               <div
-                className="relative flex items-center justify-center shrink-0"
+                className="relative h-11 w-11 shrink-0 flex items-center justify-center"
                 onMouseEnter={handleVolumeMouseEnter}
                 onMouseLeave={handleVolumeMouseLeave}
               >
                 {/* Popover Slider on Hover */}
                 {isVolumeHovered && (
                   <div
-                    className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 p-3 rounded-2xl bg-[#141d06] border border-primary/40 shadow-2xl min-w-[54px] animate-in fade-in slide-in-from-bottom-2 duration-150"
+                    className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 p-3 rounded-2xl bg-surface border border-border shadow-2xl dark:bg-[#141d06] dark:border-primary/40 min-w-[54px] animate-in fade-in slide-in-from-bottom-2 duration-150"
                     onMouseEnter={handleVolumeMouseEnter}
                     onMouseLeave={handleVolumeMouseLeave}
                   >
@@ -627,21 +635,21 @@ export function DeepFocusPage() {
                   }}
                   title={mixerState.isMuted ? 'Unmute' : 'Master Volume (Hover to adjust)'}
                   aria-label={mixerState.isMuted ? 'Unmute' : 'Master Volume'}
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black ${
                     mixerState.isMuted
-                      ? 'border-red-500/50 bg-red-500/10 text-red-400'
+                      ? 'border-red-500/50 bg-red-500/10 text-red-600 dark:text-red-400'
                       : isVolumeHovered
                         ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
-                        : 'bg-[#141d06]/90 border-border text-zinc-300 hover:text-white hover:bg-surface-2 hover:border-primary/50'
+                        : 'bg-surface border-border text-muted hover:text-text hover:bg-surface-2 hover:border-primary/50 dark:bg-[#141d06]/90 dark:border-border dark:text-zinc-300 dark:hover:text-white'
                   }`}
                 >
                   {mixerState.isMuted ? (
-                    <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                    <svg className="h-4.5 w-4.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
                     </svg>
                   ) : (
-                    <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                    <svg className="h-4.5 w-4.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -659,9 +667,9 @@ export function DeepFocusPage() {
                 onClick={() => setIsSettingsOpen(true)}
                 title={t.settingsBtn}
                 aria-label={t.settingsBtn}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#141d06]/90 border border-border text-zinc-300 hover:text-white hover:bg-surface-2 hover:border-primary/50 transition-colors shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface border border-border text-muted hover:text-text hover:bg-surface-2 hover:border-primary/50 dark:bg-[#141d06]/90 dark:border-border dark:text-zinc-300 dark:hover:text-white transition-colors shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black"
               >
-                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg className="w-4.5 h-4.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -701,7 +709,7 @@ export function DeepFocusPage() {
                   className={`right-session-card rounded-2xl p-3.5 flex items-center justify-between gap-3 border transition-all duration-200 backdrop-blur-md ${
                     isCurrent
                       ? 'border-primary/60 bg-gradient-to-r from-accent-deep/90 to-[#1b2500] text-white shadow-lg'
-                      : 'glass-card text-muted'
+                      : 'glass-card text-muted hover:text-text hover:border-primary/40'
                   }`}
                 >
                   <div className="flex items-center gap-3">

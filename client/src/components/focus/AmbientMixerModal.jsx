@@ -66,7 +66,7 @@ export function AmbientMixerModal({ isOpen, onClose }) {
       aria-labelledby="ambient-mixer-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-in fade-in duration-150"
     >
-      <div className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-border/80 bg-[#121905] shadow-2xl flex flex-col max-h-[92vh] text-text">
+      <div className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-border/80 bg-surface text-text shadow-2xl flex flex-col max-h-[92vh] dark:bg-[#121905]">
         {/* Modal Header */}
         <div className="relative z-10 flex items-center justify-between border-b border-border/80 px-6 py-4.5 shrink-0">
           <div>
@@ -74,7 +74,7 @@ export function AmbientMixerModal({ isOpen, onClose }) {
               <span className="h-1.5 w-1.5 rounded-full bg-primary" />
               <span>{isVi ? 'Không gian âm thanh học tập' : 'Lo-Fi Radio & Ambient Mixer'}</span>
             </div>
-            <h2 id="ambient-mixer-title" className="text-xl font-extrabold tracking-tight text-white mt-1">
+            <h2 id="ambient-mixer-title" className="text-xl font-extrabold tracking-tight text-text dark:text-white mt-1">
               {isVi ? 'Bộ trộn âm thanh môi trường' : 'Ambient Soundscape Mixer'}
             </h2>
             <p className="text-xs text-muted">
@@ -125,7 +125,7 @@ export function AmbientMixerModal({ isOpen, onClose }) {
                     <span className="text-2xl shrink-0">{track.icon}</span>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-white truncate">
+                        <span className="text-xs font-bold text-text dark:text-white truncate">
                           {track.name}
                         </span>
                       </div>
@@ -174,7 +174,7 @@ export function AmbientMixerModal({ isOpen, onClose }) {
         </div>
 
         {/* Modal Footer Controls */}
-        <div className="relative z-10 border-t border-border/80 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#0d1403]/90 shrink-0">
+        <div className="relative z-10 border-t border-border/80 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-surface-2/95 dark:bg-[#0d1403]/90 shrink-0">
           <div className="flex items-center gap-3 w-full sm:w-64">
             <span className="text-xs font-semibold text-muted shrink-0">
               {isVi ? 'Âm lượng tổng' : 'Master'}:

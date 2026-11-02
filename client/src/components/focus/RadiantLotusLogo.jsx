@@ -214,7 +214,7 @@ export function RadiantLotusLogo({
               cx="100"
               cy="104"
               r="72"
-              className="fill-[#0c1303]/80 stroke-primary/30"
+              className="fill-surface-2/90 stroke-primary/30 dark:fill-[#0c1303]/80"
               strokeWidth="1.2"
             />
 

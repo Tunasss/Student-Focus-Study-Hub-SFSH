@@ -36,7 +36,7 @@ export function GenreSwitchToast({ notification, onDismiss, onOpenRadio }) {
       aria-live="polite"
       className="fixed bottom-16 right-4 sm:right-8 z-50 max-w-md w-[calc(100vw-32px)] sm:w-auto animate-in fade-in slide-in-from-bottom-5 duration-300"
     >
-      <div className="relative overflow-hidden rounded-2xl border border-primary/50 bg-[#161f03]/95 backdrop-blur-xl p-4 shadow-2xl text-white">
+      <div className="relative overflow-hidden rounded-2xl border border-primary/50 bg-surface/95 dark:bg-[#161f03]/95 backdrop-blur-xl p-4 shadow-2xl text-text dark:text-white">
         {/* Glow accent */}
         <div className="absolute -top-10 -right-10 w-28 h-28 bg-primary/25 rounded-full blur-2xl pointer-events-none" />
 
@@ -56,11 +56,11 @@ export function GenreSwitchToast({ notification, onDismiss, onOpenRadio }) {
               </span>
             </div>
 
-            <p className="mt-1 text-sm font-bold text-white leading-tight">
+            <p className="mt-1 text-sm font-bold text-text dark:text-white leading-tight">
               {isVi ? 'Chuyển sang thể loại mới' : 'Switched to Next Lo-Fi Genre'}
             </p>
 
-            <p className="mt-0.5 text-xs text-white/80 line-clamp-1">
+            <p className="mt-0.5 text-xs text-text/80 dark:text-white/80 line-clamp-1">
               <span className="text-muted line-through mr-1">{notification.previousGenreName}</span>
               <span className="text-primary font-semibold">➔ {notification.nextGenreName}</span>
             </p>

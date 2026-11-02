@@ -82,7 +82,7 @@ export function LofiRadioModal({ isOpen, onClose }) {
       aria-labelledby="lofi-radio-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-in fade-in duration-150"
     >
-      <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-border/80 bg-[#121905] shadow-2xl flex flex-col max-h-[92vh] text-text">
+      <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-border/80 bg-surface text-text shadow-2xl flex flex-col max-h-[92vh] dark:bg-[#121905]">
         {/* Modal Header */}
         <div className="relative z-10 flex items-center justify-between border-b border-border/80 px-6 py-4.5 shrink-0">
           <div>
@@ -90,7 +90,7 @@ export function LofiRadioModal({ isOpen, onClose }) {
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
               <span>{isVi ? 'Đài phát nhạc OpenLoFi' : 'OpenLoFi High Fidelity'}</span>
             </div>
-            <h2 id="lofi-radio-title" className="text-xl font-extrabold tracking-tight text-white mt-1">
+            <h2 id="lofi-radio-title" className="text-xl font-extrabold tracking-tight text-text dark:text-white mt-1">
               {isVi ? 'Đài nhạc Lo-Fi học bài' : 'Lo-Fi Focus Radio'}
             </h2>
             <p className="text-xs text-muted">
@@ -151,12 +151,12 @@ export function LofiRadioModal({ isOpen, onClose }) {
           </div>
 
           {/* Now Playing Player Card */}
-          <div className="rounded-2xl border border-primary/40 bg-gradient-to-br from-surface-2/90 to-[#101803]/80 p-4.5 shadow-lg relative overflow-hidden">
+          <div className="rounded-2xl border border-primary/40 bg-surface-2/90 dark:bg-gradient-to-br dark:from-surface-2/90 dark:to-[#101803]/80 p-4.5 shadow-lg relative overflow-hidden">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3.5 min-w-0">
                 {/* Vinyl / Album Art Animation */}
                 <div
-                  className={`relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-primary/50 bg-[#1c2904] shadow-md ${
+                  className={`relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-primary/50 bg-primary/20 dark:bg-[#1c2904] shadow-md ${
                     mixerState.isMusicPlaying ? 'animate-spin-slow' : ''
                   }`}
                   style={{ animationDuration: '10s' }}
@@ -174,7 +174,7 @@ export function LofiRadioModal({ isOpen, onClose }) {
                       {currentGenre.name}
                     </span>
                   </div>
-                  <h3 className="text-base font-extrabold text-white truncate mt-1">
+                  <h3 className="text-base font-extrabold text-text dark:text-white truncate mt-1">
                     {currentTrack.title || `Track ${currentTrackIndex + 1}`}
                   </h3>
                   <p className="text-[11px] text-muted truncate">
@@ -293,7 +293,7 @@ export function LofiRadioModal({ isOpen, onClose }) {
         </div>
 
         {/* Modal Footer Controls */}
-        <div className="relative z-10 border-t border-border/80 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#0d1403]/90 shrink-0">
+        <div className="relative z-10 border-t border-border/80 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-surface-2/95 dark:bg-[#0d1403]/90 shrink-0">
           <div className="flex items-center gap-3 w-full sm:w-72">
             <span className="text-xs font-semibold text-muted shrink-0">
               {isVi ? 'Âm lượng nhạc' : 'Music Volume'}:

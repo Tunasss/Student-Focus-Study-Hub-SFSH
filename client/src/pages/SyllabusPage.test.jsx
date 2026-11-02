@@ -191,4 +191,32 @@ describe('SyllabusPage Integration', () => {
       expect(screen.getByText('Chapter 4: Advanced Graphs')).toBeInTheDocument();
     });
   });
+
+  test('filters out .1 lab duplicates and displays only the theory class in course selector', async () => {
+    scheduleApi.getCourses.mockResolvedValue({
+      courses: [
+        { id: 10, code: 'MSIS4263.R11.CTTT', name: 'Các ứng dụng thông minh trong Kinh doanh' },
+        { id: 11, code: 'MSIS4263.R11.CTTT.1', name: 'Các ứng dụng thông minh trong Kinh doanh (Thực hành)' },
+      ],
+    });
+    syllabusApi.getCourseTopics.mockResolvedValue([]);
+
+    render(
+      <MemoryRouter>
+        <LanguageProvider>
+          <SyllabusPage />
+        </LanguageProvider>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText('MSIS4263.R11.CTTT').length).toBeGreaterThan(0);
+    });
+
+    // The .1 practice code should NOT be in the document
+    expect(screen.queryByText('MSIS4263.R11.CTTT.1')).not.toBeInTheDocument();
+
+    // Enrolled count should show 1 course, not 2
+    expect(screen.getByText(/1 Enrolled Course|1 Môn học/i)).toBeInTheDocument();
+  });
 });

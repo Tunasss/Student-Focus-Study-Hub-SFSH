@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLanguage } from '../../i18n/languageContext';
-import { formatCourseInfo } from '../../utils/courseFormat';
+import { deduplicateSyllabusCourses, formatCourseInfo } from '../../utils/courseFormat';
 
 export function CourseTabs({ courses = [], activeCourseId, onSelectCourse }) {
   const { lang } = useLanguage();
@@ -37,17 +37,19 @@ export function CourseTabs({ courses = [], activeCourseId, onSelectCourse }) {
     close: 'Close',
   };
 
-  const activeCourse = courses.find((c) => c.id === activeCourseId) || courses[0];
+  const displayCourses = useMemo(() => deduplicateSyllabusCourses(courses), [courses]);
+
+  const activeCourse = displayCourses.find((c) => c.id === activeCourseId) || displayCourses[0];
   const activeFormatted = formatCourseInfo(activeCourse);
 
   const filteredCourses = useMemo(() => {
-    if (!searchQuery.trim()) return courses;
+    if (!searchQuery.trim()) return displayCourses;
     const q = searchQuery.toLowerCase();
-    return courses.filter((c) => {
+    return displayCourses.filter((c) => {
       const info = formatCourseInfo(c);
       return info.code.toLowerCase().includes(q) || info.name.toLowerCase().includes(q) || c.name.toLowerCase().includes(q);
     });
-  }, [courses, searchQuery]);
+  }, [displayCourses, searchQuery]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -78,7 +80,7 @@ export function CourseTabs({ courses = [], activeCourseId, onSelectCourse }) {
             </h3>
             <span className="text-[11px] text-muted flex items-center gap-1.5 mt-0.5">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              {t.enrolledTotal(courses.length)}
+              {t.enrolledTotal(displayCourses.length)}
             </span>
           </div>
         </div>
@@ -159,7 +161,7 @@ export function CourseTabs({ courses = [], activeCourseId, onSelectCourse }) {
 
       {/* Quick-Switch Horizontal Course Pills (Easy 1-click access) */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {courses.map((c) => {
+        {displayCourses.map((c) => {
           const info = formatCourseInfo(c);
           const isSelected = c.id === activeCourseId;
           return (

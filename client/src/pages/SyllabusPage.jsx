@@ -9,6 +9,7 @@ import { SyllabusUploadModal } from '../components/syllabus/SyllabusUploadModal'
 import { ToastNotification } from '../components/syllabus/ToastNotification';
 import { useLanguage } from '../i18n/languageContext';
 import { scheduleApi, syllabusApi } from '../lib/api';
+import { deduplicateSyllabusCourses } from '../utils/courseFormat';
 
 const DEFAULT_TOPICS = {
   1: [
@@ -150,9 +151,13 @@ export function SyllabusPage() {
         const res = await scheduleApi.getCourses();
         const list = res?.courses || (Array.isArray(res) ? res : []);
         if (!cancelled) {
-          setCourses(list);
-          if (list.length > 0) {
-            setActiveCourseId(list[0].id);
+          const deduplicated = deduplicateSyllabusCourses(list);
+          setCourses(deduplicated);
+          if (deduplicated.length > 0) {
+            setActiveCourseId((prev) => {
+              const stillExists = deduplicated.some((c) => c.id === prev);
+              return stillExists ? prev : deduplicated[0].id;
+            });
           } else {
             setActiveCourseId(null);
             setTopics([]);

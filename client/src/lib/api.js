@@ -68,3 +68,25 @@ export const scheduleApi = {
     });
   },
 };
+
+export const syllabusApi = {
+  getCourseTopics: async (courseId) => {
+    const data = await apiFetch(`/api/courses/${courseId}/topics`);
+    return data?.topics ?? data ?? [];
+  },
+  updateTopicStatus: async (topicId, status) => {
+    const data = await apiFetch(`/api/topics/${topicId}`, {
+      method: 'PATCH',
+      body: { status },
+    });
+    return data?.topic ?? data;
+  },
+  createTopic: async (courseId, topicData) => {
+    const data = await apiFetch(`/api/courses/${courseId}/topics`, {
+      method: 'POST',
+      body: topicData,
+    });
+    return data?.topic ?? data;
+  },
+};
+

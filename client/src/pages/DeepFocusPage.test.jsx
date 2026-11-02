@@ -277,4 +277,22 @@ describe('DeepFocusPage Integration Tests', () => {
     fireEvent.click(volumeBtn);
     expect(screen.getByText('MUTE')).toBeInTheDocument();
   });
+
+  test('renders all 7 media control buttons in exact specified order', async () => {
+    await renderDeepFocus();
+
+    const expectedTestIds = [
+      'open-mixer-btn',
+      'open-radio-btn',
+      'reset-timer-btn',
+      'play-pause-btn',
+      'skip-phase-btn',
+      'quick-volume-btn',
+      'open-settings-btn',
+    ];
+
+    expectedTestIds.forEach((id) => {
+      expect(screen.getByTestId(id)).toBeInTheDocument();
+    });
+  });
 });

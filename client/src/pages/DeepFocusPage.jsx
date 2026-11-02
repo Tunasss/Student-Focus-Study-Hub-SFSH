@@ -158,7 +158,7 @@ export function DeepFocusPage() {
     }
   }
 
-  // Sync active audio tracks indicator & subscribe to events
+  // Sync active audio tracks indicator & subscribe to events (Pure reactive, zero polling intervals)
   useEffect(() => {
     function updateMixer() {
       const state = audioMixer.getState();
@@ -167,7 +167,6 @@ export function DeepFocusPage() {
       setActiveSoundCount(count);
     }
     updateMixer();
-    const interval = setInterval(updateMixer, 1000);
 
     const unsubGenre = audioMixer.onGenreSwitch((payload) => {
       setGenreSwitchNotification(payload);
@@ -179,7 +178,6 @@ export function DeepFocusPage() {
     });
 
     return () => {
-      clearInterval(interval);
       unsubGenre?.();
       unsubTrack?.();
     };
@@ -398,30 +396,21 @@ export function DeepFocusPage() {
           </span>
         </div>
 
-        {/* Right Side: Settings button only (Per User Request) */}
-        <div className="flex items-center gap-2 ml-auto">
-          {/* Settings button */}
+        {/* Right Side: Overview & Timetable quick links replacing Settings (Per User Request) */}
+        <div className="flex items-center gap-2 ml-auto z-10">
           <button
             type="button"
-            data-testid="open-settings-btn"
-            onClick={() => setIsSettingsOpen(true)}
-            aria-label={t.settingsBtn}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface/80 text-muted hover:text-text hover:bg-surface-2 transition-colors shadow-xs cursor-pointer backdrop-blur-md"
+            onClick={() => navigate('/')}
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-surface/80 px-3 py-1.5 text-xs font-bold text-muted hover:text-primary hover:border-primary/50 hover:bg-surface-2 transition-all cursor-pointer backdrop-blur-md shadow-xs"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
+            <span>{t.viewOverview}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/timetable')}
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-surface/80 px-3 py-1.5 text-xs font-bold text-muted hover:text-primary hover:border-primary/50 hover:bg-surface-2 transition-all cursor-pointer backdrop-blur-md shadow-xs"
+          >
+            <span>{t.viewTimetable}</span>
           </button>
         </div>
       </div>
@@ -470,14 +459,16 @@ export function DeepFocusPage() {
             <span>{phaseBadge}</span>
           </div>
 
-          {/* Radiant Lotus Core Emblem with Breath In / Breath Out Motion (Per Hình 3) */}
-          <div className="relative flex h-52 sm:h-60 w-52 sm:w-60 items-center justify-center my-auto shrink-0">
-            <RadiantLotusLogo
-              className="radiant-lotus-aura w-44 sm:w-52 h-44 sm:h-52"
-              glow={true}
-              isPlaying={isLotusBreathing}
-              isCenter={true}
-            />
+          {/* Radiant Lotus Core Emblem Centered in Viewport */}
+          <div className="flex-1 flex items-center justify-center w-full min-h-0 my-auto py-2 overflow-visible">
+            <div className="relative flex h-60 sm:h-72 md:h-80 w-60 sm:w-72 md:w-80 items-center justify-center overflow-visible">
+              <RadiantLotusLogo
+                className="w-56 sm:w-68 md:w-72 h-56 sm:h-68 md:h-72 overflow-visible"
+                glow={true}
+                isPlaying={isLotusBreathing}
+                isCenter={true}
+              />
+            </div>
           </div>
 
           {/* Bottom Section: Scrubber & Controls pulled down towards bottom edge */}
@@ -498,9 +489,29 @@ export function DeepFocusPage() {
               </div>
             </div>
 
-            {/* Media Player Controls (Order: Radio, Restart, Play, Forward, Quick Volume, Soundscape) */}
-            <div className="flex items-center justify-center gap-3 sm:gap-4 mt-5">
-              {/* 1. Lo-Fi Radio button */}
+            {/* Media Player Controls (Exact Requested Order: Soundscape, Radio, Reset, Play, Forward, Volume, Setting) */}
+            <div className="flex items-center justify-center gap-2.5 sm:gap-3.5 mt-5">
+              {/* 1. Soundscapes Button */}
+              <button
+                type="button"
+                data-testid="open-mixer-btn"
+                onClick={() => setIsAmbientOpen(true)}
+                title={t.soundscapesBtn}
+                aria-label={t.soundscapesBtn}
+                className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer backdrop-blur-md ${
+                  activeSoundCount > 0
+                    ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
+                    : 'bg-surface border-border text-muted hover:text-white hover:bg-surface-2 hover:border-primary/50'
+                }`}
+              >
+                {activeSoundCount > 0 ? (
+                  <span className="text-base text-primary animate-pulse">🌿</span>
+                ) : (
+                  <span className="text-base grayscale opacity-75 hover:grayscale-0 hover:opacity-100 transition-all">🌿</span>
+                )}
+              </button>
+
+              {/* 2. Lo-Fi Radio Button */}
               <button
                 type="button"
                 data-testid="open-radio-btn"
@@ -516,7 +527,7 @@ export function DeepFocusPage() {
                 <span className="text-base">📻</span>
               </button>
 
-              {/* 2. Restart Pomodoro Button */}
+              {/* 3. Reset Pomodoro Button */}
               <button
                 type="button"
                 data-testid="reset-timer-btn"
@@ -534,7 +545,7 @@ export function DeepFocusPage() {
                 </svg>
               </button>
 
-              {/* 3. Center Play/Pause Button */}
+              {/* 4. Center Play/Pause Button */}
               <button
                 type="button"
                 data-testid="play-pause-btn"
@@ -553,7 +564,7 @@ export function DeepFocusPage() {
                 )}
               </button>
 
-              {/* 4. Skip to Next Phase Button (Forward) */}
+              {/* 5. Skip to Next Phase Button (Forward) */}
               <button
                 type="button"
                 data-testid="skip-phase-btn"
@@ -567,7 +578,7 @@ export function DeepFocusPage() {
                 </svg>
               </button>
 
-              {/* 5. Quick Master Volume Button with Auto-Hover Popover Slider */}
+              {/* 6. Quick Master Volume Button with Auto-Hover Popover Slider */}
               <div
                 className="relative flex items-center justify-center"
                 onMouseEnter={handleVolumeMouseEnter}
@@ -635,24 +646,29 @@ export function DeepFocusPage() {
                 </button>
               </div>
 
-              {/* 6. Dedicated Soundscapes Button (Rightmost button per user request) */}
+              {/* 7. Settings Button (Moved to controls row per user request) */}
               <button
                 type="button"
-                data-testid="open-mixer-btn"
-                onClick={() => setIsAmbientOpen(true)}
-                title={t.soundscapesBtn}
-                aria-label={t.soundscapesBtn}
-                className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer backdrop-blur-md ${
-                  activeSoundCount > 0
-                    ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
-                    : 'bg-surface border-border text-muted hover:text-white hover:bg-surface-2 hover:border-primary/50'
-                }`}
+                data-testid="open-settings-btn"
+                onClick={() => setIsSettingsOpen(true)}
+                title={t.settingsBtn}
+                aria-label={t.settingsBtn}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-surface border border-border text-muted hover:text-white hover:bg-surface-2 hover:border-primary/50 transition-colors shadow-xs cursor-pointer backdrop-blur-md"
               >
-                {activeSoundCount > 0 ? (
-                  <span className="text-base text-primary animate-pulse">🌿</span>
-                ) : (
-                  <span className="text-base grayscale opacity-75 hover:grayscale-0 hover:opacity-100 transition-all">🌿</span>
-                )}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
               </button>
             </div>
           </div>
@@ -726,25 +742,10 @@ export function DeepFocusPage() {
         </div>
       </div>
 
-      {/* Footer Info & Quick Navigation - Flushes to absolute bottom edge (Per Hình 1) */}
-      <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-muted pt-2.5 pb-0 border-t border-border/60 gap-2 z-10 w-full mt-auto mb-0 shrink-0">
+      {/* Footer Info - Flushes to absolute bottom edge (Per Hình 1) */}
+      <div className="flex items-center justify-between text-xs text-muted pt-2.5 pb-0 border-t border-border/60 gap-2 z-10 w-full mt-auto mb-0 shrink-0">
         <span>SFSH Focus Studio · Urbanist Typography & Solfeggio 528Hz</span>
-        <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="text-primary hover:underline font-bold cursor-pointer"
-          >
-            {t.viewOverview}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/timetable')}
-            className="text-primary hover:underline font-bold cursor-pointer"
-          >
-            {t.viewTimetable}
-          </button>
-        </div>
+        <span className="font-mono text-[11px] text-muted/70 hidden sm:inline">Luma Flow Ecosystem</span>
       </div>
 
       {/* Modals & Popups */}

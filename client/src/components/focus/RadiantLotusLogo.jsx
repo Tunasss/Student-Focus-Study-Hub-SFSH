@@ -17,6 +17,7 @@ export function RadiantLotusLogo({
   const petalsRef = useRef(null);
   const outerOrbitRef = useRef(null);
   const innerOrbitRef = useRef(null);
+  const outerHaloRef = useRef(null);
   const sparkRef = useRef(null);
   const auraRef = useRef(null);
 
@@ -24,14 +25,14 @@ export function RadiantLotusLogo({
     if (!isCenter) return undefined;
 
     const ctx = gsap.context(() => {
-      // 1. Continuous Gyroscopic Orbital Rotation
-      // Always spins smoothly, accelerates when active
+      // 1. Continuous Gyroscopic Orbital Rotations (GPU Compositor only, 60fps)
       gsap.to(outerOrbitRef.current, {
         rotation: 360,
         duration: isPlaying ? 10 : 28,
         repeat: -1,
         ease: 'none',
         transformOrigin: '100px 104px',
+        force3D: true,
       });
 
       gsap.to(innerOrbitRef.current, {
@@ -40,63 +41,77 @@ export function RadiantLotusLogo({
         repeat: -1,
         ease: 'none',
         transformOrigin: '100px 104px',
+        force3D: true,
       });
+
+      if (outerHaloRef.current) {
+        gsap.to(outerHaloRef.current, {
+          rotation: 360,
+          duration: isPlaying ? 18 : 45,
+          repeat: -1,
+          ease: 'none',
+          transformOrigin: '100px 104px',
+          force3D: true,
+        });
+      }
 
       // 2. Active Pulsing / Breathing when isPlaying is TRUE
       if (isPlaying) {
-        // Obvious rhythmic breath in & breath out (phóng to phóng nhỏ rõ rệt)
         gsap.to(petalsRef.current, {
-          scale: 1.16,
+          scale: 1.15,
           duration: 1.8,
           yoyo: true,
           repeat: -1,
           ease: 'sine.inOut',
           transformOrigin: '100px 104px',
+          force3D: true,
         });
 
-        // Pulsing Sacred Diamond Heart
         gsap.to(sparkRef.current, {
-          scale: 1.5,
+          scale: 1.45,
           opacity: 1,
           duration: 0.9,
           yoyo: true,
           repeat: -1,
           ease: 'power2.inOut',
           transformOrigin: '100px 108px',
+          force3D: true,
         });
 
-        // Glowing expanding energy aura
         if (auraRef.current) {
           gsap.to(auraRef.current, {
-            scale: 1.45,
-            opacity: 0.85,
+            scale: 1.4,
+            opacity: 0.8,
             duration: 1.8,
             yoyo: true,
             repeat: -1,
             ease: 'sine.inOut',
+            force3D: true,
           });
         }
       } else {
-        // Idle gentle resting state
         gsap.to(petalsRef.current, {
           scale: 1.0,
-          duration: 0.6,
+          duration: 0.5,
           ease: 'power2.out',
           transformOrigin: '100px 104px',
+          force3D: true,
         });
         gsap.to(sparkRef.current, {
           scale: 1.0,
           opacity: 0.85,
-          duration: 0.6,
+          duration: 0.5,
           ease: 'power2.out',
           transformOrigin: '100px 108px',
+          force3D: true,
         });
         if (auraRef.current) {
           gsap.to(auraRef.current, {
-            scale: 1.15,
+            scale: 1.1,
             opacity: 0.25,
-            duration: 0.6,
+            duration: 0.5,
             ease: 'power2.out',
+            force3D: true,
           });
         }
       }
@@ -108,35 +123,25 @@ export function RadiantLotusLogo({
   return (
     <div
       ref={rootRef}
-      className={`relative flex items-center justify-center select-none ${className}`}
+      className={`relative flex items-center justify-center select-none overflow-visible ${className}`}
     >
       {/* Continuous Multi-Layered Resonance Glow (GPU Compositor only, zero layout/paint cost) */}
       {glow && (
-        <>
-          {/* Outermost ambient aura */}
-          <div
-            ref={auraRef}
-            className={`absolute inset-0 rounded-full blur-2xl pointer-events-none transition-colors duration-700 ${
-              isPlaying
-                ? 'bg-gradient-to-r from-primary/45 via-[#d4f55b]/35 to-[#a7cb2e]/40'
-                : 'bg-primary/20'
-            }`}
-            style={{ willChange: 'transform, opacity' }}
-          />
-
-          {/* Concentric subtle guide rings */}
-          {isPlaying && (
-            <div
-              className="absolute -inset-4 rounded-full border border-primary/25 pointer-events-none transition-opacity duration-500"
-              style={{ willChange: 'opacity' }}
-            />
-          )}
-        </>
+        <div
+          ref={auraRef}
+          className={`absolute inset-0 rounded-full blur-2xl pointer-events-none transition-colors duration-700 ${
+            isPlaying
+              ? 'bg-gradient-to-r from-primary/40 via-[#d4f55b]/30 to-[#a7cb2e]/35'
+              : 'bg-primary/15'
+          }`}
+          style={{ willChange: 'transform, opacity' }}
+        />
       )}
 
       <svg
-        className="w-full h-full relative z-10"
-        viewBox="0 0 200 200"
+        className="w-full h-full relative z-10 overflow-visible"
+        style={{ overflow: 'visible' }}
+        viewBox="-40 -40 280 280"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
@@ -190,44 +195,68 @@ export function RadiantLotusLogo({
         {/* Center Stage Gyroscopic Continuous Orbital Rings */}
         {isCenter && (
           <>
-            {/* Background disc */}
+            {/* Background disc holding the central lotus */}
             <circle
               cx="100"
               cy="104"
-              r="86"
-              className="fill-[#0c1303]/65 stroke-primary/20"
-              strokeWidth="1"
+              r="72"
+              className="fill-[#0c1303]/80 stroke-primary/30"
+              strokeWidth="1.2"
             />
 
-            {/* Outer Continuous Rotating Dotted Orbit Ring (Clockwise) */}
+            {/* Orbit Track 1: Outer Celestial Atmosphere Halo (Wide slow rotation) */}
+            <g ref={outerHaloRef}>
+              <circle
+                cx="100"
+                cy="104"
+                r="112"
+                className="fill-none stroke-primary/25"
+                strokeWidth="1"
+                strokeDasharray="3 14"
+              />
+              {/* Star satellite nodes */}
+              <polygon points="100, -12 103, -8 100, -4 97, -8" className="fill-primary/75" />
+              <polygon points="100, 212 103, 216 100, 220 97, 216" className="fill-primary/75" />
+              <circle cx="-12" cy="104" r="1.8" className="fill-primary/60" />
+              <circle cx="212" cy="104" r="1.8" className="fill-primary/60" />
+            </g>
+
+            {/* Orbit Track 2: Middle Radiant Beacon Orbit (Clockwise with Diamond Satellite) */}
             <g ref={outerOrbitRef}>
               <circle
                 cx="100"
                 cy="104"
-                r="86"
-                className="fill-none stroke-primary/55"
-                strokeWidth="1.8"
+                r="95"
+                className="fill-none stroke-primary/50"
+                strokeWidth="1.6"
                 strokeDasharray="6 8"
                 strokeLinecap="round"
               />
-              {/* Satellite focus node on orbit */}
-              <circle cx="100" cy="18" r="3.5" className="fill-white filter drop-shadow-[0_0_8px_#DBEF90]" />
-              <circle cx="100" cy="190" r="2.5" className="fill-primary" />
+              {/* Rotating Diamond Satellite Beacon */}
+              <g transform="translate(100, 9)">
+                <polygon points="0,-7 6,0 0,7 -6,0" fill="#FFFFFF" />
+                <polygon points="0,-9 8,0 0,9 -8,0" fill="none" stroke="#DBEF90" strokeWidth="1" opacity="0.8" />
+                <circle cx="0" cy="0" r="1.8" fill="#243100" />
+              </g>
+              {/* Symmetrical Orbit Beads */}
+              <circle cx="100" cy="199" r="3" className="fill-primary" />
+              <circle cx="5" cy="104" r="2.2" className="fill-primary/80" />
+              <circle cx="195" cy="104" r="2.2" className="fill-primary/80" />
             </g>
 
-            {/* Inner Counter-Rotating Orbit Ring (Counter-Clockwise) */}
+            {/* Orbit Track 3: Inner Counter-Rotating Orbit Ring (Counter-Clockwise) */}
             <g ref={innerOrbitRef}>
               <circle
                 cx="100"
                 cy="104"
-                r="78"
-                className="fill-none stroke-primary/30"
+                r="80"
+                className="fill-none stroke-primary/35"
                 strokeWidth="1.2"
-                strokeDasharray="3 10"
+                strokeDasharray="4 8"
                 strokeLinecap="round"
               />
-              <circle cx="22" cy="104" r="2.5" className="fill-primary/90" />
-              <circle cx="178" cy="104" r="2.5" className="fill-primary/90" />
+              <circle cx="20" cy="104" r="2.5" className="fill-primary/90" />
+              <circle cx="180" cy="104" r="2.5" className="fill-primary/90" />
             </g>
           </>
         )}

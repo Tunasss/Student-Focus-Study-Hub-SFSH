@@ -189,6 +189,7 @@ export function createAudioMixer() {
     } catch {
       // ignore
     }
+    notifyTrackChange(state);
   }
 
   function getAudioContext() {

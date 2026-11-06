@@ -297,7 +297,8 @@ paths:
       summary: List tasks
       description: |
         The user's tasks ordered by due date (soonest first), optionally filtered by course and status.
-        Only the caller's tasks are ever returned (Rule 06).
+        Only the caller's tasks are ever returned (Rule 06). Each task carries `daysLeft` and `urgencyBadge`,
+        computed from the server clock at request time.
       operationId: listTasks
       parameters:
         - name: course_id
@@ -836,10 +837,22 @@ components:
       type: string
       enum: [TODO, DOING, DONE, OVERDUE]
 
+    UrgencyBadge:
+      type: [string, 'null']
+      enum: [OVERDUE, URGENT, SOON, LATER, null]
+      description: |
+        Computed at response time from `dueAt` and the server clock (never stored):
+
+        - `OVERDUE`: `dueAt` is in the past and the task is not `DONE`
+        - `URGENT`: `daysLeft` < 3
+        - `SOON`: 3 ≤ `daysLeft` ≤ 7
+        - `LATER`: `daysLeft` > 7
+        - `null`: the task is `DONE`
+
     Task:
       type: object
       additionalProperties: false
-      required: [id, title, dueAt, status, courseId, topicId, course, topic, createdAt]
+      required: [id, title, dueAt, status, daysLeft, urgencyBadge, courseId, topicId, course, topic, createdAt]
       properties:
         id:
           type: integer
@@ -853,6 +866,12 @@ components:
           example: '2026-11-20T16:59:00.000Z'
         status:
           $ref: '#/components/schemas/TaskStatus'
+        daysLeft:
+          type: integer
+          description: '`ceil((dueAt - now) / 24h)`: 0 when due within the current day, negative once overdue.'
+          example: 2
+        urgencyBadge:
+          $ref: '#/components/schemas/UrgencyBadge'
         courseId:
           type: integer
         topicId:

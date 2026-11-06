@@ -25,7 +25,7 @@
   - NotebookLM-inspired AI syllabus extractor modal supporting `.pdf`, `.docx`, `.pptx`, and `.txt` uploads with preview & chapter reorganization.
   - Automatic normalization and deduplication of theory and practical classes (`.1`, `.2`, `.TH`).
 - **🎯 Predictive Milestone & Deadline Radar:**
-  - Priority queue flagging academic tasks as `CRITICAL`, `WARNING`, `SOON`, or `LATER`.
+  - Priority queue flagging academic tasks as `OVERDUE`, `URGENT`, `SOON`, or `LATER` from the days left until their deadline.
   - Deterministic scoring algorithm factoring due dates, topic completion status, and active syllabus checkpoints.
 - **🎧 Deep Focus Studio (Pomodoro):**
   - Configurable focus and break timers with session recovery across browser reloads.
@@ -186,6 +186,7 @@ Key endpoint groups include:
 - `POST /api/schedule/import`: Multipart `.ics` calendar import with conflict resolution.
 - `GET /api/schedule`: Weekly schedule retrieval with timezone conversion (`Asia/Ho_Chi_Minh`).
 - `GET /api/courses`: User courses and schedule slots listing.
+- `GET/POST /api/tasks`, `PUT/PATCH/DELETE /api/tasks/:id`: Task (deadline) CRUD, scoped to the JWT user, validated with zod. Each task carries `daysLeft` and an `urgencyBadge` (`OVERDUE` / `URGENT` / `SOON` / `LATER`).
 
 ---
 

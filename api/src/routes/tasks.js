@@ -19,7 +19,9 @@ function tasksRouter({ prisma }) {
   router.get('/', async (req, res) => {
     const filters = parseOrThrow(listQuerySchema, req.query);
     const tasks = await listTasks(prisma, req.userId, filters);
-    res.json(ok({ tasks: tasks.map(serializeTask) }));
+    // One clock reading for the whole list so every daysLeft / urgencyBadge agrees.
+    const now = new Date();
+    res.json(ok({ tasks: tasks.map((task) => serializeTask(task, now)) }));
   });
 
   router.post('/', async (req, res) => {

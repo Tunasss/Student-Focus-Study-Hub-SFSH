@@ -86,6 +86,37 @@ Validation uses zod (`src/tasks/schemas.js`, `src/validation.js`): a missing or 
 `400 VALIDATION_ERROR` with a message naming the field (`dueAt: must be an ISO-8601 date-time with timezone, …`).
 Unknown body keys (for example `due_at`) are rejected. `dueAt` must carry an offset or `Z`, e.g. `2026-11-20T23:59:00+07:00`.
 
+### Urgency badge and `daysLeft` (WBS 2.4a.3)
+
+Every task in a response carries two computed fields (`src/tasks/urgency.js`, applied in `src/tasks/serialize.js`).
+They are derived from the server clock at request time and never stored:
+
+```
+daysLeft = ceil((dueAt - now) / 24h)        // 0 = due within the day, negative = overdue
+```
+
+| `urgencyBadge` | Rule |
+|---|---|
+| `OVERDUE` | `dueAt < now` and `status != DONE` |
+| `URGENT` | `daysLeft < 3` |
+| `SOON` | `3 <= daysLeft <= 7` |
+| `LATER` | `daysLeft > 7` |
+| `null` | `status == DONE` (a finished task has no urgency) |
+
+The PRD names these `days_left` / `urgency_badge`; the JSON uses the API's camelCase spelling.
+
+### Tests (WBS 2.4a.4)
+
+`npm test` runs the Node test runner (`node --test`, the project's runner since WBS 1.2; the PRD says Jest, but no Jest is installed and
+CI runs `npm test`). Tasks-related suites live in `test/tasks/`:
+
+| File | Covers |
+|---|---|
+| `urgency.test.js` | `daysLeft` and `urgencyBadge` at the 0, 2, 3, 7 and 8 day marks, rounding at the boundaries, overdue and `DONE` tasks, with a fixed clock |
+| `validation.test.js` | zod schemas for body, query and path params; `VALIDATION_ERROR` / `INVALID_JSON` envelopes over HTTP |
+| `taskRepo.test.js` | Rule 06 scoping: cross-user access is `404`, course and topic ownership checks |
+| `tasks.routes.test.js` | the five endpoints end to end against the in-memory Prisma stand-in (`test/helpers.js`) |
+
 ## Seed contents
 
 - 1 demo student

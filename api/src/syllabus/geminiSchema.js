@@ -15,43 +15,80 @@ const responseSchema = {
       type: Type.STRING,
       description: 'Course code as printed in the syllabus, e.g. CS101 or MATH 201. Empty string if none.',
     },
-    topics: {
+    chapters: {
       type: Type.ARRAY,
-      description: 'Chapters / units / topics of the course in syllabus order. Skip grading, policies, staff and schedule.',
+      description: 'Ordered list of chapters or lecture modules in the course. Each chapter contains key subtopics.',
       items: {
         type: Type.OBJECT,
         properties: {
-          order: { type: Type.INTEGER, description: '1-based position in the syllabus' },
-          title: { type: Type.STRING, description: 'Short topic title, as written in the syllabus' },
-          description: { type: Type.STRING, description: 'One sentence on what the topic covers (optional)' },
+          order: { type: Type.INTEGER, description: '1-based position of the chapter' },
+          title: { type: Type.STRING, description: 'Chapter title (e.g. "Chương 1: Tổng quan" or "Chapter 1: Intro")' },
+          description: { type: Type.STRING, description: 'Brief summary of the chapter' },
+          source_file: { type: Type.STRING, description: 'Original file name if provided, else empty string' },
+          subtopics: {
+            type: Type.ARRAY,
+            description: 'Key sections, concepts, or subtopics within this chapter (3 to 6 items)',
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                order: { type: Type.INTEGER, description: '1-based position within the chapter' },
+                title: { type: Type.STRING, description: 'Subtopic title or section name' },
+                description: { type: Type.STRING, description: 'Short detail of what this subtopic covers' },
+              },
+              required: ['order', 'title'],
+              propertyOrdering: ['order', 'title', 'description'],
+            },
+          },
         },
-        required: ['order', 'title'],
-        propertyOrdering: ['order', 'title', 'description'],
+        required: ['order', 'title', 'subtopics'],
+        propertyOrdering: ['order', 'title', 'description', 'source_file', 'subtopics'],
       },
     },
   },
-  required: ['topics'],
-  propertyOrdering: ['course_code', 'topics'],
+  required: ['chapters'],
+  propertyOrdering: ['course_code', 'chapters'],
 };
 
-const LIMITS = Object.freeze({ maxTopics: 100, titleMax: 255, descriptionMax: 1000 });
+const LIMITS = Object.freeze({ maxChapters: 100, maxSubtopics: 50, titleMax: 255, descriptionMax: 1000 });
 
 const text = (max) => z.string().trim().max(max);
 
-// Raw model output. Mirrors responseSchema; `description` may be missing or empty.
-const syllabusOutputSchema = z
-  .object({
-    course_code: z.string().trim().optional(),
-    topics: z
-      .array(
-        z.object({
-          order: z.int().nonnegative(),
-          title: text(LIMITS.titleMax).min(1),
-          description: text(LIMITS.descriptionMax).optional(),
-        }),
-      )
-      .max(LIMITS.maxTopics),
-  })
-  .passthrough();
+const subtopicSchema = z.object({
+  order: z.int().nonnegative().optional(),
+  title: text(LIMITS.titleMax).min(1),
+  description: text(LIMITS.descriptionMax).optional().nullable(),
+});
+
+const chapterSchema = z.object({
+  order: z.int().nonnegative().optional(),
+  title: text(LIMITS.titleMax).min(1),
+  description: text(LIMITS.descriptionMax).optional().nullable(),
+  source_file: text(LIMITS.titleMax).optional().nullable(),
+  subtopics: z.array(subtopicSchema).max(LIMITS.maxSubtopics).default([]),
+});
+
+const syllabusOutputSchema = z.preprocess(
+  (val) => {
+    if (val && typeof val === 'object' && !val.chapters && Array.isArray(val.topics)) {
+      return {
+        ...val,
+        chapters: val.topics.map((t) => ({
+          order: t.order,
+          title: t.title,
+          description: t.description,
+          source_file: null,
+          subtopics: [],
+        })),
+      };
+    }
+    return val;
+  },
+  z
+    .object({
+      course_code: z.string().trim().optional().nullable(),
+      chapters: z.array(chapterSchema).max(LIMITS.maxChapters),
+    })
+    .passthrough(),
+);
 
 module.exports = { responseSchema, syllabusOutputSchema, LIMITS };

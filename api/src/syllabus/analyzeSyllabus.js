@@ -1,4 +1,4 @@
-// WBS 2.2.2 / 2.2.3 — turns extracted syllabus text into { courseCode, topics } with Gemini.
+// WBS 2.2.2 / 2.2.3 — turns extracted syllabus text into { courseCode, chapters, topics } with Gemini.
 //
 //   const result = await analyzeSyllabusText(text, { gemini, model });
 //
@@ -24,22 +24,33 @@ const MAX_INPUT_CHARS = 200_000;
 const MAX_ATTEMPTS = 2;
 
 const SYSTEM_INSTRUCTION = [
-  'You extract the learning content structure from a university course syllabus.',
-  'Return the course code (as printed, e.g. "CS101", "MATH 201"; empty string if there is none) and the ordered list',
-  'of chapters / units / weekly topics that students must study.',
+  'You extract the hierarchical Knowledge Tree structure from university syllabus and lecture slide materials.',
+  'Return the course code (as printed, e.g. "CS101", "MATH 201"; empty string if none) and the structured list of chapters.',
   'Rules:',
-  '- Keep the order used in the syllabus; number topics from 1.',
-  '- One topic per chapter/unit/week block. Merge sub-bullets into that topic\'s description instead of listing them separately.',
-  '- Ignore grading, attendance policies, instructor contacts, textbooks, exam dates and administrative text.',
-  '- Keep titles short (under 100 characters) and in the same language as the syllabus (Vietnamese or English).',
-  '- Never invent topics that are not in the text. If the text contains no study topics, return an empty topics list.',
+  '- When multiple slide decks or chapter files are provided (each marked with === FILE: <filename> ===):',
+  '  1. Treat each separate lecture slide file as ONE top-level Chapter.',
+  '  2. Set source_file to the respective filename.',
+  '  3. Extract 3 to 6 key sections/concepts inside that slide deck as its subtopics.',
+  '  4. NEVER artificially break down a single chapter slide deck into multiple fake top-level chapters.',
+  '- When a single master syllabus is provided: identify the main chapters/units and extract their subtopics.',
+  '- Ignore administrative text, grading policies, professor contacts, office hours, and exam dates.',
+  '- Keep titles clear and concise (under 100 characters), in the original language of the material (Vietnamese or English).',
+  '- If the text contains no learning material or study topics, return an empty chapters list.',
 ].join('\n');
 
-function buildPrompt(text, previousProblem) {
-  const body = text.length > MAX_INPUT_CHARS ? `${text.slice(0, MAX_INPUT_CHARS)}\n[... truncated ...]` : text;
+function formatInput(input) {
+  if (Array.isArray(input)) {
+    return input.map((f) => `=== FILE: ${f.fileName} ===\n${f.text}`).join('\n\n');
+  }
+  return String(input || '');
+}
+
+function buildPrompt(input, previousProblem) {
+  const raw = formatInput(input);
+  const body = raw.length > MAX_INPUT_CHARS ? `${raw.slice(0, MAX_INPUT_CHARS)}\n[... truncated ...]` : raw;
   const retryNote = previousProblem
     ? `\n\nYour previous reply was rejected (${previousProblem}). Reply again with JSON that matches the schema exactly: ` +
-      'an object with "course_code" (string) and "topics" (array of { "order": integer, "title": string, "description": string }).'
+      'an object with "course_code" (string) and "chapters" (array of { "order": integer, "title": string, "description": string, "source_file": string, "subtopics": array of { "order": integer, "title": string, "description": string } }).'
     : '';
   return `Syllabus text (extracted from a PDF, page breaks are blank lines):\n\n"""\n${body}\n"""${retryNote}`;
 }
@@ -93,14 +104,58 @@ function parseReply(response) {
   return parsed.data;
 }
 
-// Sort by the model's order, drop duplicates (same title, case-insensitive) and renumber 1..n so the
-// result can be stored as topics.sort_order later without unique-key clashes.
+// Normalizes chapters and nested subtopics: re-sorts by order and renumbers 1..n
+function normalizeChapters(chapters) {
+  if (!Array.isArray(chapters)) return [];
+  const ordered = [...chapters].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const seenChapters = new Set();
+  const out = [];
+
+  for (const ch of ordered) {
+    const title = String(ch.title || '').trim();
+    if (!title) continue;
+    const key = title.toLowerCase();
+    if (seenChapters.has(key)) continue;
+    seenChapters.add(key);
+
+    const subtopicsOut = [];
+    const seenSubtopics = new Set();
+    const orderedSubtopics = [...(ch.subtopics || [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+    for (const sub of orderedSubtopics) {
+      const subTitle = String(sub.title || '').trim();
+      if (!subTitle) continue;
+      const subKey = subTitle.toLowerCase();
+      if (seenSubtopics.has(subKey)) continue;
+      seenSubtopics.add(subKey);
+
+      subtopicsOut.push({
+        order: subtopicsOut.length + 1,
+        title: subTitle,
+        description: sub.description ? String(sub.description).trim() : null,
+      });
+    }
+
+    out.push({
+      order: out.length + 1,
+      title,
+      description: ch.description ? String(ch.description).trim() : null,
+      sourceFile: ch.source_file ? String(ch.source_file).trim() : (ch.sourceFile ? String(ch.sourceFile).trim() : null),
+      subtopics: subtopicsOut,
+    });
+  }
+
+  return out;
+}
+
+// Flat normalize topics for legacy compatibility
 function normalizeTopics(topics) {
+  if (!Array.isArray(topics)) return [];
   const seen = new Set();
-  const ordered = [...topics].sort((a, b) => a.order - b.order);
+  const ordered = [...topics].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   const out = [];
   for (const topic of ordered) {
-    const key = topic.title.toLowerCase();
+    const key = String(topic.title || '').toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
     out.push({ order: out.length + 1, title: topic.title, description: topic.description || null });
@@ -108,7 +163,7 @@ function normalizeTopics(topics) {
   return out;
 }
 
-async function analyzeSyllabusText(text, { gemini, model }) {
+async function analyzeSyllabusText(input, { gemini, model }) {
   if (!gemini) {
     throw new ApiError(503, 'LLM_NOT_CONFIGURED', 'Syllabus analysis is not configured on this server (GEMINI_API_KEY is missing)');
   }
@@ -118,7 +173,7 @@ async function analyzeSyllabusText(text, { gemini, model }) {
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     let response;
     try {
-      response = await gemini.models.generateContent(buildRequest(text, model, problem));
+      response = await gemini.models.generateContent(buildRequest(input, model, problem));
     } catch (err) {
       throw mapUpstreamError(err); // never retried: the UI should fall back to manual entry at once
     }
@@ -139,8 +194,8 @@ async function analyzeSyllabusText(text, { gemini, model }) {
     }
   }
 
-  const topics = normalizeTopics(data.topics);
-  if (topics.length === 0) {
+  const chapters = normalizeChapters(data.chapters);
+  if (chapters.length === 0) {
     throw new ApiError(
       422,
       'SYLLABUS_NO_TOPICS',
@@ -148,7 +203,40 @@ async function analyzeSyllabusText(text, { gemini, model }) {
     );
   }
 
-  return { courseCode: data.course_code || null, topics, source: gemini.isMock ? 'mock' : 'gemini' };
+  // Flattened topics list for backward compatibility
+  const flattenedTopics = [];
+  for (const ch of chapters) {
+    flattenedTopics.push({
+      order: flattenedTopics.length + 1,
+      title: ch.title,
+      description: ch.description,
+      sourceFile: ch.sourceFile,
+    });
+    for (const sub of ch.subtopics) {
+      flattenedTopics.push({
+        order: flattenedTopics.length + 1,
+        title: sub.title,
+        description: sub.description,
+        sourceFile: ch.sourceFile,
+      });
+    }
+  }
+
+  return {
+    courseCode: data.course_code || null,
+    chapters,
+    topics: flattenedTopics,
+    source: gemini.isMock ? 'mock' : 'gemini',
+  };
 }
 
-module.exports = { analyzeSyllabusText, buildRequest, normalizeTopics, SYSTEM_INSTRUCTION, MAX_INPUT_CHARS, MAX_ATTEMPTS, LIMITS };
+module.exports = {
+  analyzeSyllabusText,
+  buildRequest,
+  normalizeChapters,
+  normalizeTopics,
+  SYSTEM_INSTRUCTION,
+  MAX_INPUT_CHARS,
+  MAX_ATTEMPTS,
+  LIMITS,
+};

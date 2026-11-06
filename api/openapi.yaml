@@ -3,7 +3,8 @@ info:
   title: Student Focus & Study Hub (SFSH) API
   version: 0.1.0
   description: |
-    REST API for SFSH: authentication, ICS timetable import, courses, the weekly class schedule and tasks (deadlines).
+    REST API for SFSH: authentication, ICS timetable import, courses, the weekly class schedule, tasks (deadlines)
+    and syllabus PDF text extraction.
 
     ## Response envelope (Rule 02)
     Every response, success or error, uses the same envelope:
@@ -26,6 +27,9 @@ info:
     | `VALIDATION_ERROR` | 400 | A body or query parameter is invalid |
     | `INVALID_JSON` | 400 | The request body is not valid JSON |
     | `INVALID_ICS_FORMAT` | 400 | The uploaded timetable is not a usable .ics file |
+    | `INVALID_PDF_FORMAT` | 400 | The uploaded syllabus is not a usable .pdf file (missing, wrong extension, over 5 MB, corrupt, encrypted) |
+    | `PDF_TOO_MANY_PAGES` | 400 | The syllabus PDF has more than 30 pages |
+    | `PDF_NO_TEXT_LAYER` | 422 | The syllabus PDF is a scanned image without a text layer; use the manual entry form |
     | `UNAUTHORIZED` | 401 | Missing, malformed or invalid bearer token |
     | `TOKEN_EXPIRED` | 401 | The bearer token has expired; log in again |
     | `INVALID_CREDENTIALS` | 401 | Wrong email or password |
@@ -45,6 +49,8 @@ tags:
     description: The user's courses and their weekly slots.
   - name: Tasks
     description: Deadlines (assignments, labs, exams) attached to a course and optionally a syllabus topic.
+  - name: Syllabus
+    description: Turn a syllabus PDF into topics. Step 1 (WBS 2.2.1) extracts the text layer.
 
 paths:
   /api/health:
@@ -446,6 +452,74 @@ paths:
         '404':
           $ref: '#/components/responses/TaskNotFound'
 
+  /api/syllabus/extract:
+    post:
+      tags: [Syllabus]
+      summary: Extract the text layer of a syllabus PDF
+      description: |
+        Uploads a syllabus PDF and returns its text layer, page by page, so the client (or the next pipeline step)
+        can turn it into topics.
+
+        - Accepted: `.pdf` extension, at most 5 MB, at most 30 pages, `%PDF-` header, not password protected.
+        - Text is read with `pdf-parse`; runs of spaces are collapsed and blank lines dropped.
+        - **Scanned PDFs**: when fewer than 200 non-whitespace characters can be read from the whole file, the
+          pipeline stops with `422 PDF_NO_TEXT_LAYER`. The message tells the user to add the topics with the
+          manual entry form instead.
+      operationId: extractSyllabus
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The syllabus .pdf file.
+      responses:
+        '200':
+          description: Text layer extracted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/SyllabusText'
+        '400':
+          description: |
+            `INVALID_PDF_FORMAT` (missing file, wrong field or extension, over 5 MB, no `%PDF-` header, corrupt
+            or password protected) or `PDF_TOO_MANY_PAGES` (more than 30 pages).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                data: null
+                error:
+                  code: PDF_TOO_MANY_PAGES
+                  message: PDF has 31 pages; the limit is 30
+                timestamp: '2026-11-06T00:00:00.000Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: '`PDF_NO_TEXT_LAYER`: scanned (image-only) PDF; fewer than 200 characters of text could be read.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                data: null
+                error:
+                  code: PDF_NO_TEXT_LAYER
+                  message: This PDF has no readable text layer (it looks like a scanned image). Please add the syllabus topics with the manual entry form instead.
+                timestamp: '2026-11-06T00:00:00.000Z'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -574,6 +648,9 @@ components:
                 - VALIDATION_ERROR
                 - INVALID_JSON
                 - INVALID_ICS_FORMAT
+                - INVALID_PDF_FORMAT
+                - PDF_TOO_MANY_PAGES
+                - PDF_NO_TEXT_LAYER
                 - UNAUTHORIZED
                 - TOKEN_EXPIRED
                 - INVALID_CREDENTIALS
@@ -966,6 +1043,42 @@ components:
               properties:
                 task:
                   $ref: '#/components/schemas/Task'
+
+    SyllabusText:
+      type: object
+      additionalProperties: false
+      required: [fileName, pageCount, charCount, text, pages]
+      properties:
+        fileName:
+          type: string
+          example: MATH201-syllabus.pdf
+        pageCount:
+          type: integer
+          minimum: 1
+          maximum: 30
+          example: 3
+        charCount:
+          type: integer
+          minimum: 200
+          description: Non-whitespace characters in `text`.
+          example: 2840
+        text:
+          type: string
+          description: Text of all pages, pages separated by a blank line.
+          example: "MATH201 Calculus II\nWeek 1-2: Techniques of integration\n\nWeek 3-4: Improper integrals"
+        pages:
+          type: array
+          description: Text per page, in page order.
+          items:
+            type: object
+            additionalProperties: false
+            required: [page, text]
+            properties:
+              page:
+                type: integer
+                minimum: 1
+              text:
+                type: string
 
 security:
   - bearerAuth: []

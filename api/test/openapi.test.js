@@ -14,6 +14,7 @@ const addFormats = require('ajv-formats');
 const { createApp } = require('../src/app');
 const { loadSpec } = require('../src/docs');
 const { createFakePrisma } = require('./helpers');
+const { makePdf } = require('./fixtures/makePdf');
 
 const spec = loadSpec();
 const ajv = new Ajv2020({ strict: false, allErrors: true });
@@ -150,6 +151,15 @@ describe('responses match openapi.yaml (Rule 02 envelope)', () => {
     assert.ok(week.body.data.events.length > 0);
     assertMatchesSpec(week, 'get', '/api/schedule');
     assertMatchesSpec(await get('tz=Mars/Base'), 'get', '/api/schedule'); // 400
+  });
+
+  test('POST /api/syllabus/extract', async () => {
+    const upload = (buffer, name) => auth(request(app).post('/api/syllabus/extract')).attach('file', buffer, name);
+    const text = Array.from({ length: 12 }, (_, i) => `Chapter ${i + 1}: topic number ${i + 1}`).join('\n');
+    assertMatchesSpec(await upload(makePdf([text, text]), 'syllabus.pdf'), 'post', '/api/syllabus/extract');
+    assertMatchesSpec(await upload(makePdf(['']), 'scanned.pdf'), 'post', '/api/syllabus/extract'); // 422
+    assertMatchesSpec(await upload(makePdf([text]), 'syllabus.txt'), 'post', '/api/syllabus/extract'); // 400
+    assertMatchesSpec(await request(app).post('/api/syllabus/extract'), 'post', '/api/syllabus/extract'); // 401
   });
 
   test('GET /api/courses', async () => {

@@ -1,8 +1,8 @@
 const express = require('express');
-const multer = require('multer');
 const { ApiError } = require('../errors');
 const { ok } = require('../envelope');
 const { requireAuth } = require('../middleware/auth');
+const { singleFileUpload } = require('../middleware/upload');
 const { byCourseOwner } = require('../db/scope');
 const { ICS_LIMITS, readIcsUpload, parseTimetable } = require('../ics/parseTimetable');
 const { importTimetable } = require('../ics/importTimetable');
@@ -11,21 +11,12 @@ const { Temporal, DEFAULT_TZ, isValidTimeZone, zonedToDate } = require('../ics/t
 
 const MAX_RANGE_DAYS = 62;
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: ICS_LIMITS.maxBytes, files: 1 },
-}).single('file');
-
-// Runs multer and maps its errors to the API error format.
-function uploadIcs(req, res, next) {
-  upload(req, res, (err) => {
-    if (!err) return next();
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      return next(new ApiError(400, 'INVALID_ICS_FORMAT', 'File is larger than 2 MB'));
-    }
-    return next(new ApiError(400, 'INVALID_ICS_FORMAT', 'Upload a single .ics file in the "file" field'));
-  });
-}
+const uploadIcs = singleFileUpload({
+  field: 'file',
+  maxBytes: ICS_LIMITS.maxBytes,
+  errorCode: 'INVALID_ICS_FORMAT',
+  label: '.ics',
+});
 
 function parseDisplayTz(value) {
   if (value === undefined) return DEFAULT_TZ;

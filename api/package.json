@@ -29,6 +29,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.5.0",
     "node-ical": "^0.27.3",
+    "pdf-parse": "^2.4.5",
     "swagger-ui-express": "^5.0.1",
     "temporal-polyfill": "^1.0.6",
     "yaml": "^2.9.1",

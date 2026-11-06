@@ -297,17 +297,48 @@ export function SyllabusPage() {
 
   // Optimistic status update with rollback
   async function handleStatusChange(topicId, newStatus) {
-    const prevTopics = [...topics];
+    if (!topicId) {
+      console.warn('handleStatusChange called without valid topicId:', { topicId, newStatus });
+      return;
+    }
+
+    // Capture the existing status of this specific topic for localized rollback
+    const prevTopic = topics.find((t) => t.id === topicId);
+    const prevStatus = prevTopic?.status || 'TODO';
 
     // Optimistically update local state immediately
     setTopics((prev) => updateTopicInList(prev, topicId, newStatus));
     setUpdatingTopicId(topicId);
 
+    // If topicId is a client-generated mock ID (e.g. extracted-sub-...), retain optimistic update
+    // without sending a failing request to the server
+    const isClientOnlyId =
+      typeof topicId === 'string' &&
+      (topicId.startsWith('extracted-') ||
+        topicId.startsWith('client-') ||
+        topicId.startsWith('manual-') ||
+        isNaN(Number(topicId)));
+
+    if (isClientOnlyId) {
+      setUpdatingTopicId(null);
+      return;
+    }
+
     try {
       await syllabusApi.updateTopicStatus(topicId, newStatus);
-    } catch {
-      // Rollback on failure
-      setTopics(prevTopics);
+    } catch (err) {
+      console.error('Failed to update topic status for topicId:', topicId, err);
+
+      // If the topic was not found on server (404), refresh topics to sync state
+      if (err?.status === 404 && activeCourseId) {
+        syllabusApi.getCourseTopics(activeCourseId).then((fresh) => {
+          const valid = Array.isArray(fresh) ? fresh : fresh?.topics || [];
+          if (valid.length > 0) setTopics(valid);
+        }).catch(() => {});
+      }
+
+      // Rollback only this specific topic rather than resetting all topics
+      setTopics((prev) => updateTopicInList(prev, topicId, prevStatus));
       setToast({ message: t.updateFailed, type: 'error' });
     } finally {
       setUpdatingTopicId(null);
@@ -405,11 +436,20 @@ export function SyllabusPage() {
       return;
     }
 
-    // In testing or standalone mock mode without DB bulk endpoint, preserve sanitized chapters
+    // In testing or standalone mock mode without DB bulk endpoint, preserve sanitized chapters with IDs
+    const clientFallbackChapters = sanitizedChapters.map((ch, cIdx) => ({
+      ...ch,
+      id: ch.id || `client-ch-${Date.now()}-${cIdx}`,
+      subtopics: (ch.subtopics || []).map((sub, sIdx) => ({
+        ...sub,
+        id: sub.id || `client-sub-${Date.now()}-${cIdx}-${sIdx}`,
+      })),
+    }));
+
     if (mode === 'replace') {
-      setTopics(sanitizedChapters);
+      setTopics(clientFallbackChapters);
     } else {
-      setTopics((prev) => [...prev, ...sanitizedChapters]);
+      setTopics((prev) => [...prev, ...clientFallbackChapters]);
     }
 
     setToast({

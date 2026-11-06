@@ -8,65 +8,88 @@ import { extractChapterNumber } from './chapterOrder';
  */
 
 export function simulateSyllabusExtraction(courseName = '', fileNameOrFiles = '') {
-  // If multiple chapter files are uploaded, map each file to a dedicated chapter
-  if (Array.isArray(fileNameOrFiles) && fileNameOrFiles.length > 1) {
-    return fileNameOrFiles.map((file, idx) => {
+  const filesList = Array.isArray(fileNameOrFiles)
+    ? fileNameOrFiles
+    : (fileNameOrFiles ? [fileNameOrFiles] : []);
+
+  const isSlideUpload = filesList.length > 0 && filesList.some((f) => {
+    const name = typeof f === 'string' ? f : f?.name || '';
+    return /\b(chap|chapter|chương|ch|bài|slide|lecture|session)\b|\d+/i.test(name);
+  });
+
+  // If chapter slide files are uploaded (single or multiple), map each file to a dedicated chapter
+  if (isSlideUpload) {
+    return filesList.map((file, idx) => {
       const original = file?.name || file || `Chapter ${idx + 1}`;
       const cleanName = String(original)
-        .replace(/\.pdf$/i, '')
+        .replace(/\.[a-z0-9]+$/i, '')
         .replace(/[-_]/g, ' ')
         .trim();
-      const hasPrefix = /^(chương|chapter|bài|ch)\b/i.test(cleanName);
       const detectedNum = extractChapterNumber(original);
       const chNum = detectedNum && Number.isInteger(detectedNum) && detectedNum > 0 ? detectedNum : idx + 1;
       const isEnglish = !/[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(cleanName);
 
+      // Extract core topic name without "Chapter X" prefix
+      const topicName = cleanName.replace(/^(?:chapter|chương|bài|ch)\s*\d+[:.-]?\s*/i, '').trim() || cleanName;
+
       return {
-        title: hasPrefix ? cleanName : (isEnglish ? `Chapter ${chNum}: ${cleanName}` : `Chương ${chNum}: ${cleanName}`),
+        title: isEnglish ? `Chapter ${chNum}: ${topicName}` : `Chương ${chNum}: ${topicName}`,
         description: isEnglish
-          ? `Comprehensive study material and learning objectives for ${cleanName}.`
-          : `Nội dung và mục tiêu học tập từ tài liệu ${original}.`,
+          ? `Comprehensive study material and learning objectives for ${topicName}.`
+          : `Nội dung và mục tiêu học tập từ tài liệu ${topicName}.`,
         sourceFile: String(original),
         sortOrder: chNum,
         status: 'TODO',
         subtopics: isEnglish
           ? [
               {
-                title: `${chNum}.1 Fundamental Concepts & Theoretical Principles`,
-                description: 'Core concepts, domain terminology, and foundational principles.',
+                title: `${chNum}.1 Overview & Foundations of ${topicName}`,
+                description: `Core concepts, domain terminology, and theoretical foundations of ${topicName}.`,
                 sortOrder: 1,
                 status: 'TODO',
               },
               {
-                title: `${chNum}.2 Methodologies, Modeling & Analytical Techniques`,
-                description: 'Analytical frameworks, modeling algorithms, and standard processing.',
+                title: `${chNum}.2 Methodologies & Formulation of ${topicName}`,
+                description: `Analytical frameworks, algorithms, and key modeling equations for ${topicName}.`,
                 sortOrder: 2,
                 status: 'TODO',
               },
               {
-                title: `${chNum}.3 Practical Applications, Case Studies & Solutions`,
-                description: 'Applied case studies, real-world data analysis, and practical solutions.',
+                title: `${chNum}.3 Practical Applications & Model Evaluation`,
+                description: 'Applied use cases, diagnostic evaluation metrics, and practical implementations.',
                 sortOrder: 3,
+                status: 'TODO',
+              },
+              {
+                title: `${chNum}.4 Advanced Analysis & Case Studies`,
+                description: 'Complex problem solving, edge scenarios, and comprehensive case analysis.',
+                sortOrder: 4,
                 status: 'TODO',
               },
             ]
           : [
               {
-                title: `${chNum}.1 Tổng quan & Cơ sở lý luận nền tảng`,
-                description: 'Giới thiệu các nguyên lý cơ bản, thuật ngữ và định hướng tiếp cận',
+                title: `${chNum}.1 Tổng quan & Cơ sở lý luận của ${topicName}`,
+                description: `Giới thiệu các khái niệm cốt lõi, thuật ngữ chuyên ngành và nền tảng lý thuyết ${topicName}.`,
                 sortOrder: 1,
                 status: 'TODO',
               },
               {
-                title: `${chNum}.2 Phương pháp luận & Phân tích chuyên sâu`,
-                description: 'Khung phân tích tiêu chuẩn, mô hình hóa và các kỹ thuật xử lý cốt lõi',
+                title: `${chNum}.2 Phương pháp luận & Xây dựng mô hình`,
+                description: 'Khung phân tích chuẩn hóa, các công thức toán học và kỹ thuật mô hình hóa.',
                 sortOrder: 2,
                 status: 'TODO',
               },
               {
-                title: `${chNum}.3 Ứng dụng thực hành & Tối ưu giải pháp`,
-                description: 'Bài tập áp dụng, tình huống thực tế và đánh giá hiệu quả triển khai',
+                title: `${chNum}.3 Ứng dụng thực hành & Đánh giá kết quả`,
+                description: 'Triển khai trên dữ liệu thực tế, các chỉ số đánh giá độ chính xác và kiểm định.',
                 sortOrder: 3,
+                status: 'TODO',
+              },
+              {
+                title: `${chNum}.4 Tình huống mở rộng & Tối ưu giải pháp`,
+                description: 'Phân tích tình huống nâng cao, xử lý các trường hợp đặc biệt và phương án tối ưu.',
+                sortOrder: 4,
                 status: 'TODO',
               },
             ],

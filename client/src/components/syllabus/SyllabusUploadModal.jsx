@@ -241,21 +241,49 @@ export function SyllabusUploadModal({
         const chapterNum = detectedNum && Number.isInteger(detectedNum) && detectedNum > 0
           ? detectedNum
           : (currentTopicsCount + idx + 1);
+
+        // Normalize chapter title: ensure clean "Chapter X: <Name>" or "Chương X: <Name>"
+        let rawChapterTitle = (ch.title || '').trim();
+        let cleanedChapterTitle = rawChapterTitle;
+        if (!cleanedChapterTitle) {
+          cleanedChapterTitle = `${t.chapterBadge} ${chapterNum}`;
+        } else {
+          // If title has arbitrary prefix, clean and unify
+          const prefixMatch = cleanedChapterTitle.match(/^(?:chapter|chương|bài|ch)\s*\d+[:.-]?\s*/i);
+          if (prefixMatch) {
+            const topicPart = cleanedChapterTitle.substring(prefixMatch[0].length).trim();
+            cleanedChapterTitle = `${t.chapterBadge} ${chapterNum}${topicPart ? `: ${topicPart}` : ''}`;
+          } else if (!cleanedChapterTitle.toLowerCase().startsWith('chapter') && !cleanedChapterTitle.toLowerCase().startsWith('chương')) {
+            cleanedChapterTitle = `${t.chapterBadge} ${chapterNum}: ${cleanedChapterTitle}`;
+          }
+        }
+
         return {
           id: `extracted-ch-${Date.now()}-${idx}`,
-          title: ch.title || `${t.chapterBadge} ${chapterNum}`,
+          title: cleanedChapterTitle,
           description: ch.description || '',
           sourceFile: ch.sourceFile || ch.source_file || (files.length === 1 ? files[0].name : null),
           chapterNumber: chapterNum,
           sortOrder: chapterNum,
           status: ch.status || 'TODO',
-          subtopics: (ch.subtopics || []).map((sub, subIdx) => ({
-            id: `extracted-sub-${Date.now()}-${idx}-${subIdx}`,
-            title: sub.title || `${t.subtopicBadge} ${subIdx + 1}`,
-            description: sub.description || '',
-            sortOrder: subIdx + 1,
-            status: sub.status || 'TODO',
-          })),
+          subtopics: (ch.subtopics || []).map((sub, subIdx) => {
+            const rawSubTitle = (sub.title || `${t.subtopicBadge} ${subIdx + 1}`).trim();
+            // Strip any existing leading numbers / bullets (e.g. "4.1 ", "1. ", "4.1. ", "Section 1: ", "✦ ")
+            const cleanSubTitle = rawSubTitle
+              .replace(/^[✦•\-*]\s*/, '')
+              .replace(/^(?:section|phần|mục|bài|part)?\s*\d+(?:\.\d+)*\s*[-:.)]?\s*/i, '')
+              .trim();
+            const subNum = `${chapterNum}.${subIdx + 1}`;
+            const finalSubTitle = `${subNum} ${cleanSubTitle || `${t.subtopicBadge} ${subIdx + 1}`}`;
+
+            return {
+              id: `extracted-sub-${Date.now()}-${idx}-${subIdx}`,
+              title: finalSubTitle,
+              description: sub.description || '',
+              sortOrder: subIdx + 1,
+              status: sub.status || 'TODO',
+            };
+          }),
         };
       });
 
@@ -310,6 +338,7 @@ export function SyllabusUploadModal({
     setExtractedChapters((prev) =>
       prev.map((ch, i) => {
         if (i !== chIdx) return ch;
+        const chapterNum = ch.chapterNumber || ch.sortOrder || (i + 1);
         const nextSubOrder = (ch.subtopics || []).length + 1;
         return {
           ...ch,
@@ -317,7 +346,7 @@ export function SyllabusUploadModal({
             ...(ch.subtopics || []),
             {
               id: `manual-sub-${Date.now()}-${nextSubOrder}`,
-              title: `${t.subtopicBadge} ${nextSubOrder}: `,
+              title: `${chapterNum}.${nextSubOrder} ${t.subtopicBadge} ${nextSubOrder}`,
               description: '',
               sortOrder: nextSubOrder,
               status: 'TODO',

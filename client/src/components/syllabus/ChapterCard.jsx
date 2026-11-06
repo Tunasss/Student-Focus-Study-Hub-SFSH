@@ -94,11 +94,10 @@ export function ChapterCard({
     },
   ];
 
-  function handleMarkAllDone() {
-    for (const sub of subtopics) {
-      if (sub.status !== 'DONE') {
-        onStatusChange?.(sub.id, 'DONE');
-      }
+  async function handleMarkAllDone() {
+    const pending = subtopics.filter((sub) => sub.status !== 'DONE' && sub.id);
+    for (const sub of pending) {
+      await onStatusChange?.(sub.id, 'DONE');
     }
   }
 

@@ -28,15 +28,18 @@ const SYSTEM_INSTRUCTION = [
   'You extract the hierarchical Knowledge Tree structure from university syllabus and lecture slide materials.',
   'Return the course code (as printed, e.g. "CS101", "MATH 201"; empty string if none) and the structured list of chapters.',
   'Rules:',
-  '- When multiple slide decks or chapter files are provided (each marked with === FILE: <filename> ===):',
-  '  1. Treat each separate lecture slide file as ONE top-level Chapter.',
-  '  2. Set source_file to the respective filename.',
-  '  3. Extract 3 to 6 key sections/concepts inside that slide deck as its subtopics.',
-  '  4. NEVER artificially break down a single chapter slide deck into multiple fake top-level chapters.',
-  '  5. Maintain correct numerical chapter ordering (e.g., Chapter 1 / Overview first, Chapter 2 second, etc.) based on titles or file names.',
-  '- When a single master syllabus is provided: identify the main chapters/units and extract their subtopics.',
+  '- When lecture slide files or chapter documents are provided (each marked with === FILE: <filename> ===, or single/multiple chapter slide decks):',
+  '  1. Treat each separate lecture slide file as EXACTLY ONE top-level Chapter.',
+  '  2. Chapter title MUST include the chapter designation if present in the material or filename (e.g. "Chapter 4: Logistic Regression" or "Chapter 5: Forecasting Model of Time Series").',
+  '  3. Set source_file to the respective filename.',
+  '  4. Extract 3 to 6 key sections/concepts inside that slide deck as its subtopics.',
+  '  5. Every subtopic title MUST start with the hierarchical chapter numbering: e.g. for Chapter 4, use "4.1 <Topic>", "4.2 <Topic>", "4.3 <Topic>". For Chapter 5, use "5.1 <Topic>", "5.2 <Topic>". For Chapter 1, use "1.1 <Topic>", "1.2 <Topic>".',
+  '  6. NEVER artificially break down a single chapter slide deck into multiple fake top-level chapters.',
+  '  7. Maintain correct numerical chapter ordering (e.g., Chapter 1 first, Chapter 2 second, etc.) based on titles or file names.',
+  '- When a single master syllabus is provided: identify the main chapters/units and extract their subtopics following the same hierarchical numbering convention ("1.1", "1.2", etc.).',
   '- Ignore administrative text, grading policies, professor contacts, office hours, and exam dates.',
   '- Keep titles clear and concise (under 100 characters), in the original language of the material (Vietnamese or English).',
+  '- Keep descriptions concise (1-2 sentences summarizing learning outcomes or covered concepts).',
   '- If the text contains no learning material or study topics, return an empty chapters list.',
 ].join('\n');
 
@@ -120,27 +123,36 @@ function normalizeChapters(chapters) {
     if (seenChapters.has(key)) continue;
     seenChapters.add(key);
 
+    const sourceFileVal = ch.source_file ? String(ch.source_file).trim() : (ch.sourceFile ? String(ch.sourceFile).trim() : null);
+    const naturalNum = extractChapterNumber(title) ?? extractChapterNumber(sourceFileVal);
+    const resolvedOrder = naturalNum && Number.isInteger(naturalNum) && naturalNum > 0 ? naturalNum : (out.length + 1);
+
     const subtopicsOut = [];
     const seenSubtopics = new Set();
     const orderedSubtopics = [...(ch.subtopics || [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-    for (const sub of orderedSubtopics) {
-      const subTitle = String(sub.title || '').trim();
-      if (!subTitle) continue;
-      const subKey = subTitle.toLowerCase();
+    for (let sIdx = 0; sIdx < orderedSubtopics.length; sIdx++) {
+      const sub = orderedSubtopics[sIdx];
+      const rawSubTitle = String(sub.title || '').trim();
+      if (!rawSubTitle) continue;
+      const subKey = rawSubTitle.toLowerCase();
       if (seenSubtopics.has(subKey)) continue;
       seenSubtopics.add(subKey);
 
+      // Strip any existing prefix (e.g., "4.1", "1.", "Section 1:") and enforce hierarchical numbering
+      const cleanSubTitle = rawSubTitle
+        .replace(/^[✦•\-*]\s*/, '')
+        .replace(/^(?:section|phần|mục|bài|part)?\s*\d+(?:\.\d+)*\s*[-:.)]?\s*/i, '')
+        .trim();
+      const subOrder = subtopicsOut.length + 1;
+      const formattedSubTitle = `${resolvedOrder}.${subOrder} ${cleanSubTitle || `Section ${subOrder}`}`;
+
       subtopicsOut.push({
-        order: subtopicsOut.length + 1,
-        title: subTitle,
+        order: subOrder,
+        title: formattedSubTitle,
         description: sub.description ? String(sub.description).trim() : null,
       });
     }
-
-    const sourceFileVal = ch.source_file ? String(ch.source_file).trim() : (ch.sourceFile ? String(ch.sourceFile).trim() : null);
-    const naturalNum = extractChapterNumber(title) ?? extractChapterNumber(sourceFileVal);
-    const resolvedOrder = naturalNum && Number.isInteger(naturalNum) && naturalNum > 0 ? naturalNum : (out.length + 1);
 
     out.push({
       order: resolvedOrder,

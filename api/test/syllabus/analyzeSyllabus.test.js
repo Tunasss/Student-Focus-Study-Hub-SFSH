@@ -106,8 +106,8 @@ describe('analyzeSyllabusText', () => {
         description: 'Overview of hardware',
         sourceFile: 'Chapter1.pdf',
         subtopics: [
-          { order: 1, title: 'Von Neumann Architecture', description: 'CPU and memory layout' },
-          { order: 2, title: 'Boolean Logic', description: 'Gates and truth tables' },
+          { order: 1, title: '1.1 Von Neumann Architecture', description: 'CPU and memory layout' },
+          { order: 2, title: '1.2 Boolean Logic', description: 'Gates and truth tables' },
         ],
       },
       {
@@ -116,7 +116,7 @@ describe('analyzeSyllabusText', () => {
         description: 'Machine instructions',
         sourceFile: 'Chapter2.pdf',
         subtopics: [
-          { order: 1, title: 'ALU Operations', description: 'Math and logic ops' },
+          { order: 1, title: '2.1 ALU Operations', description: 'Math and logic ops' },
         ],
       },
     ]);
@@ -154,9 +154,9 @@ describe('analyzeSyllabusText', () => {
     assert.equal(result.chapters[1].order, 2);
     assert.equal(result.chapters[1].title, 'Graphs');
     assert.equal(result.chapters[1].subtopics[0].order, 1);
-    assert.equal(result.chapters[1].subtopics[0].title, 'BFS');
+    assert.equal(result.chapters[1].subtopics[0].title, '2.1 BFS');
     assert.equal(result.chapters[1].subtopics[1].order, 2);
-    assert.equal(result.chapters[1].subtopics[1].title, 'Dijkstra');
+    assert.equal(result.chapters[1].subtopics[1].title, '2.2 Dijkstra');
   });
 
   test('empty chapters list -> 422 SYLLABUS_NO_TOPICS pointing to the manual form', async () => {

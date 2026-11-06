@@ -20,8 +20,8 @@ export function extractChapterNumber(str) {
 }
 
 export function compareChapterItems(a, b) {
-  const nameA = typeof a === 'string' ? a : (a?.name || a?.fileName || a?.title || a?.sourceFile || '');
-  const nameB = typeof b === 'string' ? b : (b?.name || b?.fileName || b?.title || b?.sourceFile || '');
+  const nameA = typeof a === 'string' ? a : (a?.name || a?.fileName || a?.originalname || a?.title || a?.sourceFile || a?.source_file || '');
+  const nameB = typeof b === 'string' ? b : (b?.name || b?.fileName || b?.originalname || b?.title || b?.sourceFile || b?.source_file || '');
 
   const numA = extractChapterNumber(nameA);
   const numB = extractChapterNumber(nameB);
@@ -40,8 +40,8 @@ export function compareChapterItems(a, b) {
 export function sortChaptersNaturally(chapters) {
   if (!Array.isArray(chapters)) return [];
   return [...chapters].sort((a, b) => {
-    const numA = extractChapterNumber(a.title) ?? extractChapterNumber(a.sourceFile);
-    const numB = extractChapterNumber(b.title) ?? extractChapterNumber(b.sourceFile);
+    const numA = extractChapterNumber(a.title) ?? extractChapterNumber(a.sourceFile ?? a.source_file);
+    const numB = extractChapterNumber(b.title) ?? extractChapterNumber(b.sourceFile ?? b.source_file);
     if (numA !== null && numB !== null) {
       if (numA !== numB) return numA - numB;
     } else if (numA !== null) {
@@ -57,3 +57,4 @@ export function sortFilesNaturally(fileList) {
   if (!Array.isArray(fileList)) return [];
   return [...fileList].sort(compareChapterItems);
 }
+

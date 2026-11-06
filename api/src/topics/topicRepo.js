@@ -5,6 +5,7 @@
 
 const { ApiError } = require('../errors');
 const { byUser, byCourseOwner } = require('../db/scope');
+const { extractChapterNumber } = require('../syllabus/chapterOrder');
 
 const notFound = (what) => new ApiError(404, 'NOT_FOUND', `${what} not found`);
 const isRecordNotFound = (err) => err?.code === 'P2025';
@@ -109,16 +110,44 @@ async function saveHierarchicalTopics(prisma, userId, courseId, payload) {
 
     if (isChapters) {
       const existingChapters = mode === 'append' ? existing.filter((t) => t.parentId === null) : [];
-      let baseOrder = existingChapters.reduce((max, ch) => Math.max(max, ch.sortOrder), 0);
+      const takenOrders = new Set(existingChapters.map((ch) => ch.sortOrder));
+      let maxOrder = existingChapters.reduce((max, ch) => Math.max(max, ch.sortOrder), 0);
 
-      for (let i = 0; i < payload.chapters.length; i++) {
-        const ch = payload.chapters[i];
-        baseOrder += 1;
+      // Sort incoming chapters naturally before inserting so Chapter 4 is handled before Chapter 5 if both present
+      const sortedIncoming = [...payload.chapters].sort((a, b) => {
+        const numA = extractChapterNumber(a.title) ?? extractChapterNumber(a.sourceFile ?? a.source_file);
+        const numB = extractChapterNumber(b.title) ?? extractChapterNumber(b.sourceFile ?? b.source_file);
+        if (numA !== null && numB !== null) return numA - numB;
+        if (numA !== null) return -1;
+        if (numB !== null) return 1;
+        return (a.sortOrder ?? a.order ?? 0) - (b.sortOrder ?? b.order ?? 0);
+      });
+
+      for (let i = 0; i < sortedIncoming.length; i++) {
+        const ch = sortedIncoming[i];
+        const naturalNum = extractChapterNumber(ch.title) ?? extractChapterNumber(ch.sourceFile ?? ch.source_file);
+
+        let targetOrder;
+        if (naturalNum && Number.isInteger(naturalNum) && naturalNum > 0 && !takenOrders.has(naturalNum)) {
+          targetOrder = naturalNum;
+        } else if (ch.sortOrder && Number.isInteger(ch.sortOrder) && ch.sortOrder > 0 && !takenOrders.has(ch.sortOrder)) {
+          targetOrder = ch.sortOrder;
+        } else if (ch.order && Number.isInteger(ch.order) && ch.order > 0 && !takenOrders.has(ch.order)) {
+          targetOrder = ch.order;
+        } else {
+          maxOrder += 1;
+          while (takenOrders.has(maxOrder)) {
+            maxOrder += 1;
+          }
+          targetOrder = maxOrder;
+        }
+        takenOrders.add(targetOrder);
+
         const createdChapter = await tx.topic.create({
           data: {
             courseId,
             parentId: null,
-            sortOrder: baseOrder,
+            sortOrder: targetOrder,
             title: ch.title,
             description: ch.description ?? null,
             sourceFile: ch.sourceFile ?? null,

@@ -17,7 +17,7 @@
 
 const { ApiError } = require('../errors');
 const { responseSchema, syllabusOutputSchema, LIMITS } = require('./geminiSchema');
-const { sortChaptersNaturally } = require('./chapterOrder');
+const { sortChaptersNaturally, extractChapterNumber } = require('./chapterOrder');
 
 // Gemini Flash has a very large context window; this cap only protects against runaway input (30 pages ≈ 100k chars).
 const MAX_INPUT_CHARS = 200_000;
@@ -138,11 +138,15 @@ function normalizeChapters(chapters) {
       });
     }
 
+    const sourceFileVal = ch.source_file ? String(ch.source_file).trim() : (ch.sourceFile ? String(ch.sourceFile).trim() : null);
+    const naturalNum = extractChapterNumber(title) ?? extractChapterNumber(sourceFileVal);
+    const resolvedOrder = naturalNum && Number.isInteger(naturalNum) && naturalNum > 0 ? naturalNum : (out.length + 1);
+
     out.push({
-      order: out.length + 1,
+      order: resolvedOrder,
       title,
       description: ch.description ? String(ch.description).trim() : null,
-      sourceFile: ch.source_file ? String(ch.source_file).trim() : (ch.sourceFile ? String(ch.sourceFile).trim() : null),
+      sourceFile: sourceFileVal,
       subtopics: subtopicsOut,
     });
   }

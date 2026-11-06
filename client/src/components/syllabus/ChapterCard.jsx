@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLanguage } from '../../i18n/languageContext';
+import { extractChapterNumber } from '../../utils/chapterOrder';
 
 export function ChapterCard({
   chapter,
@@ -12,7 +13,11 @@ export function ChapterCard({
   const { lang } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(true);
 
-  const chapterNum = String(chapter?.sortOrder || index + 1).padStart(2, '0');
+  const detectedNum = extractChapterNumber(chapter?.title) ?? extractChapterNumber(chapter?.sourceFile);
+  const num = detectedNum && Number.isInteger(detectedNum) && detectedNum > 0
+    ? detectedNum
+    : (chapter?.sortOrder || index + 1);
+  const chapterNum = String(num).padStart(2, '0');
   const subtopics = chapter?.subtopics || [];
   const hasSubtopics = subtopics.length > 0;
 

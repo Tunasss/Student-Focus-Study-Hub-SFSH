@@ -1,3 +1,5 @@
+import { extractChapterNumber } from './chapterOrder';
+
 /**
  * Fallback AI Syllabus Extractor Simulator
  * Simulates Gemini AI document structure parsing for uploaded syllabus files (.pdf, .docx, .pptx, .txt).
@@ -15,33 +17,59 @@ export function simulateSyllabusExtraction(courseName = '', fileNameOrFiles = ''
         .replace(/[-_]/g, ' ')
         .trim();
       const hasPrefix = /^(chương|chapter|bài|ch)\b/i.test(cleanName);
-      const chNum = idx + 1;
+      const detectedNum = extractChapterNumber(original);
+      const chNum = detectedNum && Number.isInteger(detectedNum) && detectedNum > 0 ? detectedNum : idx + 1;
+      const isEnglish = !/[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(cleanName);
+
       return {
-        title: hasPrefix ? cleanName : `Chương ${chNum}: ${cleanName}`,
-        description: `Nội dung và mục tiêu học tập từ tài liệu ${original}.`,
+        title: hasPrefix ? cleanName : (isEnglish ? `Chapter ${chNum}: ${cleanName}` : `Chương ${chNum}: ${cleanName}`),
+        description: isEnglish
+          ? `Comprehensive study material and learning objectives for ${cleanName}.`
+          : `Nội dung và mục tiêu học tập từ tài liệu ${original}.`,
         sourceFile: String(original),
         sortOrder: chNum,
         status: 'TODO',
-        subtopics: [
-          {
-            title: `${chNum}.1 Tổng quan & Cơ sở lý luận nền tảng`,
-            description: 'Giới thiệu các nguyên lý cơ bản, thuật ngữ và định hướng tiếp cận',
-            sortOrder: 1,
-            status: 'TODO',
-          },
-          {
-            title: `${chNum}.2 Phương pháp luận & Phân tích chuyên sâu`,
-            description: 'Khung phân tích tiêu chuẩn, mô hình hóa và các kỹ thuật xử lý cốt lõi',
-            sortOrder: 2,
-            status: 'TODO',
-          },
-          {
-            title: `${chNum}.3 Ứng dụng thực hành & Tối ưu giải pháp`,
-            description: 'Bài tập áp dụng, tình huống thực tế và đánh giá hiệu quả triển khai',
-            sortOrder: 3,
-            status: 'TODO',
-          },
-        ],
+        subtopics: isEnglish
+          ? [
+              {
+                title: `${chNum}.1 Fundamental Concepts & Theoretical Principles`,
+                description: 'Core concepts, domain terminology, and foundational principles.',
+                sortOrder: 1,
+                status: 'TODO',
+              },
+              {
+                title: `${chNum}.2 Methodologies, Modeling & Analytical Techniques`,
+                description: 'Analytical frameworks, modeling algorithms, and standard processing.',
+                sortOrder: 2,
+                status: 'TODO',
+              },
+              {
+                title: `${chNum}.3 Practical Applications, Case Studies & Solutions`,
+                description: 'Applied case studies, real-world data analysis, and practical solutions.',
+                sortOrder: 3,
+                status: 'TODO',
+              },
+            ]
+          : [
+              {
+                title: `${chNum}.1 Tổng quan & Cơ sở lý luận nền tảng`,
+                description: 'Giới thiệu các nguyên lý cơ bản, thuật ngữ và định hướng tiếp cận',
+                sortOrder: 1,
+                status: 'TODO',
+              },
+              {
+                title: `${chNum}.2 Phương pháp luận & Phân tích chuyên sâu`,
+                description: 'Khung phân tích tiêu chuẩn, mô hình hóa và các kỹ thuật xử lý cốt lõi',
+                sortOrder: 2,
+                status: 'TODO',
+              },
+              {
+                title: `${chNum}.3 Ứng dụng thực hành & Tối ưu giải pháp`,
+                description: 'Bài tập áp dụng, tình huống thực tế và đánh giá hiệu quả triển khai',
+                sortOrder: 3,
+                status: 'TODO',
+              },
+            ],
       };
     });
   }

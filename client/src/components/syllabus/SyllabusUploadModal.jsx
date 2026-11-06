@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../../i18n/languageContext';
 import { syllabusApi } from '../../lib/api';
 import { formatCourseInfo } from '../../utils/courseFormat';
-import { sortFilesNaturally, sortChaptersNaturally } from '../../utils/chapterOrder';
+import { sortFilesNaturally, sortChaptersNaturally, extractChapterNumber } from '../../utils/chapterOrder';
 
 export function SyllabusUploadModal({
   isOpen,
@@ -236,21 +236,28 @@ export function SyllabusUploadModal({
       const rawChapters = response?.chapters || (Array.isArray(response) ? response : (response?.topics || []));
       const sortedChapters = sortChaptersNaturally(rawChapters);
 
-      const formatted = sortedChapters.map((ch, idx) => ({
-        id: `extracted-ch-${Date.now()}-${idx}`,
-        title: ch.title || `${t.chapterBadge} ${idx + 1}`,
-        description: ch.description || '',
-        sourceFile: ch.sourceFile || ch.source_file || (files.length === 1 ? files[0].name : null),
-        sortOrder: currentTopicsCount + idx + 1,
-        status: ch.status || 'TODO',
-        subtopics: (ch.subtopics || []).map((sub, subIdx) => ({
-          id: `extracted-sub-${Date.now()}-${idx}-${subIdx}`,
-          title: sub.title || `${t.subtopicBadge} ${subIdx + 1}`,
-          description: sub.description || '',
-          sortOrder: subIdx + 1,
-          status: sub.status || 'TODO',
-        })),
-      }));
+      const formatted = sortedChapters.map((ch, idx) => {
+        const detectedNum = extractChapterNumber(ch.title) ?? extractChapterNumber(ch.sourceFile ?? ch.source_file);
+        const chapterNum = detectedNum && Number.isInteger(detectedNum) && detectedNum > 0
+          ? detectedNum
+          : (currentTopicsCount + idx + 1);
+        return {
+          id: `extracted-ch-${Date.now()}-${idx}`,
+          title: ch.title || `${t.chapterBadge} ${chapterNum}`,
+          description: ch.description || '',
+          sourceFile: ch.sourceFile || ch.source_file || (files.length === 1 ? files[0].name : null),
+          chapterNumber: chapterNum,
+          sortOrder: chapterNum,
+          status: ch.status || 'TODO',
+          subtopics: (ch.subtopics || []).map((sub, subIdx) => ({
+            id: `extracted-sub-${Date.now()}-${idx}-${subIdx}`,
+            title: sub.title || `${t.subtopicBadge} ${subIdx + 1}`,
+            description: sub.description || '',
+            sortOrder: subIdx + 1,
+            status: sub.status || 'TODO',
+          })),
+        };
+      });
 
       setExtractedChapters(formatted);
       setStep('PREVIEW');
@@ -599,7 +606,7 @@ export function SyllabusUploadModal({
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <span className="px-2.5 py-0.5 rounded-full bg-primary/20 border border-primary/30 text-primary text-[10px] font-bold font-mono">
-                            {t.chapterBadge} {chIdx + 1}
+                            {t.chapterBadge} {ch.chapterNumber || ch.sortOrder || (chIdx + 1)}
                           </span>
                           {ch.sourceFile && (
                             <span className="px-2 py-0.5 rounded-md bg-surface border border-border/70 text-[10px] text-muted font-mono truncate max-w-xs">

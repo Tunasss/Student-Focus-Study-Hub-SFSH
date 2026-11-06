@@ -1,10 +1,16 @@
+import { sortChaptersNaturally } from './chapterOrder';
+
 export function buildTopicTree(topics = []) {
   if (!Array.isArray(topics) || topics.length === 0) return [];
 
-  // If topics are already structured with subtopics and have no parentId links, preserve them
+  // If topics are already structured with subtopics and have no parentId links, preserve them with natural sorting
   const hasParentId = topics.some((t) => t.parentId != null);
   if (!hasParentId && topics.some((t) => Array.isArray(t.subtopics) && t.subtopics.length > 0)) {
-    return topics.map((t) => ({ ...t, subtopics: [...(t.subtopics || [])] }));
+    const list = topics.map((t) => ({
+      ...t,
+      subtopics: [...(t.subtopics || [])].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)),
+    }));
+    return sortChaptersNaturally(list);
   }
 
   const topicMap = new Map();
@@ -31,8 +37,7 @@ export function buildTopicTree(topics = []) {
     ch.subtopics.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   }
 
-  chapters.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-  return chapters;
+  return sortChaptersNaturally(chapters);
 }
 
 export function updateTopicInList(list = [], topicId, newStatus) {

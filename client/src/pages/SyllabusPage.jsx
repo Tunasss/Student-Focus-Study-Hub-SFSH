@@ -11,6 +11,7 @@ import { useLanguage } from '../i18n/languageContext';
 import { scheduleApi, syllabusApi } from '../lib/api';
 import { deduplicateSyllabusCourses } from '../utils/courseFormat';
 import { buildTopicTree, updateTopicInList } from '../utils/topicTree';
+import { extractChapterNumber } from '../utils/chapterOrder';
 
 const DEFAULT_TOPICS = {
   1: [
@@ -344,25 +345,41 @@ export function SyllabusPage() {
     if (incomingChapters.length === 0) return;
 
     const mode = importedData.mode || 'append';
+    const targetCourseId = activeCourseId || activeCourse?.id;
+
+    if (!targetCourseId) {
+      setToast({
+        message: lang === 'vi' ? 'Chưa chọn môn học để lưu đề cương.' : 'No course selected to save syllabus.',
+        type: 'error',
+      });
+      return;
+    }
 
     // Sanitize chapters for bulk persistence: clean up any temporary client ids
-    const sanitizedChapters = incomingChapters.map((ch, chIdx) => ({
-      title: ch.title,
-      description: ch.description || null,
-      sourceFile: ch.sourceFile || null,
-      sortOrder: ch.sortOrder || chIdx + 1,
-      status: ch.status || 'TODO',
-      subtopics: (ch.subtopics || []).map((sub, sIdx) => ({
-        title: sub.title,
-        description: sub.description || null,
-        sortOrder: sub.sortOrder || sIdx + 1,
-        status: sub.status || 'TODO',
-      })),
-    }));
+    const sanitizedChapters = incomingChapters.map((ch, chIdx) => {
+      const detectedNum = extractChapterNumber(ch.title) ?? extractChapterNumber(ch.sourceFile);
+      const resolvedSortOrder =
+        ch.sortOrder ||
+        (detectedNum && Number.isInteger(detectedNum) && detectedNum > 0 ? detectedNum : chIdx + 1);
+
+      return {
+        title: ch.title,
+        description: ch.description || null,
+        sourceFile: ch.sourceFile || null,
+        sortOrder: resolvedSortOrder,
+        status: ch.status || 'TODO',
+        subtopics: (ch.subtopics || []).map((sub, sIdx) => ({
+          title: sub.title,
+          description: sub.description || null,
+          sortOrder: sub.sortOrder || sIdx + 1,
+          status: sub.status || 'TODO',
+        })),
+      };
+    });
 
     try {
-      if (activeCourseId && typeof syllabusApi.bulkSaveTopics === 'function') {
-        const saved = await syllabusApi.bulkSaveTopics(activeCourseId, {
+      if (typeof syllabusApi.bulkSaveTopics === 'function') {
+        const saved = await syllabusApi.bulkSaveTopics(targetCourseId, {
           mode,
           chapters: sanitizedChapters,
         });
@@ -388,10 +405,11 @@ export function SyllabusPage() {
       return;
     }
 
+    // In testing or standalone mock mode without DB bulk endpoint, preserve sanitized chapters
     if (mode === 'replace') {
-      setTopics(incomingChapters);
+      setTopics(sanitizedChapters);
     } else {
-      setTopics((prev) => [...prev, ...incomingChapters]);
+      setTopics((prev) => [...prev, ...sanitizedChapters]);
     }
 
     setToast({
@@ -570,7 +588,7 @@ export function SyllabusPage() {
           <div className="space-y-4">
             {topicTree.map((chapter, index) => (
               <ChapterCard
-                key={chapter.id}
+                key={chapter.id ?? `ch-${chapter.sortOrder ?? index}`}
                 chapter={chapter}
                 index={index}
                 onStatusChange={handleStatusChange}

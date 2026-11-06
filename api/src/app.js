@@ -7,6 +7,7 @@ const { docsRouter } = require('./docs');
 const { authRouter } = require('./routes/auth');
 const { coursesRouter } = require('./routes/courses');
 const { scheduleRouter } = require('./routes/schedule');
+const { tasksRouter } = require('./routes/tasks');
 
 // prisma is injected so tests can pass a fake client.
 function createApp({ prisma }) {
@@ -25,6 +26,7 @@ function createApp({ prisma }) {
   app.use('/api/auth', authRouter({ prisma }));
   app.use('/api/courses', coursesRouter({ prisma }));
   app.use('/api/schedule', scheduleRouter({ prisma }));
+  app.use('/api/tasks', tasksRouter({ prisma }));
 
   app.use(notFound);
   app.use(errorHandler);

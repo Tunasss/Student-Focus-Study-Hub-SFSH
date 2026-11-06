@@ -3,7 +3,7 @@ info:
   title: Student Focus & Study Hub (SFSH) API
   version: 0.1.0
   description: |
-    REST API for SFSH: authentication, ICS timetable import, courses and the weekly class schedule.
+    REST API for SFSH: authentication, ICS timetable import, courses, the weekly class schedule and tasks (deadlines).
 
     ## Response envelope (Rule 02)
     Every response, success or error, uses the same envelope:
@@ -29,7 +29,7 @@ info:
     | `UNAUTHORIZED` | 401 | Missing, malformed or invalid bearer token |
     | `TOKEN_EXPIRED` | 401 | The bearer token has expired; log in again |
     | `INVALID_CREDENTIALS` | 401 | Wrong email or password |
-    | `NOT_FOUND` | 404 | No such route |
+    | `NOT_FOUND` | 404 | No such route, or the task / course / topic does not exist for this user |
     | `EMAIL_TAKEN` | 409 | An account with this email already exists |
     | `INTERNAL_ERROR` | 500 | Unexpected server error |
 servers:
@@ -43,6 +43,8 @@ tags:
     description: Import an .ics timetable and read class occurrences.
   - name: Courses
     description: The user's courses and their weekly slots.
+  - name: Tasks
+    description: Deadlines (assignments, labs, exams) attached to a course and optionally a syllabus topic.
 
 paths:
   /api/health:
@@ -289,6 +291,160 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /api/tasks:
+    get:
+      tags: [Tasks]
+      summary: List tasks
+      description: |
+        The user's tasks ordered by due date (soonest first), optionally filtered by course and status.
+        Only the caller's tasks are ever returned (Rule 06).
+      operationId: listTasks
+      parameters:
+        - name: course_id
+          in: query
+          description: Only tasks of this course. `courseId` is accepted as an alias.
+          schema:
+            type: integer
+            minimum: 1
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/TaskStatus'
+      responses:
+        '200':
+          description: The user's tasks.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        type: object
+                        additionalProperties: false
+                        required: [tasks]
+                        properties:
+                          tasks:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Task'
+        '400':
+          description: '`VALIDATION_ERROR`: `course_id` is not a positive integer or `status` is not a known status.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Tasks]
+      summary: Create a task
+      description: |
+        Creates a task for one of the caller's courses. `topicId`, when given, must be a topic of that course.
+        A course or topic that belongs to another user is reported as `404 NOT_FOUND`.
+      operationId: createTask
+      requestBody:
+        $ref: '#/components/requestBodies/TaskInput'
+      responses:
+        '201':
+          description: Task created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          $ref: '#/components/responses/TaskValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/TaskNotFound'
+
+  /api/tasks/{id}:
+    parameters:
+      - $ref: '#/components/parameters/TaskId'
+    put:
+      tags: [Tasks]
+      summary: Replace a task
+      description: |
+        Replaces the whole task. Omitted optional fields fall back to their defaults
+        (`topicId` → `null`, `status` → `TODO`). Use `PATCH` to change single fields.
+      operationId: replaceTask
+      requestBody:
+        $ref: '#/components/requestBodies/TaskInput'
+      responses:
+        '200':
+          description: Task replaced.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          $ref: '#/components/responses/TaskValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/TaskNotFound'
+    patch:
+      tags: [Tasks]
+      summary: Update a task
+      description: |
+        Changes one or more fields, typically the status (`{ "status": "DONE" }`).
+        When `courseId` changes, the current `topicId` must belong to the new course or be set to `null`.
+      operationId: updateTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskPatch'
+            example:
+              status: DONE
+      responses:
+        '200':
+          description: Task updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          $ref: '#/components/responses/TaskValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/TaskNotFound'
+    delete:
+      tags: [Tasks]
+      summary: Delete a task
+      description: Deletes the task. Focus sessions that referenced it are kept with `task_id = null`.
+      operationId: deleteTask
+      responses:
+        '200':
+          description: Task deleted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        type: object
+                        additionalProperties: false
+                        required: [id]
+                        properties:
+                          id:
+                            type: integer
+                            description: Id of the deleted task.
+        '400':
+          description: '`VALIDATION_ERROR`: `id` is not a positive integer.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/TaskNotFound'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -297,7 +453,23 @@ components:
       bearerFormat: JWT
       description: JWT from `POST /api/auth/login` or `POST /api/auth/register` (`data.token`).
 
+  parameters:
+    TaskId:
+      name: id
+      in: path
+      required: true
+      description: Task id. Another user's task is reported as `404 NOT_FOUND`.
+      schema:
+        type: integer
+        minimum: 1
+
   requestBodies:
+    TaskInput:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TaskInput'
     Credentials:
       required: true
       content:
@@ -335,6 +507,34 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorEnvelope'
+    TaskValidationError:
+      description: |
+        `VALIDATION_ERROR` (missing or malformed field, unknown key, bad `id`) or `INVALID_JSON`.
+        The message names the field, e.g. `dueAt: must be an ISO-8601 date-time with timezone`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            data: null
+            error:
+              code: VALIDATION_ERROR
+              message: 'dueAt: must be an ISO-8601 date-time with timezone, e.g. 2026-11-20T23:59:00+07:00'
+            timestamp: '2026-11-06T00:00:00.000Z'
+    TaskNotFound:
+      description: '`NOT_FOUND`: the task, course or topic does not exist for this user.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            data: null
+            error:
+              code: NOT_FOUND
+              message: Task not found
+            timestamp: '2026-11-06T00:00:00.000Z'
 
   schemas:
     SuccessEnvelope:
@@ -631,6 +831,122 @@ components:
           type: string
           description: Timezone the slot was defined in.
           example: Asia/Ho_Chi_Minh
+
+    TaskStatus:
+      type: string
+      enum: [TODO, DOING, DONE, OVERDUE]
+
+    Task:
+      type: object
+      additionalProperties: false
+      required: [id, title, dueAt, status, courseId, topicId, course, topic, createdAt]
+      properties:
+        id:
+          type: integer
+          example: 12
+        title:
+          type: string
+          example: 'CS101 Lab 3: Functions exercises'
+        dueAt:
+          type: string
+          format: date-time
+          example: '2026-11-20T16:59:00.000Z'
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        courseId:
+          type: integer
+        topicId:
+          type: [integer, 'null']
+        course:
+          type: object
+          additionalProperties: false
+          required: [id, code, name]
+          properties:
+            id:
+              type: integer
+            code:
+              type: [string, 'null']
+              example: CS101
+            name:
+              type: string
+              example: Introduction to Programming
+        topic:
+          type: [object, 'null']
+          additionalProperties: false
+          required: [id, title]
+          properties:
+            id:
+              type: integer
+            title:
+              type: string
+              example: Functions
+        createdAt:
+          type: string
+          format: date-time
+
+    TaskInput:
+      type: object
+      description: Body of `POST /api/tasks` and `PUT /api/tasks/{id}`. Unknown keys are rejected.
+      additionalProperties: false
+      required: [title, dueAt, courseId]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: 'CS101 Lab 3: Functions exercises'
+        dueAt:
+          type: string
+          format: date-time
+          description: ISO-8601 with an explicit offset or `Z`.
+          example: '2026-11-20T23:59:00+07:00'
+        courseId:
+          type: integer
+          minimum: 1
+          description: One of the caller's courses.
+        topicId:
+          type: [integer, 'null']
+          minimum: 1
+          default: null
+          description: A topic of `courseId`.
+        status:
+          allOf:
+            - $ref: '#/components/schemas/TaskStatus'
+          default: TODO
+
+    TaskPatch:
+      type: object
+      description: Body of `PATCH /api/tasks/{id}`. Any subset of the task fields, at least one. Unknown keys are rejected.
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        dueAt:
+          type: string
+          format: date-time
+        courseId:
+          type: integer
+          minimum: 1
+        topicId:
+          type: [integer, 'null']
+          minimum: 1
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+
+    TaskResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - properties:
+            data:
+              type: object
+              additionalProperties: false
+              required: [task]
+              properties:
+                task:
+                  $ref: '#/components/schemas/Task'
 
 security:
   - bearerAuth: []

@@ -55,7 +55,8 @@ function routesInCode() {
     if (!fs.existsSync(file)) continue; // e.g. docsRouter, not an API resource
     const routerJs = fs.readFileSync(file, 'utf8');
     for (const [, method, sub] of routerJs.matchAll(/router\.(get|post|put|patch|delete)\('([^']+)'/g)) {
-      routes.push(`${method} ${mount}${sub === '/' ? '' : sub}`);
+      // Express params (:id) are written {id} in OpenAPI.
+      routes.push(`${method} ${mount}${sub === '/' ? '' : sub.replace(/:(\w+)/g, '{$1}')}`);
     }
   }
   return routes.sort();
@@ -155,6 +156,61 @@ describe('responses match openapi.yaml (Rule 02 envelope)', () => {
     const res = await auth(request(app).get('/api/courses'));
     assert.ok(res.body.data.courses.length > 0);
     assertMatchesSpec(res, 'get', '/api/courses');
+  });
+
+  describe('tasks', () => {
+    let courseId;
+    let taskId;
+
+    before(async () => {
+      const courses = await auth(request(app).get('/api/courses'));
+      courseId = courses.body.data.courses[0].id;
+    });
+
+    const body = (extra = {}) => ({ title: 'Lab 1', dueAt: '2026-11-20T23:59:00+07:00', courseId, ...extra });
+
+    test('POST /api/tasks', async () => {
+      const created = await auth(request(app).post('/api/tasks')).send(body());
+      assert.equal(created.status, 201);
+      assertMatchesSpec(created, 'post', '/api/tasks');
+      taskId = created.body.data.task.id;
+
+      assertMatchesSpec(await auth(request(app).post('/api/tasks')).send({ title: '' }), 'post', '/api/tasks'); // 400
+      assertMatchesSpec(await auth(request(app).post('/api/tasks')).send(body({ courseId: 9999 })), 'post', '/api/tasks'); // 404
+      assertMatchesSpec(await request(app).post('/api/tasks').send(body()), 'post', '/api/tasks'); // 401
+    });
+
+    test('GET /api/tasks', async () => {
+      const list = await auth(request(app).get(`/api/tasks?course_id=${courseId}&status=TODO`));
+      assert.ok(list.body.data.tasks.length > 0);
+      assertMatchesSpec(list, 'get', '/api/tasks');
+      assertMatchesSpec(await auth(request(app).get('/api/tasks?status=NOPE')), 'get', '/api/tasks'); // 400
+      assertMatchesSpec(await request(app).get('/api/tasks'), 'get', '/api/tasks'); // 401
+    });
+
+    test('PATCH /api/tasks/{id}', async () => {
+      const route = '/api/tasks/{id}';
+      assertMatchesSpec(await auth(request(app).patch(`/api/tasks/${taskId}`)).send({ status: 'DONE' }), 'patch', route);
+      assertMatchesSpec(await auth(request(app).patch(`/api/tasks/${taskId}`)).send({}), 'patch', route); // 400
+      assertMatchesSpec(await auth(request(app).patch('/api/tasks/9999')).send({ status: 'DONE' }), 'patch', route); // 404
+      assertMatchesSpec(await request(app).patch(`/api/tasks/${taskId}`).send({ status: 'DONE' }), 'patch', route); // 401
+    });
+
+    test('PUT /api/tasks/{id}', async () => {
+      const route = '/api/tasks/{id}';
+      assertMatchesSpec(await auth(request(app).put(`/api/tasks/${taskId}`)).send(body({ title: 'Lab 1b' })), 'put', route);
+      assertMatchesSpec(await auth(request(app).put(`/api/tasks/${taskId}`)).send({ title: 'x' }), 'put', route); // 400
+      assertMatchesSpec(await auth(request(app).put('/api/tasks/9999')).send(body()), 'put', route); // 404
+      assertMatchesSpec(await request(app).put(`/api/tasks/${taskId}`).send(body()), 'put', route); // 401
+    });
+
+    test('DELETE /api/tasks/{id}', async () => {
+      const route = '/api/tasks/{id}';
+      assertMatchesSpec(await auth(request(app).delete('/api/tasks/abc')), 'delete', route); // 400
+      assertMatchesSpec(await auth(request(app).delete('/api/tasks/9999')), 'delete', route); // 404
+      assertMatchesSpec(await request(app).delete(`/api/tasks/${taskId}`), 'delete', route); // 401
+      assertMatchesSpec(await auth(request(app).delete(`/api/tasks/${taskId}`)), 'delete', route);
+    });
   });
 
   test('unknown routes return a NOT_FOUND error envelope', async () => {

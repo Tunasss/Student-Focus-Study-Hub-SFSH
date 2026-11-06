@@ -62,6 +62,30 @@ prisma.topic.findMany({ where: byCourseOwner(userId, { courseId }) });     // sc
 
 Both throw if `userId` is missing or invalid.
 
+## Tasks data layer (WBS 2.4a.1)
+
+`src/tasks/taskRepo.js` is the only place that reads or writes the `tasks` table. Every query goes through `byUser(req.userId, …)`,
+so a task, course or topic that belongs to another user is answered with `404 NOT_FOUND` (never 403, so ids are not enumerable).
+`course_id` must be one of the caller's courses and `topic_id` (optional) must be a topic of that course.
+The list uses the `(user_id, due_at)` index; `due_at` alone is indexed for deadline scans. Both exist since the WBS 1.1 migration.
+
+## Tasks API (WBS 2.4a.2)
+
+All routes need `Authorization: Bearer <jwt>`. JSON fields are camelCase (`dueAt`, `courseId`, `topicId`);
+the query filters follow the PRD (`course_id`, `status`; `courseId` is accepted as an alias).
+
+| Method | Route | Body | Result |
+|---|---|---|---|
+| `GET` | `/api/tasks?course_id=&status=` | — | `{ tasks: [Task] }`, soonest `dueAt` first |
+| `POST` | `/api/tasks` | `{ title, dueAt, courseId, topicId?, status? }` | `201 { task }` |
+| `PUT` | `/api/tasks/:id` | full body as for `POST` (omitted `topicId` → `null`, `status` → `TODO`) | `{ task }` |
+| `PATCH` | `/api/tasks/:id` | any subset, e.g. `{ "status": "DONE" }` | `{ task }` |
+| `DELETE` | `/api/tasks/:id` | — | `{ id }` |
+
+Validation uses zod (`src/tasks/schemas.js`, `src/validation.js`): a missing or malformed field answers
+`400 VALIDATION_ERROR` with a message naming the field (`dueAt: must be an ISO-8601 date-time with timezone, …`).
+Unknown body keys (for example `due_at`) are rejected. `dueAt` must carry an offset or `Z`, e.g. `2026-11-20T23:59:00+07:00`.
+
 ## Seed contents
 
 - 1 demo student

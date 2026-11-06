@@ -47,10 +47,13 @@ const topicInputSchema = z
   })
   .strict();
 
+const clientGeneratedId = z.union([z.number(), z.string()]).optional();
+
 // One item of POST /api/courses/:id/topics/bulk. `order` (Gemini) or `sortOrder` (client) give the position;
 // without either the array position is used.
 const bulkTopicSchema = z
   .object({
+    id: clientGeneratedId,
     parentId: id.optional().nullable(),
     sourceFile: sourceFile.optional(),
     title,
@@ -63,6 +66,7 @@ const bulkTopicSchema = z
 
 const bulkSubtopicSchema = z
   .object({
+    id: clientGeneratedId,
     title,
     description: description.optional().default(null),
     status: status.optional(),
@@ -73,6 +77,7 @@ const bulkSubtopicSchema = z
 
 const bulkChapterSchema = z
   .object({
+    id: clientGeneratedId,
     title,
     description: description.optional().default(null),
     sourceFile: sourceFile.optional(),

@@ -309,14 +309,30 @@ export function SyllabusPage() {
 
     const mode = importedData.mode || 'append';
 
+    // Sanitize chapters for bulk persistence: clean up any temporary client ids
+    const sanitizedChapters = incomingChapters.map((ch, chIdx) => ({
+      title: ch.title,
+      description: ch.description || null,
+      sourceFile: ch.sourceFile || null,
+      sortOrder: ch.sortOrder || chIdx + 1,
+      status: ch.status || 'TODO',
+      subtopics: (ch.subtopics || []).map((sub, sIdx) => ({
+        title: sub.title,
+        description: sub.description || null,
+        sortOrder: sub.sortOrder || sIdx + 1,
+        status: sub.status || 'TODO',
+      })),
+    }));
+
     try {
       if (activeCourseId && typeof syllabusApi.bulkSaveTopics === 'function') {
         const saved = await syllabusApi.bulkSaveTopics(activeCourseId, {
           mode,
-          chapters: incomingChapters,
+          chapters: sanitizedChapters,
         });
-        if (saved?.topics && Array.isArray(saved.topics)) {
-          setTopics(saved.topics);
+        const savedTopics = Array.isArray(saved) ? saved : (saved?.topics || []);
+        if (savedTopics.length > 0) {
+          setTopics(savedTopics);
           setToast({
             message: t.importSuccess(incomingChapters.length),
             type: 'success',
@@ -325,7 +341,15 @@ export function SyllabusPage() {
         }
       }
     } catch (err) {
-      console.warn('bulkSaveTopics API call failed, falling back to local state:', err);
+      console.error('bulkSaveTopics API call failed:', err);
+      setToast({
+        message:
+          lang === 'vi'
+            ? `Lưu đề cương thất bại: ${err?.message || 'Lỗi máy chủ'}`
+            : `Failed to save syllabus: ${err?.message || 'Server error'}`,
+        type: 'error',
+      });
+      return;
     }
 
     if (mode === 'replace') {

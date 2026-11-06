@@ -1501,6 +1501,11 @@ components:
             additionalProperties: false
             required: [title]
             properties:
+              id:
+                oneOf:
+                  - type: integer
+                  - type: string
+                description: Optional client-side identifier; ignored when persisting.
               order:
                 type: integer
               sortOrder:
@@ -1520,6 +1525,11 @@ components:
                   additionalProperties: false
                   required: [title]
                   properties:
+                    id:
+                      oneOf:
+                        - type: integer
+                        - type: string
+                      description: Optional client-side identifier; ignored when persisting.
                     order:
                       type: integer
                     sortOrder:
@@ -1537,6 +1547,11 @@ components:
             additionalProperties: false
             required: [title]
             properties:
+              id:
+                oneOf:
+                  - type: integer
+                  - type: string
+                description: Optional client-side identifier; ignored when persisting.
               order:
                 type: integer
                 minimum: 1

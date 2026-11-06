@@ -93,4 +93,53 @@ async function extractPdfText(buffer) {
   }
 }
 
-module.exports = { PDF_LIMITS, NO_TEXT_LAYER_MESSAGE, readPdfUpload, extractPdfText, normalizePageText, countChars };
+// Extracts text and metadata across an array of uploaded PDF files.
+// Enforces a 20-file count limit, 50 MB batch size limit, and per-file validation.
+async function extractMultiplePdfs(files) {
+  if (!files || !Array.isArray(files) || files.length === 0) {
+    throw invalidPdf('Missing .pdf file (multipart field "files")');
+  }
+  if (files.length > 20) {
+    throw new ApiError(400, 'FILE_LIMIT_EXCEEDED', 'Cannot upload more than 20 files at once');
+  }
+
+  const totalBytes = files.reduce((sum, f) => sum + (f?.size || f?.buffer?.length || 0), 0);
+  if (totalBytes > 50 * 1024 * 1024) {
+    throw new ApiError(400, 'FILE_LIMIT_EXCEEDED', 'Total upload size exceeds 50 MB');
+  }
+
+  const results = [];
+  for (const file of files) {
+    const buffer = readPdfUpload(file);
+    try {
+      const extracted = await extractPdfText(buffer);
+      results.push({
+        fileName: file.originalname || 'syllabus.pdf',
+        text: extracted.text,
+        pageCount: extracted.pageCount,
+        charCount: extracted.charCount,
+      });
+    } catch (err) {
+      if (err.code === 'PDF_NO_TEXT_LAYER') {
+        throw new ApiError(
+          422,
+          'PDF_NO_TEXT_LAYER',
+          `File "${file.originalname || 'syllabus.pdf'}" has no readable text layer (it looks like a scanned image).`,
+        );
+      }
+      throw err;
+    }
+  }
+
+  return results;
+}
+
+module.exports = {
+  PDF_LIMITS,
+  NO_TEXT_LAYER_MESSAGE,
+  readPdfUpload,
+  extractPdfText,
+  extractMultiplePdfs,
+  normalizePageText,
+  countChars,
+};

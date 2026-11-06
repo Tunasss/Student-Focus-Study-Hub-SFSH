@@ -6,6 +6,7 @@ const {
   PDF_LIMITS,
   readPdfUpload,
   extractPdfText,
+  extractMultiplePdfs,
   normalizePageText,
   countChars,
 } = require('../../src/syllabus/extractPdf');
@@ -126,3 +127,50 @@ describe('normalizePageText', () => {
     assert.equal(countChars(' a b\nc\t'), 3);
   });
 });
+
+describe('extractMultiplePdfs', () => {
+  test('extracts text and metadata for multiple valid files', async () => {
+    const file1 = upload(makePdf([CHAPTER_TEXT]), 'Chapter1.pdf');
+    const file2 = upload(makePdf([CHAPTER_TEXT, 'Chapter 2 detail']), 'Chapter2.pdf');
+
+    const results = await extractMultiplePdfs([file1, file2]);
+    assert.equal(results.length, 2);
+    assert.equal(results[0].fileName, 'Chapter1.pdf');
+    assert.equal(results[0].pageCount, 1);
+    assert.ok(results[0].charCount >= PDF_LIMITS.minChars);
+    assert.match(results[0].text, /CS101 Introduction to Programming/);
+
+    assert.equal(results[1].fileName, 'Chapter2.pdf');
+    assert.equal(results[1].pageCount, 2);
+    assert.ok(results[1].charCount >= PDF_LIMITS.minChars);
+  });
+
+  test('rejects empty or missing files list', async () => {
+    await assertApiError(() => extractMultiplePdfs([]), 400, 'INVALID_PDF_FORMAT');
+    await assertApiError(() => extractMultiplePdfs(null), 400, 'INVALID_PDF_FORMAT');
+  });
+
+  test('rejects more than 20 files with FILE_LIMIT_EXCEEDED', async () => {
+    const dummyBuffer = makePdf([CHAPTER_TEXT]);
+    const files = Array.from({ length: 21 }, (_, i) => upload(dummyBuffer, `file_${i + 1}.pdf`));
+    await assertApiError(() => extractMultiplePdfs(files), 400, 'FILE_LIMIT_EXCEEDED', /more than 20 files/);
+  });
+
+  test('rejects total size over 50 MB with FILE_LIMIT_EXCEEDED', async () => {
+    const bigFile1 = { originalname: 'big1.pdf', buffer: Buffer.from('%PDF-1.4'), size: 26 * 1024 * 1024 };
+    const bigFile2 = { originalname: 'big2.pdf', buffer: Buffer.from('%PDF-1.4'), size: 25 * 1024 * 1024 };
+    await assertApiError(() => extractMultiplePdfs([bigFile1, bigFile2]), 400, 'FILE_LIMIT_EXCEEDED', /exceeds 50 MB/);
+  });
+
+  test('reports the specific file name if one has no readable text layer', async () => {
+    const validFile = upload(makePdf([CHAPTER_TEXT]), 'valid.pdf');
+    const scannedFile = upload(makePdf(['']), 'scanned_deck.pdf');
+    await assertApiError(
+      () => extractMultiplePdfs([validFile, scannedFile]),
+      422,
+      'PDF_NO_TEXT_LAYER',
+      /scanned_deck\.pdf/,
+    );
+  });
+});
+

@@ -3,6 +3,9 @@ const { requireAuth } = require('../middleware/auth');
 const { byUser } = require('../db/scope');
 const { ok } = require('../envelope');
 const { timeFromDb, dateFromDb } = require('../ics/time');
+const { parseOrThrow } = require('../validation');
+const { topicInputSchema, topicBulkSchema, idParamSchema } = require('../topics/schemas');
+const { listTopics, createTopic, replaceTopics, serializeTopic } = require('../topics/topicRepo');
 
 function serializeSchedule(s) {
   return {
@@ -43,6 +46,31 @@ function coursesRouter({ prisma }) {
         })),
       }),
     );
+  });
+
+  // ---- Syllabus topics of a course (WBS 2.2.4) ----
+
+  // GET /api/courses/:id/topics — the course's topics in sortOrder
+  router.get('/:id/topics', async (req, res) => {
+    const { id } = parseOrThrow(idParamSchema, req.params);
+    const topics = await listTopics(prisma, req.userId, id);
+    res.json(ok({ topics: topics.map(serializeTopic) }));
+  });
+
+  // POST /api/courses/:id/topics — one topic (manual entry form)
+  router.post('/:id/topics', async (req, res) => {
+    const { id } = parseOrThrow(idParamSchema, req.params);
+    const input = parseOrThrow(topicInputSchema, req.body);
+    const topic = await createTopic(prisma, req.userId, id, input);
+    res.status(201).json(ok({ topic: serializeTopic(topic) }));
+  });
+
+  // POST /api/courses/:id/topics/bulk — save the reviewed syllabus preview; replaces the course's topic list
+  router.post('/:id/topics/bulk', async (req, res) => {
+    const { id } = parseOrThrow(idParamSchema, req.params);
+    const { topics } = parseOrThrow(topicBulkSchema, req.body);
+    const result = await replaceTopics(prisma, req.userId, id, topics);
+    res.status(201).json(ok({ topics: result.topics.map(serializeTopic), replaced: result.replaced }));
   });
 
   return router;

@@ -238,6 +238,64 @@ describe('responses match openapi.yaml (Rule 02 envelope)', () => {
     });
   });
 
+  describe('topics', () => {
+    let courseId;
+    let topicId;
+
+    before(async () => {
+      const courses = await auth(request(app).get('/api/courses'));
+      courseId = courses.body.data.courses[0].id;
+    });
+
+    test('POST /api/courses/{id}/topics/bulk', async () => {
+      const route = '/api/courses/{id}/topics/bulk';
+      const post = (id, body) => auth(request(app).post(`/api/courses/${id}/topics/bulk`)).send(body);
+      const saved = await post(courseId, { topics: [{ order: 2, title: 'Chapter 2' }, { order: 1, title: 'Chapter 1', description: 'd' }] });
+      assert.equal(saved.status, 201);
+      assertMatchesSpec(saved, 'post', route);
+      topicId = saved.body.data.topics[0].id;
+      assertMatchesSpec(await post(courseId, { topics: [] }), 'post', route); // 400
+      assertMatchesSpec(await post(9999, { topics: [{ title: 'x' }] }), 'post', route); // 404
+      assertMatchesSpec(await request(app).post(`/api/courses/${courseId}/topics/bulk`).send({}), 'post', route); // 401
+    });
+
+    test('GET /api/courses/{id}/topics', async () => {
+      const route = '/api/courses/{id}/topics';
+      const list = await auth(request(app).get(`/api/courses/${courseId}/topics`));
+      assert.ok(list.body.data.topics.length > 0);
+      assertMatchesSpec(list, 'get', route);
+      assertMatchesSpec(await auth(request(app).get('/api/courses/abc/topics')), 'get', route); // 400
+      assertMatchesSpec(await auth(request(app).get('/api/courses/9999/topics')), 'get', route); // 404
+      assertMatchesSpec(await request(app).get(`/api/courses/${courseId}/topics`), 'get', route); // 401
+    });
+
+    test('POST /api/courses/{id}/topics', async () => {
+      const route = '/api/courses/{id}/topics';
+      const post = (id, body) => auth(request(app).post(`/api/courses/${id}/topics`)).send(body);
+      assertMatchesSpec(await post(courseId, { title: 'Manual', sortOrder: 10 }), 'post', route); // 201
+      assertMatchesSpec(await post(courseId, { title: 'Clash', sortOrder: 10 }), 'post', route); // 409
+      assertMatchesSpec(await post(courseId, { title: '' }), 'post', route); // 400
+      assertMatchesSpec(await post(9999, { title: 'x' }), 'post', route); // 404
+      assertMatchesSpec(await request(app).post(`/api/courses/${courseId}/topics`).send({ title: 'x' }), 'post', route); // 401
+    });
+
+    test('PATCH /api/topics/{id}', async () => {
+      const route = '/api/topics/{id}';
+      assertMatchesSpec(await auth(request(app).patch(`/api/topics/${topicId}`)).send({ status: 'DONE' }), 'patch', route);
+      assertMatchesSpec(await auth(request(app).patch(`/api/topics/${topicId}`)).send({}), 'patch', route); // 400
+      assertMatchesSpec(await auth(request(app).patch('/api/topics/9999')).send({ status: 'DONE' }), 'patch', route); // 404
+      assertMatchesSpec(await request(app).patch(`/api/topics/${topicId}`).send({ status: 'DONE' }), 'patch', route); // 401
+    });
+
+    test('DELETE /api/topics/{id}', async () => {
+      const route = '/api/topics/{id}';
+      assertMatchesSpec(await auth(request(app).delete('/api/topics/abc')), 'delete', route); // 400
+      assertMatchesSpec(await auth(request(app).delete('/api/topics/9999')), 'delete', route); // 404
+      assertMatchesSpec(await request(app).delete(`/api/topics/${topicId}`), 'delete', route); // 401
+      assertMatchesSpec(await auth(request(app).delete(`/api/topics/${topicId}`)), 'delete', route);
+    });
+  });
+
   test('unknown routes return a NOT_FOUND error envelope', async () => {
     const res = await request(app).get('/api/nope');
     assert.equal(res.status, 404);

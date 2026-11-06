@@ -9,6 +9,7 @@ const { coursesRouter } = require('./routes/courses');
 const { scheduleRouter } = require('./routes/schedule');
 const { tasksRouter } = require('./routes/tasks');
 const { syllabusRouter } = require('./routes/syllabus');
+const { topicsRouter } = require('./routes/topics');
 
 // prisma and the Gemini client are injected so tests can pass fakes. gemini may be null (not configured).
 function createApp({ prisma, gemini = null }) {
@@ -29,6 +30,7 @@ function createApp({ prisma, gemini = null }) {
   app.use('/api/schedule', scheduleRouter({ prisma }));
   app.use('/api/tasks', tasksRouter({ prisma }));
   app.use('/api/syllabus', syllabusRouter({ gemini }));
+  app.use('/api/topics', topicsRouter({ prisma }));
 
   app.use(notFound);
   app.use(errorHandler);

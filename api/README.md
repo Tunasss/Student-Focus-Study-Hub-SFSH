@@ -165,3 +165,23 @@ through `errorHandler` as `500 INTERNAL_ERROR`). Successful responses carry `sou
 - 2 deadlines: one due in ~20h, one due in ~4 days
 - 1 OVERDUE task (due 2 days ago)
 - 10 Pomodoro sessions over the last 7 days (8 COMPLETED, 2 ABANDONED)
+
+## Topics API (WBS 2.2.4)
+
+The Gemini preview from `POST /api/syllabus/extract` is never stored automatically. The user reviews and edits it on
+the web, then the client saves the confirmed list. Data access is `src/topics/topicRepo.js` (scoped through the
+course with `byCourseOwner`, so another user's course or topic is `404 NOT_FOUND`); validation is `src/topics/schemas.js`.
+
+| Method | Route | Body | Result |
+|---|---|---|---|
+| `GET` | `/api/courses/:id/topics` | — | `{ topics: [Topic] }` in `sortOrder` |
+| `POST` | `/api/courses/:id/topics` | `{ title, description?, status?, sortOrder? }` | `201 { topic }`; `409 SORT_ORDER_TAKEN` if the position is used |
+| `POST` | `/api/courses/:id/topics/bulk` | `{ topics: [{ order \| sortOrder, title, description?, status? }] }` | `201 { topics, replaced }` |
+| `PATCH` | `/api/topics/:id` | any of `{ title, description, status }` | `{ topic }` |
+| `DELETE` | `/api/topics/:id` | — | `{ id }` |
+
+`order` in the Gemini JSON (or `sortOrder` from the client) is stored in the `sort_order` column (`order` is a reserved
+word in SQL). Bulk save runs in one transaction: items are sorted by their position and renumbered 1..n, the course's
+previous topics are replaced, and the learning status of a topic with the same title (case-insensitive) is carried over.
+Tasks / sessions that referenced a removed topic keep `topic_id = null` (`ON DELETE SET NULL`). Topic status is
+`TODO | DOING | DONE` (no `OVERDUE`; deadlines live on tasks).

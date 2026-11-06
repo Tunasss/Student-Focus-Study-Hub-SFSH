@@ -89,18 +89,59 @@ export const syllabusApi = {
     });
     return data?.topic ?? data;
   },
-  extractSyllabus: async (courseId, file, courseName = '') => {
+  bulkSaveTopics: async (courseId, payload) => {
+    const data = await apiFetch(`/api/courses/${courseId}/topics/bulk`, {
+      method: 'POST',
+      body: payload,
+    });
+    return data?.topics ?? data ?? [];
+  },
+  extractSyllabus: async (courseIdOrFiles, filesOrCourseName = [], courseNameFallback = '') => {
+    let files;
+    let courseName = courseNameFallback;
+    let courseId = null;
+
+    if (typeof courseIdOrFiles === 'number' || (typeof courseIdOrFiles === 'string' && /^\d+$/.test(courseIdOrFiles))) {
+      courseId = courseIdOrFiles;
+      files = Array.isArray(filesOrCourseName) ? filesOrCourseName : [filesOrCourseName];
+      courseName = courseNameFallback;
+    } else {
+      files = Array.isArray(courseIdOrFiles) ? courseIdOrFiles : [courseIdOrFiles];
+      courseName = typeof filesOrCourseName === 'string' ? filesOrCourseName : '';
+    }
+
     const formData = new FormData();
-    formData.append('file', file);
+    for (const f of files) {
+      if (f) formData.append('files', f);
+    }
+    if (files[0]) {
+      formData.append('file', files[0]);
+    }
+
+    const endpoint = courseId ? `/api/courses/${courseId}/syllabus/extract` : '/api/syllabus/extract';
+
     try {
-      const data = await apiFetch(`/api/courses/${courseId}/syllabus/extract`, {
+      const data = await apiFetch(endpoint, {
         method: 'POST',
         body: formData,
       });
+      if (data?.chapters) return data;
       return data?.topics || (Array.isArray(data) ? data : []);
     } catch (err) {
       if (err?.status === 404 || err?.code === 'NETWORK_ERROR' || err?.status === 501) {
-        return simulateSyllabusExtraction(courseName, file.name);
+        if (courseId) {
+          try {
+            const fallbackData = await apiFetch('/api/syllabus/extract', {
+              method: 'POST',
+              body: formData,
+            });
+            if (fallbackData?.chapters) return fallbackData;
+            return fallbackData?.topics || (Array.isArray(fallbackData) ? fallbackData : []);
+          } catch {
+            // fallback to simulation
+          }
+        }
+        return simulateSyllabusExtraction(courseName, files[0]?.name || 'syllabus.pdf');
       }
       throw err;
     }

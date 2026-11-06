@@ -127,7 +127,7 @@ describe('SyllabusUploadModal', () => {
     });
 
     // Delete first item
-    const deleteBtns = screen.getAllByRole('button', { name: '✕' });
+    const deleteBtns = screen.getAllByRole('button', { name: /Remove chapter|✕/i });
     fireEvent.click(deleteBtns[0]);
     expect(screen.queryByDisplayValue('Chapter A')).not.toBeInTheDocument();
     expect(screen.getByDisplayValue('Chapter B')).toBeInTheDocument();
@@ -138,5 +138,82 @@ describe('SyllabusUploadModal', () => {
     });
     fireEvent.click(addBtn);
     expect(screen.getAllByDisplayValue(/Chapter 2:|Chương 2:/i).length).toBeGreaterThan(0);
+  });
+
+  test('supports selecting multiple files and removing an individual file chip', () => {
+    renderModal();
+    const fileInput = document.querySelector('input[type="file"]');
+    const file1 = new File(['file 1'], 'lecture1.pdf', { type: 'application/pdf' });
+    const file2 = new File(['file 2'], 'lecture2.pdf', { type: 'application/pdf' });
+
+    fireEvent.change(fileInput, { target: { files: [file1, file2] } });
+
+    expect(screen.getByText('lecture1.pdf')).toBeInTheDocument();
+    expect(screen.getByText('lecture2.pdf')).toBeInTheDocument();
+
+    const removeFile1Btn = screen.getByRole('button', { name: /Remove lecture1\.pdf|Xóa lecture1\.pdf/i });
+    fireEvent.click(removeFile1Btn);
+
+    expect(screen.queryByText('lecture1.pdf')).not.toBeInTheDocument();
+    expect(screen.getByText('lecture2.pdf')).toBeInTheDocument();
+  });
+
+  test('renders hierarchical knowledge tree preview and supports adding subtopics and toggling append/replace', async () => {
+    const mockTree = {
+      chapters: [
+        {
+          title: 'Chapter 1: Intro',
+          description: 'Basic concepts',
+          sourceFile: 'lecture1.pdf',
+          subtopics: [{ title: '1.1 Getting Started', description: 'Setup' }],
+        },
+      ],
+    };
+    vi.spyOn(syllabusApi, 'extractSyllabus').mockResolvedValue(mockTree);
+
+    const onImportSuccess = vi.fn();
+    renderModal({ onImportSuccess });
+
+    const fileInput = document.querySelector('input[type="file"]');
+    const fakeFile = new File(['dummy'], 'lecture1.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [fakeFile] } });
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Extract Topics with Gemini AI|Phân tích chương mục bằng Gemini AI/i,
+      })
+    );
+
+    await waitFor(
+      () => {
+        expect(screen.getByDisplayValue('Chapter 1: Intro')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('1.1 Getting Started')).toBeInTheDocument();
+        expect(screen.getByText(/lecture1\.pdf/)).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+
+    // Add a subtopic
+    const addSubtopicBtn = screen.getByRole('button', { name: /\+ Add Subtopic|\+ Thêm mục con/i });
+    fireEvent.click(addSubtopicBtn);
+
+    expect(screen.getAllByDisplayValue(/Subtopic|Mục con/i).length).toBeGreaterThan(0);
+
+    // Toggle mode to replace
+    const replaceRadio = screen.getByLabelText(/Replace entire syllabus|Thay thế toàn bộ/i);
+    fireEvent.click(replaceRadio);
+
+    // Confirm import
+    const confirmBtn = screen.getByRole('button', {
+      name: /Import 1 Topic to Syllabus|Thêm 1 chương vào Giáo trình/i,
+    });
+    fireEvent.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(onImportSuccess).toHaveBeenCalledTimes(1);
+      const passed = onImportSuccess.mock.calls[0][0];
+      expect(passed.mode).toBe('replace');
+      expect(passed[0].subtopics.length).toBe(2);
+    });
   });
 });

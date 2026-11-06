@@ -44,7 +44,7 @@ describe('SyllabusUploadModal', () => {
   test('handles file selection and enables extraction button', () => {
     renderModal();
     const extractBtn = screen.getByRole('button', {
-      name: /Extract Topics with Gemini AI|Phân tích chương mục bằng Gemini AI/i,
+      name: /Extract Topics|Phân tích chương mục/i,
     });
     expect(extractBtn).toBeDisabled();
 
@@ -71,7 +71,7 @@ describe('SyllabusUploadModal', () => {
     fireEvent.change(fileInput, { target: { files: [fakeFile] } });
 
     const extractBtn = screen.getByRole('button', {
-      name: /Extract Topics with Gemini AI|Phân tích chương mục bằng Gemini AI/i,
+      name: /Extract Topics|Phân tích chương mục/i,
     });
     fireEvent.click(extractBtn);
 
@@ -118,7 +118,7 @@ describe('SyllabusUploadModal', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: /Extract Topics with Gemini AI|Phân tích chương mục bằng Gemini AI/i,
+        name: /Extract Topics|Phân tích chương mục/i,
       })
     );
 
@@ -180,7 +180,7 @@ describe('SyllabusUploadModal', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: /Extract Topics with Gemini AI|Phân tích chương mục bằng Gemini AI/i,
+        name: /Extract Topics|Phân tích chương mục/i,
       })
     );
 

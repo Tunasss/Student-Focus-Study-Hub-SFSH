@@ -155,7 +155,7 @@ describe('SyllabusPage Integration', () => {
       expect(screen.getByText('Algorithm Analysis')).toBeInTheDocument();
     });
 
-    const aiBtn = screen.getByRole('button', { name: /AI Extract Syllabus|Nạp đề cương bằng AI/i });
+    const aiBtn = screen.getByRole('button', { name: /Extract Syllabus|Nạp đề cương/i });
     fireEvent.click(aiBtn);
 
     // Modal should now be open
@@ -168,7 +168,7 @@ describe('SyllabusPage Integration', () => {
     fireEvent.change(fileInput, { target: { files: [fakeFile] } });
 
     const startExtractBtn = screen.getByRole('button', {
-      name: /Extract Topics with Gemini AI|Phân tích chương mục bằng Gemini AI/i,
+      name: /Extract Topics|Phân tích chương mục/i,
     });
     fireEvent.click(startExtractBtn);
 

@@ -89,8 +89,8 @@ export function SyllabusPage() {
       pageTitle: 'Course Syllabi & Topics',
       pageSubtitle: 'Structured chapter breakdown and progressive mastery tracking for your enrolled courses.',
       addTopicBtn: '+ Add Topic',
-      extractAiBtn: '✨ AI Extract Syllabus',
-      importSuccess: (count) => `Successfully imported ${count} chapters via Gemini AI.`,
+      extractBtn: 'Extract Syllabus',
+      importSuccess: (count) => `Successfully imported ${count} chapters.`,
       noTopicsTitle: 'No Topics for this Course Yet',
       noTopicsDesc: 'Start breaking down this course by adding your first chapter topic or uploading a syllabus.',
       loadingText: 'Loading syllabus topics…',
@@ -116,8 +116,8 @@ export function SyllabusPage() {
       pageTitle: 'Giáo trình & Chủ đề môn học',
       pageSubtitle: 'Phân rã chương trình và theo dõi tiến độ hoàn thành kiến thức từng môn học.',
       addTopicBtn: '+ Thêm chương mới',
-      extractAiBtn: '✨ Nạp đề cương bằng AI',
-      importSuccess: (count) => `Đã nạp thành công ${count} chương vào giáo trình bằng Gemini AI.`,
+      extractBtn: 'Nạp đề cương',
+      importSuccess: (count) => `Đã nạp thành công ${count} chương vào giáo trình.`,
       noTopicsTitle: 'Chưa có chương mục nào',
       noTopicsDesc: 'Bắt đầu theo dõi môn học bằng cách thêm chương đầu tiên hoặc nạp đề cương môn học.',
       loadingText: 'Đang tải danh sách chương…',
@@ -143,7 +143,7 @@ export function SyllabusPage() {
     pageTitle: 'Course Syllabi & Topics',
     pageSubtitle: 'Structured chapter breakdown and progressive mastery tracking for each enrolled course.',
     addTopicBtn: '+ Add Topic',
-    extractAiBtn: '✨ AI Extract Syllabus',
+    extractBtn: 'Extract Syllabus',
     importSuccess: (count) => `Successfully imported ${count} chapters.`,
     noTopicsTitle: 'No Topics for this Course Yet',
     noTopicsDesc: 'Start breaking down this course by adding your first chapter topic or uploading a syllabus.',
@@ -520,8 +520,7 @@ export function SyllabusPage() {
             onClick={() => setIsUploadModalOpen(true)}
             className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-primary/25 to-primary/10 border border-primary/40 px-4 py-2.5 text-xs font-bold text-primary hover:border-primary hover:bg-primary/20 transition-all cursor-pointer shadow-xs"
           >
-            <span>✨</span>
-            <span>{t.extractAiBtn}</span>
+            <span>{t.extractBtn}</span>
           </button>
           <button
             type="button"
@@ -572,8 +571,7 @@ export function SyllabusPage() {
                 onClick={() => setIsUploadModalOpen(true)}
                 className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-bold text-primary-fg shadow-md hover:opacity-90 transition-all cursor-pointer"
               >
-                <span>✨</span>
-                <span>{t.extractAiBtn}</span>
+                <span>{t.extractBtn}</span>
               </button>
               <button
                 type="button"

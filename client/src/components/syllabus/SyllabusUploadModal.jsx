@@ -28,10 +28,10 @@ export function SyllabusUploadModal({
 
   const t = {
     en: {
-      modalBadge: '✨ AI SYLLABUS EXTRACTOR · NOTEBOOKLM POWERED',
+      modalBadge: 'SYLLABUS EXTRACTOR',
       targetCourse: 'Target Course:',
       stepUpload: '1. Upload File',
-      stepScan: '2. AI Analysis',
+      stepScan: '2. Analysis',
       stepReview: '3. Organize',
       // Step 1
       dropTitle: 'Upload Course Syllabus Document',
@@ -39,17 +39,17 @@ export function SyllabusUploadModal({
       supportedFormats: 'Supports PDF, Word (.docx), PowerPoint (.pptx), and TXT (up to 20 files, max 50MB)',
       selectedFiles: (count) => `Selected Documents (${count})`,
       removeFileTooltip: (name) => `Remove ${name}`,
-      startExtractBtn: '✨ Extract Topics with Gemini AI',
+      startExtractBtn: 'Extract Topics',
       fileTooBig: 'File size exceeds 15MB limit.',
       tooManyFiles: 'Cannot upload more than 20 files at once.',
       invalidType: 'Unsupported file format. Please upload PDF, Word, PowerPoint, or TXT.',
       // Step 2
-      scanningTitle: 'NotebookLM Engine Analyzing Syllabus',
+      scanningTitle: 'Analyzing Syllabus Document',
       scanningSubtitle: (count) =>
-        `Extracting chapters and key subtopics across ${count} ${count === 1 ? 'file' : 'files'} with Gemini AI…`,
+        `Extracting chapters and key subtopics across ${count} ${count === 1 ? 'file' : 'files'}…`,
       stages: [
         'Reading document layout and structure…',
-        'Identifying chapter hierarchy with Gemini AI…',
+        'Identifying chapter hierarchy…',
         'Synthesizing subtopics and competencies…',
         'Finalizing curriculum knowledge tree…',
       ],
@@ -72,15 +72,15 @@ export function SyllabusUploadModal({
       addChapterBtn: '+ Add Chapter Manually',
       backToUpload: '← Upload Another File',
       cancelBtn: 'Cancel',
-      confirmImportBtn: (count) => `💾 Import ${count} ${count === 1 ? 'Topic' : 'Topics'} to Syllabus`,
+      confirmImportBtn: (count) => `Import ${count} ${count === 1 ? 'Topic' : 'Topics'} to Syllabus`,
       savingText: 'Saving syllabus chapters…',
       noTopicsNotice: 'No chapters left. Click "+ Add Chapter Manually" or upload a different file.',
     },
     vi: {
-      modalBadge: '✨ TÁCH ĐỀ CƯƠNG BẰNG AI · NOTEBOOKLM CORE',
+      modalBadge: 'TRÍCH XUẤT ĐỀ CƯƠNG',
       targetCourse: 'Môn học mục tiêu:',
       stepUpload: '1. Tải tài liệu',
-      stepScan: '2. AI phân tích',
+      stepScan: '2. Phân tích tài liệu',
       stepReview: '3. Xem & Sắp xếp',
       // Step 1
       dropTitle: 'Tải lên đề cương môn học',
@@ -88,17 +88,17 @@ export function SyllabusUploadModal({
       supportedFormats: 'Hỗ trợ PDF, Word (.docx), PowerPoint (.pptx) và TXT (tối đa 20 file, 50MB)',
       selectedFiles: (count) => `Tài liệu đã chọn (${count})`,
       removeFileTooltip: (name) => `Xóa ${name}`,
-      startExtractBtn: '✨ Phân tích chương mục bằng Gemini AI',
+      startExtractBtn: 'Phân tích chương mục',
       fileTooBig: 'Kích thước file vượt quá giới hạn 15MB.',
       tooManyFiles: 'Không thể tải lên quá 20 file cùng lúc.',
       invalidType: 'Định dạng file không hỗ trợ. Vui lòng chọn PDF, Word, PowerPoint hoặc TXT.',
       // Step 2
-      scanningTitle: 'NotebookLM AI đang phân tích đề cương',
+      scanningTitle: 'Đang phân tích cấu trúc đề cương',
       scanningSubtitle: (count) =>
-        `Tự động trích xuất cấu trúc chương mục và các kiến thức con trên ${count} tài liệu bằng Gemini AI…`,
+        `Đang trích xuất cấu trúc chương mục và các nội dung từ ${count} tài liệu…`,
       stages: [
         'Đang đọc cấu trúc và các tiêu đề văn bản…',
-        'Phân rã chương mục kiến thức bằng Gemini AI…',
+        'Phân rã chương mục kiến thức…',
         'Tổng hợp danh mục kiến thức con và chuẩn đầu ra…',
         'Hoàn thiện cây kiến thức môn học…',
       ],
@@ -121,7 +121,7 @@ export function SyllabusUploadModal({
       addChapterBtn: '+ Thêm chương thủ công',
       backToUpload: '← Chọn file khác',
       cancelBtn: 'Hủy bỏ',
-      confirmImportBtn: (count) => `💾 Thêm ${count} chương vào Giáo trình`,
+      confirmImportBtn: (count) => `Thêm ${count} chương vào Giáo trình`,
       savingText: 'Đang lưu danh sách chương…',
       noTopicsNotice: 'Danh sách đang trống. Bấm "+ Thêm chương thủ công" hoặc quay lại tải file khác.',
     },
@@ -267,8 +267,8 @@ export function SyllabusUploadModal({
         err?.message ||
         err?.error?.message ||
         (lang === 'vi'
-          ? 'Không thể phân tích tài liệu bằng AI. Vui lòng kiểm tra lại file hoặc thử lại sau.'
-          : 'AI extraction failed. Please try again or check the file.');
+          ? 'Không thể phân tích tài liệu. Vui lòng kiểm tra lại file hoặc thử lại sau.'
+          : 'Extraction failed. Please try again or check the file.');
       setError(errorMsg);
       setStep('UPLOAD');
     }
@@ -527,12 +527,14 @@ export function SyllabusUploadModal({
             </div>
           )}
 
-          {/* STEP 2: AI SCANNING ANIMATION */}
+          {/* STEP 2: SCANNING ANIMATION */}
           {step === 'SCANNING' && (
             <div className="py-12 px-4 flex flex-col items-center justify-center text-center space-y-6">
               <div className="relative">
                 <div className="w-20 h-20 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-                <div className="absolute inset-0 flex items-center justify-center text-2xl animate-pulse">✨</div>
+                <div className="absolute inset-0 flex items-center justify-center text-primary text-xs font-bold font-mono">
+                  DOCS
+                </div>
               </div>
 
               <div className="space-y-1.5 max-w-md">
@@ -684,9 +686,9 @@ export function SyllabusUploadModal({
                         {(ch.subtopics || []).map((sub, subIdx) => (
                           <div
                             key={sub.id || subIdx}
-                            className="p-2.5 rounded-2xl bg-surface/90 border border-border/60 flex items-start gap-2 group/sub"
+                            className="p-2.5 rounded-2xl bg-surface/90 border border-border/60 flex items-start gap-2.5 group/sub"
                           >
-                            <span className="text-primary text-xs mt-1 shrink-0">✦</span>
+                            <span className="h-1.5 w-1.5 rounded-full bg-primary/70 mt-2 shrink-0" />
                             <div className="grow space-y-1">
                               <input
                                 type="text"

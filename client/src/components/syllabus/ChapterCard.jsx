@@ -283,7 +283,7 @@ export function ChapterCard({
                   {/* Subtopic description & title */}
                   <div className="min-w-0 flex-1 pr-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-primary text-xs shrink-0">✦</span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary/70 shrink-0" />
                       <h4
                         className={`text-xs sm:text-sm font-semibold tracking-tight transition-colors ${
                           isDone ? 'text-text/70 line-through decoration-primary/60' : 'text-text'

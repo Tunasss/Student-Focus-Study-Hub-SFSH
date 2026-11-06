@@ -3,7 +3,8 @@ info:
   title: Student Focus & Study Hub (SFSH) API
   version: 0.1.0
   description: |
-    REST API for SFSH: authentication, ICS timetable import, courses, the weekly class schedule and tasks (deadlines).
+    REST API for SFSH: authentication, ICS timetable import, courses, the weekly class schedule, tasks (deadlines)
+    and syllabus PDF text extraction.
 
     ## Response envelope (Rule 02)
     Every response, success or error, uses the same envelope:
@@ -26,11 +27,19 @@ info:
     | `VALIDATION_ERROR` | 400 | A body or query parameter is invalid |
     | `INVALID_JSON` | 400 | The request body is not valid JSON |
     | `INVALID_ICS_FORMAT` | 400 | The uploaded timetable is not a usable .ics file |
+    | `INVALID_PDF_FORMAT` | 400 | The uploaded syllabus is not a usable .pdf file (missing, wrong extension, over 5 MB, corrupt, encrypted) |
+    | `PDF_TOO_MANY_PAGES` | 400 | The syllabus PDF has more than 30 pages |
+    | `PDF_NO_TEXT_LAYER` | 422 | The syllabus PDF is a scanned image without a text layer; use the manual entry form |
+    | `SYLLABUS_NO_TOPICS` | 422 | The AI found no course topics in the syllabus text; use the manual entry form |
+    | `LLM_SCHEMA_INVALID` | 502 | The AI reply was not valid JSON or failed the topics schema (zod), even after one retry |
+    | `LLM_UNAVAILABLE` | 503 | The AI service is out of quota (429), unreachable or rejected the key: switch to the manual entry form |
+    | `LLM_NOT_CONFIGURED` | 503 | `GEMINI_API_KEY` is not set on this server |
     | `UNAUTHORIZED` | 401 | Missing, malformed or invalid bearer token |
     | `TOKEN_EXPIRED` | 401 | The bearer token has expired; log in again |
     | `INVALID_CREDENTIALS` | 401 | Wrong email or password |
     | `NOT_FOUND` | 404 | No such route, or the task / course / topic does not exist for this user |
     | `EMAIL_TAKEN` | 409 | An account with this email already exists |
+    | `SORT_ORDER_TAKEN` | 409 | The course already has a topic at that `sortOrder` |
     | `INTERNAL_ERROR` | 500 | Unexpected server error |
 servers:
   - url: /
@@ -45,6 +54,13 @@ tags:
     description: The user's courses and their weekly slots.
   - name: Tasks
     description: Deadlines (assignments, labs, exams) attached to a course and optionally a syllabus topic.
+  - name: Syllabus
+    description: "Turn a syllabus PDF into topics (WBS 2.2): text-layer extraction, then Gemini structured output."
+  - name: Topics
+    description: |
+      Syllabus topics (chapters) of a course and their learning status. The Gemini preview from
+      `POST /api/syllabus/extract` is **not** stored: the user reviews it on the web, then the client saves the
+      confirmed list with `POST /api/courses/{id}/topics/bulk`. JSON `sortOrder` maps to the `sort_order` column.
 
 paths:
   /api/health:
@@ -446,6 +462,290 @@ paths:
         '404':
           $ref: '#/components/responses/TaskNotFound'
 
+  /api/syllabus/extract:
+    post:
+      tags: [Syllabus]
+      summary: Extract topics from a syllabus PDF
+      description: |
+        Uploads a syllabus PDF, reads its text layer and asks Gemini (`GEMINI_MODEL`, a Flash model) for the course
+        code and the ordered list of topics. The reply is forced to JSON (`responseMimeType: application/json` +
+        a fixed `responseSchema`) and re-validated with zod before it is returned.
+
+        - Accepted: `.pdf` extension, at most 5 MB, at most 30 pages, `%PDF-` header, not password protected.
+        - Text is read with `pdf-parse`; runs of spaces are collapsed and blank lines dropped.
+        - **Scanned PDFs**: when fewer than 200 non-whitespace characters can be read from the whole file, the
+          pipeline stops with `422 PDF_NO_TEXT_LAYER`. The message tells the user to add the topics with the
+          manual entry form instead.
+        - Topics are sorted by the model's `order`, de-duplicated by title and renumbered from 1, ready to become
+          `topics.sort_order`. `courseCode` is null when the syllabus has none.
+        - The raw `text` and per-page `pages` are returned as well, so the client can show the source.
+
+        Resilience (WBS 2.2.3): a reply that fails the schema is retried once, then `502 LLM_SCHEMA_INVALID`.
+        Quota (429) or connection problems answer `503 LLM_UNAVAILABLE` immediately, so the client should open the
+        manual entry form. With `LLM_MOCK=true` the server skips Gemini and returns a fixed 5-chapter sample
+        (`source: mock`).
+      operationId: extractSyllabus
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The syllabus .pdf file.
+      responses:
+        '200':
+          description: Text layer extracted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/SyllabusText'
+        '400':
+          description: |
+            `INVALID_PDF_FORMAT` (missing file, wrong field or extension, over 5 MB, no `%PDF-` header, corrupt
+            or password protected) or `PDF_TOO_MANY_PAGES` (more than 30 pages).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                data: null
+                error:
+                  code: PDF_TOO_MANY_PAGES
+                  message: PDF has 31 pages; the limit is 30
+                timestamp: '2026-11-06T00:00:00.000Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: |
+            The file was read but no topics can be produced; the message points the user to the manual entry form.
+            `PDF_NO_TEXT_LAYER`: scanned (image-only) PDF, fewer than 200 characters of text.
+            `SYLLABUS_NO_TOPICS`: the AI found no course topics in the text.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                data: null
+                error:
+                  code: PDF_NO_TEXT_LAYER
+                  message: This PDF has no readable text layer (it looks like a scanned image). Please add the syllabus topics with the manual entry form instead.
+                timestamp: '2026-11-06T00:00:00.000Z'
+        '502':
+          description: '`LLM_SCHEMA_INVALID`: the AI reply was not valid JSON or failed the topics schema twice (one retry).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                data: null
+                error:
+                  code: LLM_SCHEMA_INVALID
+                  message: 'The AI reply did not match the expected syllabus structure after 2 attempts (topics.0.title: Invalid input: expected string, received undefined); please add the topics manually'
+                timestamp: '2026-11-06T00:00:00.000Z'
+        '503':
+          description: |
+            `LLM_UNAVAILABLE` (out of quota / HTTP 429, unreachable, or key rejected) or `LLM_NOT_CONFIGURED`
+            (no `GEMINI_API_KEY`). The client should open the manual entry form right away.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                data: null
+                error:
+                  code: LLM_UNAVAILABLE
+                  message: The AI service is out of quota or rate limited; please add the topics manually or try again later
+                timestamp: '2026-11-06T00:00:00.000Z'
+
+  /api/courses/{id}/topics:
+    parameters:
+      - $ref: '#/components/parameters/CourseId'
+    get:
+      tags: [Topics]
+      summary: List the topics of a course
+      description: The course's syllabus topics ordered by `sortOrder`. The course must belong to the caller.
+      operationId: listCourseTopics
+      responses:
+        '200':
+          description: The course's topics.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicListResponse'
+        '400':
+          $ref: '#/components/responses/TopicValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/CourseNotFound'
+    post:
+      tags: [Topics]
+      summary: Add one topic
+      description: |
+        Adds a single topic (the manual entry form). Without `sortOrder` it is appended after the last topic;
+        with one, that position must be free.
+      operationId: createTopic
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicInput'
+      responses:
+        '201':
+          description: Topic created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicResponse'
+        '400':
+          $ref: '#/components/responses/TopicValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/CourseNotFound'
+        '409':
+          description: '`SORT_ORDER_TAKEN`: the course already has a topic at that `sortOrder`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /api/courses/{id}/topics/bulk:
+    parameters:
+      - $ref: '#/components/parameters/CourseId'
+    post:
+      tags: [Topics]
+      summary: Save the reviewed syllabus topics
+      description: |
+        Writes the whole list the user confirmed on the web into the course's `topics` table, in one transaction.
+        The previous topic list of that course is replaced; learning status is carried over from an existing topic
+        with the same title (case-insensitive) unless the item sets `status`. Tasks and focus sessions that pointed
+        at removed topics keep running with `topic_id = null`.
+
+        Items are sorted by `order` (the Gemini preview field) or `sortOrder` (array position when neither is
+        given) and renumbered 1..n into `sort_order`, so the stored positions are unique and gap-free.
+      operationId: bulkSaveTopics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicBulkInput'
+            example:
+              topics:
+                - order: 1
+                  title: 'Chapter 1: Introduction to Programming'
+                  description: What programs are, the development cycle.
+                - order: 2
+                  title: 'Chapter 2: Variables, Types and Expressions'
+      responses:
+        '201':
+          description: Topics saved; the course's new list in `sortOrder`.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        type: object
+                        additionalProperties: false
+                        required: [topics, replaced]
+                        properties:
+                          topics:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Topic'
+                          replaced:
+                            type: integer
+                            minimum: 0
+                            description: Number of topics the course had before this save.
+        '400':
+          $ref: '#/components/responses/TopicValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/CourseNotFound'
+
+  /api/topics/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Topic id. A topic of another user's course is reported as `404 NOT_FOUND`.
+        schema:
+          type: integer
+          minimum: 1
+    patch:
+      tags: [Topics]
+      summary: Update a topic
+      description: |
+        Changes the learning status (`TODO` → `DOING` → `DONE`) or quick-edits the title / description from the
+        topic card. At least one field; `sortOrder` cannot be changed here.
+      operationId: updateTopic
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicPatch'
+            example:
+              status: DOING
+      responses:
+        '200':
+          description: Topic updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicResponse'
+        '400':
+          $ref: '#/components/responses/TopicValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/TopicNotFound'
+    delete:
+      tags: [Topics]
+      summary: Delete a topic
+      description: Deletes the topic. Tasks and focus sessions that referenced it are kept with `topic_id = null`.
+      operationId: deleteTopic
+      responses:
+        '200':
+          description: Topic deleted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        type: object
+                        additionalProperties: false
+                        required: [id]
+                        properties:
+                          id:
+                            type: integer
+        '400':
+          $ref: '#/components/responses/TopicValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/TopicNotFound'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -455,6 +755,14 @@ components:
       description: JWT from `POST /api/auth/login` or `POST /api/auth/register` (`data.token`).
 
   parameters:
+    CourseId:
+      name: id
+      in: path
+      required: true
+      description: Course id. Another user's course is reported as `404 NOT_FOUND`.
+      schema:
+        type: integer
+        minimum: 1
     TaskId:
       name: id
       in: path
@@ -523,6 +831,24 @@ components:
               code: VALIDATION_ERROR
               message: 'dueAt: must be an ISO-8601 date-time with timezone, e.g. 2026-11-20T23:59:00+07:00'
             timestamp: '2026-11-06T00:00:00.000Z'
+    TopicValidationError:
+      description: '`VALIDATION_ERROR` (missing or malformed field, unknown key, bad `id`) or `INVALID_JSON`.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    CourseNotFound:
+      description: '`NOT_FOUND`: the course does not exist for this user.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    TopicNotFound:
+      description: '`NOT_FOUND`: the topic does not exist for this user.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
     TaskNotFound:
       description: '`NOT_FOUND`: the task, course or topic does not exist for this user.'
       content:
@@ -574,11 +900,19 @@ components:
                 - VALIDATION_ERROR
                 - INVALID_JSON
                 - INVALID_ICS_FORMAT
+                - INVALID_PDF_FORMAT
+                - PDF_TOO_MANY_PAGES
+                - PDF_NO_TEXT_LAYER
+                - SYLLABUS_NO_TOPICS
+                - LLM_SCHEMA_INVALID
+                - LLM_UNAVAILABLE
+                - LLM_NOT_CONFIGURED
                 - UNAUTHORIZED
                 - TOKEN_EXPIRED
                 - INVALID_CREDENTIALS
                 - NOT_FOUND
                 - EMAIL_TAKEN
+                - SORT_ORDER_TAKEN
                 - INTERNAL_ERROR
             message:
               type: string
@@ -966,6 +1300,194 @@ components:
               properties:
                 task:
                   $ref: '#/components/schemas/Task'
+
+    SyllabusTopic:
+      type: object
+      additionalProperties: false
+      required: [order, title, description]
+      properties:
+        order:
+          type: integer
+          minimum: 1
+          description: 1-based position; consecutive.
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: Techniques of integration
+        description:
+          type: [string, 'null']
+          maxLength: 1000
+          example: Substitution, integration by parts, partial fractions.
+
+    SyllabusText:
+      type: object
+      additionalProperties: false
+      required: [fileName, pageCount, charCount, courseCode, topics, source, text, pages]
+      properties:
+        fileName:
+          type: string
+          example: MATH201-syllabus.pdf
+        pageCount:
+          type: integer
+          minimum: 1
+          maximum: 30
+          example: 3
+        charCount:
+          type: integer
+          minimum: 200
+          description: Non-whitespace characters in `text`.
+          example: 2840
+        courseCode:
+          type: [string, 'null']
+          description: Course code found by the model, e.g. MATH201; null when the syllabus shows none.
+          example: MATH201
+        topics:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/SyllabusTopic'
+        source:
+          type: string
+          enum: [gemini, mock]
+          description: '`mock` when the server runs with `LLM_MOCK=true` (fixed sample, Gemini not called).'
+        text:
+          type: string
+          description: Text of all pages, pages separated by a blank line.
+          example: "MATH201 Calculus II\nWeek 1-2: Techniques of integration\n\nWeek 3-4: Improper integrals"
+        pages:
+          type: array
+          description: Text per page, in page order.
+          items:
+            type: object
+            additionalProperties: false
+            required: [page, text]
+            properties:
+              page:
+                type: integer
+                minimum: 1
+              text:
+                type: string
+
+    TopicStatus:
+      type: string
+      enum: [TODO, DOING, DONE]
+
+    Topic:
+      type: object
+      additionalProperties: false
+      required: [id, courseId, sortOrder, title, description, status]
+      properties:
+        id:
+          type: integer
+        courseId:
+          type: integer
+        sortOrder:
+          type: integer
+          minimum: 1
+          description: Position in the syllabus (column `sort_order`).
+        title:
+          type: string
+          example: 'Chapter 3: Control Flow'
+        description:
+          type: [string, 'null']
+        status:
+          $ref: '#/components/schemas/TopicStatus'
+
+    TopicInput:
+      type: object
+      additionalProperties: false
+      required: [title]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: [string, 'null']
+          maxLength: 2000
+        status:
+          allOf:
+            - $ref: '#/components/schemas/TopicStatus'
+          default: TODO
+        sortOrder:
+          type: integer
+          minimum: 1
+          description: Position; defaults to the next free one.
+
+    TopicBulkInput:
+      type: object
+      additionalProperties: false
+      required: [topics]
+      properties:
+        topics:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: object
+            additionalProperties: false
+            required: [title]
+            properties:
+              order:
+                type: integer
+                minimum: 1
+                description: Position as in the Gemini preview.
+              sortOrder:
+                type: integer
+                minimum: 1
+                description: Alias of `order`.
+              title:
+                type: string
+                minLength: 1
+                maxLength: 255
+              description:
+                type: [string, 'null']
+                maxLength: 2000
+              status:
+                $ref: '#/components/schemas/TopicStatus'
+
+    TopicPatch:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: [string, 'null']
+          maxLength: 2000
+        status:
+          $ref: '#/components/schemas/TopicStatus'
+
+    TopicResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - properties:
+            data:
+              type: object
+              additionalProperties: false
+              required: [topic]
+              properties:
+                topic:
+                  $ref: '#/components/schemas/Topic'
+
+    TopicListResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - properties:
+            data:
+              type: object
+              additionalProperties: false
+              required: [topics]
+              properties:
+                topics:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Topic'
 
 security:
   - bearerAuth: []

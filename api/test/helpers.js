@@ -10,8 +10,9 @@ function createFakePrisma() {
 
   const courseOwnedBy = (courseId, userId) => courses.some((c) => c.id === courseId && c.userId === userId);
 
-  // Prisma's "record not found" error for update/delete.
+  // Prisma's "record not found" error for update/delete, and the unique-constraint error for create.
   const recordNotFound = () => Object.assign(new Error('Record to update/delete does not exist.'), { code: 'P2025' });
+  const uniqueViolation = () => Object.assign(new Error('Unique constraint failed'), { code: 'P2002' });
 
   // Matches a row against a flat where clause of equality filters, plus the
   // nested `course: { userId }` scope used by byCourseOwner().
@@ -118,13 +119,40 @@ function createFakePrisma() {
       },
     },
     topic: {
-      async findFirst({ where, select }) {
-        return pick(topics.find((t) => matchesWhere(t, where)) ?? null, select);
+      async findMany({ where, orderBy }) {
+        return sortBy(topics.filter((t) => matchesWhere(t, where)), orderBy ?? []);
+      },
+      async findFirst({ where, select, orderBy }) {
+        const rows = sortBy(topics.filter((t) => matchesWhere(t, where)), orderBy ?? []);
+        return pick(rows[0] ?? null, select);
       },
       async create({ data }) {
         const topic = { id: ids.topic++, description: null, status: 'TODO', ...data };
+        if (topics.some((t) => t.courseId === topic.courseId && t.sortOrder === topic.sortOrder)) throw uniqueViolation();
         topics.push(topic);
         return topic;
+      },
+      async createMany({ data }) {
+        for (const row of data) await prisma.topic.create({ data: row });
+        return { count: data.length };
+      },
+      async update({ where, data }) {
+        const topic = topics.find((t) => matchesWhere(t, where));
+        if (!topic) throw recordNotFound();
+        Object.assign(topic, data);
+        return topic;
+      },
+      async delete({ where }) {
+        const index = topics.findIndex((t) => matchesWhere(t, where));
+        if (index === -1) throw recordNotFound();
+        return topics.splice(index, 1)[0];
+      },
+      async deleteMany({ where }) {
+        const before = topics.length;
+        for (let i = topics.length - 1; i >= 0; i--) {
+          if (matchesWhere(topics[i], where)) topics.splice(i, 1);
+        }
+        return { count: before - topics.length };
       },
     },
     task: {
@@ -156,4 +184,33 @@ function createFakePrisma() {
   return prisma;
 }
 
-module.exports = { createFakePrisma };
+// Stand-in for the @google/genai client used by src/syllabus/analyzeSyllabus.js.
+//   createFakeGemini({ course_code: 'CS101', topics: [...] })  -> replies with that JSON
+//   createFakeGemini('not json')                                -> replies with raw text
+//   createFakeGemini((request) => reply | throw)                -> custom per call
+// Every generateContent request is recorded in `calls`.
+function createFakeGemini(reply) {
+  const calls = [];
+  return {
+    calls,
+    models: {
+      async generateContent(request) {
+        calls.push(request);
+        const value = typeof reply === 'function' ? reply(request) : reply;
+        return { text: typeof value === 'string' ? value : JSON.stringify(value) };
+      },
+    },
+  };
+}
+
+// A plausible Gemini reply for route tests.
+const SAMPLE_ANALYSIS = {
+  course_code: 'MATH201',
+  topics: [
+    { order: 1, title: 'Techniques of integration', description: 'Substitution, parts, partial fractions.' },
+    { order: 2, title: 'Improper integrals and applications', description: 'Area, volume, arc length.' },
+    { order: 3, title: 'Sequences and series' },
+  ],
+};
+
+module.exports = { createFakePrisma, createFakeGemini, SAMPLE_ANALYSIS };

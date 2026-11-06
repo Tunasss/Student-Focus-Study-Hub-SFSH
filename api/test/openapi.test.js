@@ -13,7 +13,8 @@ const Ajv2020 = require('ajv/dist/2020');
 const addFormats = require('ajv-formats');
 const { createApp } = require('../src/app');
 const { loadSpec } = require('../src/docs');
-const { createFakePrisma } = require('./helpers');
+const { createFakePrisma, createFakeGemini, SAMPLE_ANALYSIS } = require('./helpers');
+const { makePdf } = require('./fixtures/makePdf');
 
 const spec = loadSpec();
 const ajv = new Ajv2020({ strict: false, allErrors: true });
@@ -105,7 +106,7 @@ describe('responses match openapi.yaml (Rule 02 envelope)', () => {
   let token;
 
   before(async () => {
-    app = createApp({ prisma: createFakePrisma() });
+    app = createApp({ prisma: createFakePrisma(), gemini: createFakeGemini(SAMPLE_ANALYSIS) });
     const res = await request(app).post('/api/auth/register').send({ email: 'a@sfsh.dev', password: 'Password123!' });
     token = res.body.data.token;
   });
@@ -150,6 +151,30 @@ describe('responses match openapi.yaml (Rule 02 envelope)', () => {
     assert.ok(week.body.data.events.length > 0);
     assertMatchesSpec(week, 'get', '/api/schedule');
     assertMatchesSpec(await get('tz=Mars/Base'), 'get', '/api/schedule'); // 400
+  });
+
+  test('POST /api/syllabus/extract', async () => {
+    const upload = (buffer, name) => auth(request(app).post('/api/syllabus/extract')).attach('file', buffer, name);
+    const text = Array.from({ length: 12 }, (_, i) => `Chapter ${i + 1}: topic number ${i + 1}`).join('\n');
+    assertMatchesSpec(await upload(makePdf([text, text]), 'syllabus.pdf'), 'post', '/api/syllabus/extract');
+    assertMatchesSpec(await upload(makePdf(['']), 'scanned.pdf'), 'post', '/api/syllabus/extract'); // 422
+    assertMatchesSpec(await upload(makePdf([text]), 'syllabus.txt'), 'post', '/api/syllabus/extract'); // 400
+    assertMatchesSpec(await request(app).post('/api/syllabus/extract'), 'post', '/api/syllabus/extract'); // 401
+
+    const noTopics = createApp({ prisma: createFakePrisma(), gemini: createFakeGemini({ topics: [] }) });
+    const noKey = createApp({ prisma: createFakePrisma(), gemini: null });
+    const badReply = createApp({ prisma: createFakePrisma(), gemini: createFakeGemini('not json') });
+    const route = (a) => auth(request(a).post('/api/syllabus/extract')).attach('file', makePdf([text]), 'syllabus.pdf');
+    assertMatchesSpec(await route(noTopics), 'post', '/api/syllabus/extract'); // 422 SYLLABUS_NO_TOPICS
+    assertMatchesSpec(await route(noKey), 'post', '/api/syllabus/extract'); // 503
+    assertMatchesSpec(await route(badReply), 'post', '/api/syllabus/extract'); // 502 LLM_SCHEMA_INVALID
+    const offline = createApp({
+      prisma: createFakePrisma(),
+      gemini: createFakeGemini(() => {
+        throw new TypeError('fetch failed');
+      }),
+    });
+    assertMatchesSpec(await route(offline), 'post', '/api/syllabus/extract'); // 503 LLM_UNAVAILABLE
   });
 
   test('GET /api/courses', async () => {
@@ -210,6 +235,64 @@ describe('responses match openapi.yaml (Rule 02 envelope)', () => {
       assertMatchesSpec(await auth(request(app).delete('/api/tasks/9999')), 'delete', route); // 404
       assertMatchesSpec(await request(app).delete(`/api/tasks/${taskId}`), 'delete', route); // 401
       assertMatchesSpec(await auth(request(app).delete(`/api/tasks/${taskId}`)), 'delete', route);
+    });
+  });
+
+  describe('topics', () => {
+    let courseId;
+    let topicId;
+
+    before(async () => {
+      const courses = await auth(request(app).get('/api/courses'));
+      courseId = courses.body.data.courses[0].id;
+    });
+
+    test('POST /api/courses/{id}/topics/bulk', async () => {
+      const route = '/api/courses/{id}/topics/bulk';
+      const post = (id, body) => auth(request(app).post(`/api/courses/${id}/topics/bulk`)).send(body);
+      const saved = await post(courseId, { topics: [{ order: 2, title: 'Chapter 2' }, { order: 1, title: 'Chapter 1', description: 'd' }] });
+      assert.equal(saved.status, 201);
+      assertMatchesSpec(saved, 'post', route);
+      topicId = saved.body.data.topics[0].id;
+      assertMatchesSpec(await post(courseId, { topics: [] }), 'post', route); // 400
+      assertMatchesSpec(await post(9999, { topics: [{ title: 'x' }] }), 'post', route); // 404
+      assertMatchesSpec(await request(app).post(`/api/courses/${courseId}/topics/bulk`).send({}), 'post', route); // 401
+    });
+
+    test('GET /api/courses/{id}/topics', async () => {
+      const route = '/api/courses/{id}/topics';
+      const list = await auth(request(app).get(`/api/courses/${courseId}/topics`));
+      assert.ok(list.body.data.topics.length > 0);
+      assertMatchesSpec(list, 'get', route);
+      assertMatchesSpec(await auth(request(app).get('/api/courses/abc/topics')), 'get', route); // 400
+      assertMatchesSpec(await auth(request(app).get('/api/courses/9999/topics')), 'get', route); // 404
+      assertMatchesSpec(await request(app).get(`/api/courses/${courseId}/topics`), 'get', route); // 401
+    });
+
+    test('POST /api/courses/{id}/topics', async () => {
+      const route = '/api/courses/{id}/topics';
+      const post = (id, body) => auth(request(app).post(`/api/courses/${id}/topics`)).send(body);
+      assertMatchesSpec(await post(courseId, { title: 'Manual', sortOrder: 10 }), 'post', route); // 201
+      assertMatchesSpec(await post(courseId, { title: 'Clash', sortOrder: 10 }), 'post', route); // 409
+      assertMatchesSpec(await post(courseId, { title: '' }), 'post', route); // 400
+      assertMatchesSpec(await post(9999, { title: 'x' }), 'post', route); // 404
+      assertMatchesSpec(await request(app).post(`/api/courses/${courseId}/topics`).send({ title: 'x' }), 'post', route); // 401
+    });
+
+    test('PATCH /api/topics/{id}', async () => {
+      const route = '/api/topics/{id}';
+      assertMatchesSpec(await auth(request(app).patch(`/api/topics/${topicId}`)).send({ status: 'DONE' }), 'patch', route);
+      assertMatchesSpec(await auth(request(app).patch(`/api/topics/${topicId}`)).send({}), 'patch', route); // 400
+      assertMatchesSpec(await auth(request(app).patch('/api/topics/9999')).send({ status: 'DONE' }), 'patch', route); // 404
+      assertMatchesSpec(await request(app).patch(`/api/topics/${topicId}`).send({ status: 'DONE' }), 'patch', route); // 401
+    });
+
+    test('DELETE /api/topics/{id}', async () => {
+      const route = '/api/topics/{id}';
+      assertMatchesSpec(await auth(request(app).delete('/api/topics/abc')), 'delete', route); // 400
+      assertMatchesSpec(await auth(request(app).delete('/api/topics/9999')), 'delete', route); // 404
+      assertMatchesSpec(await request(app).delete(`/api/topics/${topicId}`), 'delete', route); // 401
+      assertMatchesSpec(await auth(request(app).delete(`/api/topics/${topicId}`)), 'delete', route);
     });
   });
 

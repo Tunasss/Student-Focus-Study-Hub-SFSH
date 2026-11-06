@@ -134,8 +134,8 @@ describe('POST /api/syllabus/extract', () => {
     assert.match(res.body.error.message, /manual entry form/);
   });
 
-  test('answers 400 PDF_TOO_MANY_PAGES above 30 pages', async () => {
-    const res = await extract(makePdf(Array.from({ length: 31 }, () => SYLLABUS)));
+  test('answers 400 PDF_TOO_MANY_PAGES above 200 pages', async () => {
+    const res = await extract(makePdf(Array.from({ length: 201 }, () => SYLLABUS)));
     assert.equal(res.status, 400);
     assert.equal(res.body.error.code, 'PDF_TOO_MANY_PAGES');
   });

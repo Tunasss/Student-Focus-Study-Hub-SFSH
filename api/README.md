@@ -126,7 +126,7 @@ CI runs `npm test`). Tasks-related suites live in `test/tasks/`:
 |---|---|---|
 | extension, `%PDF-` header, field name | `.pdf` in field `file` | `400 INVALID_PDF_FORMAT` |
 | size (multer + explicit check) | ≤ 5 MB | `400 INVALID_PDF_FORMAT` |
-| pages (checked before extracting text) | ≤ 30 | `400 PDF_TOO_MANY_PAGES` |
+| pages (checked before extracting text) | ≤ 200 | `400 PDF_TOO_MANY_PAGES` |
 | corrupt or password-protected file | — | `400 INVALID_PDF_FORMAT` |
 | text layer (scanned PDF fallback) | ≥ 200 non-whitespace characters | `422 PDF_NO_TEXT_LAYER`, message points to the manual entry form |
 

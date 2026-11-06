@@ -28,7 +28,7 @@ info:
     | `INVALID_JSON` | 400 | The request body is not valid JSON |
     | `INVALID_ICS_FORMAT` | 400 | The uploaded timetable is not a usable .ics file |
     | `INVALID_PDF_FORMAT` | 400 | The uploaded syllabus is not a usable .pdf file (missing, wrong extension, over 5 MB, corrupt, encrypted) |
-    | `PDF_TOO_MANY_PAGES` | 400 | The syllabus PDF has more than 30 pages |
+    | `PDF_TOO_MANY_PAGES` | 400 | The syllabus PDF has more than 200 pages |
     | `PDF_NO_TEXT_LAYER` | 422 | The syllabus PDF is a scanned image without a text layer; use the manual entry form |
     | `SYLLABUS_NO_TOPICS` | 422 | The AI found no course topics in the syllabus text; use the manual entry form |
     | `LLM_SCHEMA_INVALID` | 502 | The AI reply was not valid JSON or failed the topics schema (zod), even after one retry |
@@ -471,7 +471,7 @@ paths:
         code and the ordered list of topics. The reply is forced to JSON (`responseMimeType: application/json` +
         a fixed `responseSchema`) and re-validated with zod before it is returned.
 
-        - Accepted: `.pdf` extension, at most 5 MB, at most 30 pages, `%PDF-` header, not password protected.
+        - Accepted: `.pdf` extension, at most 5 MB, at most 200 pages, `%PDF-` header, not password protected.
         - Text is read with `pdf-parse`; runs of spaces are collapsed and blank lines dropped.
         - **Scanned PDFs**: when fewer than 200 non-whitespace characters can be read from the whole file, the
           pipeline stops with `422 PDF_NO_TEXT_LAYER`. The message tells the user to add the topics with the
@@ -511,7 +511,7 @@ paths:
         '400':
           description: |
             `INVALID_PDF_FORMAT` (missing file, wrong field or extension, over 5 MB, no `%PDF-` header, corrupt
-            or password protected) or `PDF_TOO_MANY_PAGES` (more than 30 pages).
+            or password protected) or `PDF_TOO_MANY_PAGES` (more than 200 pages).
           content:
             application/json:
               schema:
@@ -521,7 +521,7 @@ paths:
                 data: null
                 error:
                   code: PDF_TOO_MANY_PAGES
-                  message: PDF has 31 pages; the limit is 30
+                  message: PDF has 201 pages; the limit is 200
                 timestamp: '2026-11-06T00:00:00.000Z'
         '401':
           $ref: '#/components/responses/Unauthorized'
@@ -1374,7 +1374,7 @@ components:
         pageCount:
           type: integer
           minimum: 1
-          maximum: 30
+          maximum: 200
           example: 3
         charCount:
           type: integer

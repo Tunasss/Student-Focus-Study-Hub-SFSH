@@ -79,15 +79,15 @@ describe('extractPdfText', () => {
     assert.doesNotMatch(result.text, /-- \d+ of \d+ --/);
   });
 
-  test('accepts exactly 30 pages', async () => {
-    const pages = Array.from({ length: 30 }, (_, i) => `Page ${i + 1}: ${'topic '.repeat(5)}`);
+  test('accepts exactly 200 pages', async () => {
+    const pages = Array.from({ length: 200 }, (_, i) => `Page ${i + 1}: ${'topic '.repeat(5)}`);
     const result = await extractPdfText(makePdf(pages));
-    assert.equal(result.pageCount, 30);
+    assert.equal(result.pageCount, 200);
   });
 
-  test('rejects 31 pages with PDF_TOO_MANY_PAGES before extracting text', async () => {
-    const pages = Array.from({ length: 31 }, () => CHAPTER_TEXT);
-    await assertApiError(() => extractPdfText(makePdf(pages)), 400, 'PDF_TOO_MANY_PAGES', /31 pages; the limit is 30/);
+  test('rejects 201 pages with PDF_TOO_MANY_PAGES before extracting text', async () => {
+    const pages = Array.from({ length: 201 }, () => CHAPTER_TEXT);
+    await assertApiError(() => extractPdfText(makePdf(pages)), 400, 'PDF_TOO_MANY_PAGES', /201 pages; the limit is 200/);
   });
 
   describe('scanned PDF fallback: fewer than 200 characters -> PDF_NO_TEXT_LAYER', () => {

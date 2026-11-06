@@ -1,6 +1,6 @@
 // WBS 2.2.1 — syllabus PDF upload checks and text-layer extraction (pdf-parse).
 //
-// Limits: .pdf extension, at most 5 MB, at most 30 pages.
+// Limits: .pdf extension, at most 5 MB, at most 200 pages.
 // Scanned PDFs (image only) have no text layer. When fewer than 200 non-whitespace
 // characters can be read from the whole file the pipeline stops with
 // PDF_NO_TEXT_LAYER (422) and the user is told to use the manual entry form instead.
@@ -10,7 +10,7 @@ const { ApiError } = require('../errors');
 
 const PDF_LIMITS = Object.freeze({
   maxBytes: 5 * 1024 * 1024,
-  maxPages: 30,
+  maxPages: 200,
   minChars: 200,
   extension: '.pdf',
 });

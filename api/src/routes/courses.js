@@ -5,7 +5,7 @@ const { ok } = require('../envelope');
 const { timeFromDb, dateFromDb } = require('../ics/time');
 const { parseOrThrow } = require('../validation');
 const { topicInputSchema, topicBulkSchema, idParamSchema } = require('../topics/schemas');
-const { listTopics, createTopic, replaceTopics, saveHierarchicalTopics, serializeTopic } = require('../topics/topicRepo');
+const { listTopics, createTopic, saveHierarchicalTopics, serializeTopic } = require('../topics/topicRepo');
 
 function serializeSchedule(s) {
   return {

@@ -6,7 +6,7 @@ const { requireAuth } = require('../middleware/auth');
 const { multiFileUpload } = require('../middleware/upload');
 const { ok } = require('../envelope');
 const { ApiError } = require('../errors');
-const { PDF_LIMITS, readPdfUpload, extractPdfText, extractMultiplePdfs } = require('../syllabus/extractPdf');
+const { extractPdfText, extractMultiplePdfs } = require('../syllabus/extractPdf');
 const { analyzeSyllabusText } = require('../syllabus/analyzeSyllabus');
 
 const uploadPdf = multiFileUpload({

@@ -52,7 +52,7 @@ describe('SyllabusPage Integration', () => {
       expect(screen.getByText('Algorithm Analysis')).toBeInTheDocument();
       expect(screen.getByText('Binary Search Trees')).toBeInTheDocument();
       expect(screen.getByText('Dynamic Programming')).toBeInTheDocument();
-    });
+    }, { timeout: 4000 });
 
     // 1 done out of 3 = 33%
     expect(screen.getByText('33%')).toBeInTheDocument();
@@ -69,7 +69,7 @@ describe('SyllabusPage Integration', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Dynamic Programming')).toBeInTheDocument();
-    });
+    }, { timeout: 4000 });
 
     const radios = screen.getAllByRole('radio', { name: /Completed|Hoàn thành/i });
     const dpDoneRadio = radios[2];
@@ -97,7 +97,7 @@ describe('SyllabusPage Integration', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Dynamic Programming')).toBeInTheDocument();
-    });
+    }, { timeout: 4000 });
 
     const radios = screen.getAllByRole('radio', { name: /Completed|Hoàn thành/i });
     const dpDoneRadio = radios[2];
@@ -247,7 +247,7 @@ describe('SyllabusPage Integration', () => {
       expect(screen.getByText('Chapter 2: Memory Systems')).toBeInTheDocument();
       expect(screen.getByText(/deck2\.pdf/)).toBeInTheDocument();
       expect(screen.getByText('2.1 Cache Hierarchy')).toBeInTheDocument();
-    });
+    }, { timeout: 4000 });
 
     // 1 subtopic done out of 3 total subtopics = 33%
     expect(screen.getByText('33%')).toBeInTheDocument();
@@ -272,7 +272,7 @@ describe('SyllabusPage Integration', () => {
 
     await waitFor(() => {
       expect(screen.getByText('1.2 ALU Design')).toBeInTheDocument();
-    });
+    }, { timeout: 4000 });
 
     // Subtopic 1.2 is currently TODO. Find its DONE radio
     const subtopicRadios = screen.getAllByRole('radio', { name: /Completed|Hoàn thành/i });

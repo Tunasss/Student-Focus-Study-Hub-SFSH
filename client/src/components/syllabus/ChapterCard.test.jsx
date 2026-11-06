@@ -48,8 +48,6 @@ describe('ChapterCard', () => {
     renderCard({ onStatusChange });
 
     // Click DONE for subtopic 102 (Đại số Boolean)
-    const radioGroups = screen.getAllByRole('radiogroup');
-    // Group 2 is for subtopic 102
     const todoChip = screen.getByRole('radio', { name: /Chưa học|To Do/i, checked: true });
     expect(todoChip).toBeInTheDocument();
 

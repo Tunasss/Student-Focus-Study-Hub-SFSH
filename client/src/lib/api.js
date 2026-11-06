@@ -98,16 +98,16 @@ export const syllabusApi = {
   },
   extractSyllabus: async (courseIdOrFiles, filesOrCourseName = [], courseNameFallback = '') => {
     let files;
-    let courseName = courseNameFallback;
+    let courseName;
     let courseId = null;
 
     if (typeof courseIdOrFiles === 'number' || (typeof courseIdOrFiles === 'string' && /^\d+$/.test(courseIdOrFiles))) {
       courseId = courseIdOrFiles;
       files = Array.isArray(filesOrCourseName) ? filesOrCourseName : [filesOrCourseName];
-      courseName = courseNameFallback;
+      courseName = courseNameFallback || '';
     } else {
       files = Array.isArray(courseIdOrFiles) ? courseIdOrFiles : [courseIdOrFiles];
-      courseName = typeof filesOrCourseName === 'string' ? filesOrCourseName : '';
+      courseName = typeof filesOrCourseName === 'string' ? filesOrCourseName : courseNameFallback || '';
     }
 
     const formData = new FormData();

@@ -1,16 +1,17 @@
 // WBS 2.2.1 — syllabus PDF upload checks and text-layer extraction (pdf-parse).
 //
-// Limits: .pdf extension, at most 5 MB, at most 30 pages.
+// Limits: .pdf extension, at most 5 MB, at most 200 pages.
 // Scanned PDFs (image only) have no text layer. When fewer than 200 non-whitespace
 // characters can be read from the whole file the pipeline stops with
 // PDF_NO_TEXT_LAYER (422) and the user is told to use the manual entry form instead.
 
 const { PDFParse, VerbosityLevel } = require('pdf-parse');
 const { ApiError } = require('../errors');
+const { compareChapterItems } = require('./chapterOrder');
 
 const PDF_LIMITS = Object.freeze({
   maxBytes: 5 * 1024 * 1024,
-  maxPages: 30,
+  maxPages: 200,
   minChars: 200,
   extension: '.pdf',
 });
@@ -93,4 +94,54 @@ async function extractPdfText(buffer) {
   }
 }
 
-module.exports = { PDF_LIMITS, NO_TEXT_LAYER_MESSAGE, readPdfUpload, extractPdfText, normalizePageText, countChars };
+// Extracts text and metadata across an array of uploaded PDF files.
+// Enforces a 20-file count limit, 50 MB batch size limit, and per-file validation.
+async function extractMultiplePdfs(files) {
+  if (!files || !Array.isArray(files) || files.length === 0) {
+    throw invalidPdf('Missing .pdf file (multipart field "files")');
+  }
+  if (files.length > 20) {
+    throw new ApiError(400, 'FILE_LIMIT_EXCEEDED', 'Cannot upload more than 20 files at once');
+  }
+
+  const totalBytes = files.reduce((sum, f) => sum + (f?.size || f?.buffer?.length || 0), 0);
+  if (totalBytes > 50 * 1024 * 1024) {
+    throw new ApiError(400, 'FILE_LIMIT_EXCEEDED', 'Total upload size exceeds 50 MB');
+  }
+
+  const results = [];
+  const sortedFiles = [...files].sort((a, b) => compareChapterItems(a.originalname, b.originalname));
+  for (const file of sortedFiles) {
+    const buffer = readPdfUpload(file);
+    try {
+      const extracted = await extractPdfText(buffer);
+      results.push({
+        fileName: file.originalname || 'syllabus.pdf',
+        text: extracted.text,
+        pageCount: extracted.pageCount,
+        charCount: extracted.charCount,
+      });
+    } catch (err) {
+      if (err.code === 'PDF_NO_TEXT_LAYER') {
+        throw new ApiError(
+          422,
+          'PDF_NO_TEXT_LAYER',
+          `File "${file.originalname || 'syllabus.pdf'}" has no readable text layer (it looks like a scanned image). Please add the syllabus topics with the manual entry form instead.`,
+        );
+      }
+      throw err;
+    }
+  }
+
+  return results;
+}
+
+module.exports = {
+  PDF_LIMITS,
+  NO_TEXT_LAYER_MESSAGE,
+  readPdfUpload,
+  extractPdfText,
+  extractMultiplePdfs,
+  normalizePageText,
+  countChars,
+};

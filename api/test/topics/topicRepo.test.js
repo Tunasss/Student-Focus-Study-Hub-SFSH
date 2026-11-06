@@ -182,13 +182,15 @@ describe('updateTopic / deleteTopic', () => {
   });
 });
 
-test('serializeTopic exposes sortOrder (not sort_order) and null description', () => {
+test('serializeTopic exposes sortOrder (not sort_order), parentId, sourceFile and null description', () => {
   assert.deepEqual(serializeTopic({ id: 1, courseId: 2, sortOrder: 3, title: 'T', description: undefined, status: 'TODO' }), {
     id: 1,
     courseId: 2,
+    parentId: null,
     sortOrder: 3,
     title: 'T',
     description: null,
+    sourceFile: null,
     status: 'TODO',
   });
 });

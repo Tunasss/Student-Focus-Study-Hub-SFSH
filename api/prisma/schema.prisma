@@ -98,17 +98,23 @@ model Schedule {
 model Topic {
   id          Int         @id @default(autoincrement())
   courseId    Int         @map("course_id")
+  parentId    Int?        @map("parent_id")
   // Named sort_order to avoid the MySQL reserved word ORDER.
   sortOrder   Int         @map("sort_order")
   title       String      @db.VarChar(255)
   description String?     @db.Text
+  sourceFile  String?     @map("source_file") @db.VarChar(255)
   status      TopicStatus @default(TODO)
 
   course   Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  parent   Topic?         @relation("TopicHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children Topic[]        @relation("TopicHierarchy")
   tasks    Task[]
   sessions StudySession[]
 
-  @@unique([courseId, sortOrder])
+  @@unique([courseId, parentId, sortOrder])
+  @@index([courseId])
+  @@index([parentId])
   @@map("topics")
 }
 

@@ -127,8 +127,16 @@ function createFakePrisma() {
         return pick(rows[0] ?? null, select);
       },
       async create({ data }) {
-        const topic = { id: ids.topic++, description: null, status: 'TODO', ...data };
-        if (topics.some((t) => t.courseId === topic.courseId && t.sortOrder === topic.sortOrder)) throw uniqueViolation();
+        const topic = { id: ids.topic++, description: null, status: 'TODO', parentId: null, sourceFile: null, ...data };
+        if (
+          topics.some(
+            (t) =>
+              t.courseId === topic.courseId &&
+              (t.parentId ?? null) === (topic.parentId ?? null) &&
+              t.sortOrder === topic.sortOrder,
+          )
+        )
+          throw uniqueViolation();
         topics.push(topic);
         return topic;
       },

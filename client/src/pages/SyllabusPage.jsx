@@ -3,74 +3,34 @@ import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { CourseTabs } from '../components/syllabus/CourseTabs';
 import { MasteryHeaderCard } from '../components/syllabus/MasteryHeaderCard';
-import { TopicCard } from '../components/syllabus/TopicCard';
+import { ChapterCard } from '../components/syllabus/ChapterCard';
 import { AddTopicModal } from '../components/syllabus/AddTopicModal';
 import { SyllabusUploadModal } from '../components/syllabus/SyllabusUploadModal';
 import { ToastNotification } from '../components/syllabus/ToastNotification';
 import { useLanguage } from '../i18n/languageContext';
 import { scheduleApi, syllabusApi } from '../lib/api';
 import { deduplicateSyllabusCourses } from '../utils/courseFormat';
-
-const DEFAULT_TOPICS = {
-  1: [
-    {
-      id: 101,
-      courseId: 1,
-      sortOrder: 1,
-      title: 'Chapter 1: Hardware Foundations & Logic Gates',
-      description: 'Boolean algebra, binary logic, CPU register architecture and Von Neumann model.',
-      status: 'DONE',
-    },
-    {
-      id: 102,
-      courseId: 1,
-      sortOrder: 2,
-      title: 'Chapter 2: Data Structures & Asymptotic Complexity',
-      description: 'Linked lists, hash tables, Big-O notation, tree traversals and recursion.',
-      status: 'DONE',
-    },
-    {
-      id: 103,
-      courseId: 1,
-      sortOrder: 3,
-      title: 'Chapter 3: Relational DB & Express REST Endpoints',
-      description: 'Schema normalization, SQL queries, Prisma ORM and HTTP controller routing.',
-      status: 'DOING',
-    },
-    {
-      id: 104,
-      courseId: 1,
-      sortOrder: 4,
-      title: 'Chapter 4: Distributed Systems & Consensus Protocols',
-      description: 'Two-phase commit (2PC), Paxos/Raft consensus and event-driven microservices.',
-      status: 'TODO',
-    },
-    {
-      id: 105,
-      courseId: 1,
-      sortOrder: 5,
-      title: 'Chapter 5: Operating System Virtual Memory & Threads',
-      description: 'Paging algorithms, mutex locks, semaphores and concurrency deadlocks.',
-      status: 'TODO',
-    },
-  ],
-  2: [
-    { id: 201, courseId: 2, sortOrder: 1, title: 'Chapter 1: Multivariable Derivatives', description: 'Partial derivatives and gradients', status: 'DONE' },
-    { id: 202, courseId: 2, sortOrder: 2, title: 'Chapter 2: Vector Spaces & Matrices', description: 'Eigenvalues and Gaussian elimination', status: 'TODO' },
-  ],
-};
+import { buildTopicTree, updateTopicInList } from '../utils/topicTree';
+import { extractChapterNumber } from '../utils/chapterOrder';
 
 export function SyllabusPage() {
   const { lang } = useLanguage();
   const containerRef = useRef(null);
 
   const [courses, setCourses] = useState([]);
-  const [activeCourseId, setActiveCourseId] = useState(null);
+  const [activeCourseId, setActiveCourseId] = useState(() => {
+    if (typeof localStorage !== 'undefined') {
+      const saved = Number(localStorage.getItem('sfsh_active_course_id'));
+      return Number.isInteger(saved) && saved > 0 ? saved : null;
+    }
+    return null;
+  });
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(
     () => !(typeof localStorage !== 'undefined' && localStorage.getItem('sfsh_timetable_cleared') === 'true')
   );
   const [updatingTopicId, setUpdatingTopicId] = useState(null);
+  const [chapterToDelete, setChapterToDelete] = useState(null);
   const [toast, setToast] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -80,14 +40,21 @@ export function SyllabusPage() {
       pageTitle: 'Course Syllabi & Topics',
       pageSubtitle: 'Structured chapter breakdown and progressive mastery tracking for your enrolled courses.',
       addTopicBtn: '+ Add Topic',
-      extractAiBtn: '✨ AI Extract Syllabus',
-      importSuccess: (count) => `Successfully imported ${count} chapters via Gemini AI.`,
+      extractBtn: 'Extract Syllabus',
+      importSuccess: (count) => `Successfully imported ${count} chapters.`,
       noTopicsTitle: 'No Topics for this Course Yet',
       noTopicsDesc: 'Start breaking down this course by adding your first chapter topic or uploading a syllabus.',
       loadingText: 'Loading syllabus topics…',
       updateFailed: 'Failed to update topic status. Changes rolled back.',
       createSuccess: 'New topic chapter added successfully.',
       createFailed: 'Failed to create topic.',
+      deleteChapterSuccess: 'Chapter deleted successfully.',
+      deleteChapterFailed: 'Failed to delete chapter.',
+      deleteModalTitle: 'Delete Chapter?',
+      deleteModalConfirm: (title, count) =>
+        `Are you sure you want to delete "${title}" and its ${count} subtopics? This action cannot be undone.`,
+      deleteModalAction: 'Delete Chapter',
+      cancel: 'Cancel',
       // Timetable Constraint Requirement View
       reqBadge: 'TIMETABLE REQUIRED · SYSTEM PREREQUISITE',
       reqTitle: 'No Enrolled Courses Found in Timetable',
@@ -100,14 +67,21 @@ export function SyllabusPage() {
       pageTitle: 'Giáo trình & Chủ đề môn học',
       pageSubtitle: 'Phân rã chương trình và theo dõi tiến độ hoàn thành kiến thức từng môn học.',
       addTopicBtn: '+ Thêm chương mới',
-      extractAiBtn: '✨ Nạp đề cương bằng AI',
-      importSuccess: (count) => `Đã nạp thành công ${count} chương vào giáo trình bằng Gemini AI.`,
+      extractBtn: 'Nạp đề cương',
+      importSuccess: (count) => `Đã nạp thành công ${count} chương vào giáo trình.`,
       noTopicsTitle: 'Chưa có chương mục nào',
       noTopicsDesc: 'Bắt đầu theo dõi môn học bằng cách thêm chương đầu tiên hoặc nạp đề cương môn học.',
       loadingText: 'Đang tải danh sách chương…',
       updateFailed: 'Không thể cập nhật trạng thái chương. Đã hoàn tác lại thay đổi.',
       createSuccess: 'Đã thêm chương học mới thành công.',
       createFailed: 'Không thể tạo chương học mới.',
+      deleteChapterSuccess: 'Đã xóa chương học thành công.',
+      deleteChapterFailed: 'Không thể xóa chương học.',
+      deleteModalTitle: 'Xóa chương học?',
+      deleteModalConfirm: (title, count) =>
+        `Bạn có chắc chắn muốn xóa "${title}" cùng ${count} mục kiến thức con? Thao tác này không thể hoàn tác.`,
+      deleteModalAction: 'Xóa chương',
+      cancel: 'Hủy',
       // Timetable Constraint Requirement View
       reqBadge: 'YÊU CẦU THỜI KHÓA BIỂU · RÀNG BUỘC HỆ THỐNG',
       reqTitle: 'Chưa có môn học nào từ Thời khóa biểu',
@@ -120,7 +94,7 @@ export function SyllabusPage() {
     pageTitle: 'Course Syllabi & Topics',
     pageSubtitle: 'Structured chapter breakdown and progressive mastery tracking for each enrolled course.',
     addTopicBtn: '+ Add Topic',
-    extractAiBtn: '✨ AI Extract Syllabus',
+    extractBtn: 'Extract Syllabus',
     importSuccess: (count) => `Successfully imported ${count} chapters.`,
     noTopicsTitle: 'No Topics for this Course Yet',
     noTopicsDesc: 'Start breaking down this course by adding your first chapter topic or uploading a syllabus.',
@@ -128,6 +102,13 @@ export function SyllabusPage() {
     updateFailed: 'Failed to update topic status. Changes rolled back.',
     createSuccess: 'New topic chapter added successfully.',
     createFailed: 'Failed to create topic.',
+    deleteChapterSuccess: 'Chapter deleted successfully.',
+    deleteChapterFailed: 'Failed to delete chapter.',
+    deleteModalTitle: 'Delete Chapter?',
+    deleteModalConfirm: (title, count) =>
+      `Are you sure you want to delete "${title}" and its ${count} subtopics?`,
+    deleteModalAction: 'Delete Chapter',
+    cancel: 'Cancel',
     reqBadge: 'TIMETABLE REQUIRED',
     reqTitle: 'No Courses in Timetable',
     reqSubtitle: 'Import a timetable to track syllabus topics.',
@@ -155,8 +136,16 @@ export function SyllabusPage() {
           setCourses(deduplicated);
           if (deduplicated.length > 0) {
             setActiveCourseId((prev) => {
-              const stillExists = deduplicated.some((c) => c.id === prev);
-              return stillExists ? prev : deduplicated[0].id;
+              const saved = typeof localStorage !== 'undefined'
+                ? Number(localStorage.getItem('sfsh_active_course_id'))
+                : null;
+              const preferredId = prev || saved;
+              const match = deduplicated.find((c) => c.id === preferredId);
+              const targetId = match ? match.id : deduplicated[0].id;
+              if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('sfsh_active_course_id', String(targetId));
+              }
+              return targetId;
             });
           } else {
             setActiveCourseId(null);
@@ -214,15 +203,11 @@ export function SyllabusPage() {
         const fetched = await syllabusApi.getCourseTopics(activeCourseId);
         if (!cancelled) {
           const validList = Array.isArray(fetched) ? fetched : fetched?.topics || [];
-          if (validList.length > 0) {
-            setTopics(validList);
-          } else {
-            setTopics(DEFAULT_TOPICS[activeCourseId] || []);
-          }
+          setTopics(validList);
         }
       } catch {
         if (!cancelled) {
-          setTopics(DEFAULT_TOPICS[activeCourseId] || []);
+          setTopics([]);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -259,19 +244,48 @@ export function SyllabusPage() {
 
   // Optimistic status update with rollback
   async function handleStatusChange(topicId, newStatus) {
-    const prevTopics = [...topics];
+    if (!topicId) {
+      console.warn('handleStatusChange called without valid topicId:', { topicId, newStatus });
+      return;
+    }
+
+    // Capture the existing status of this specific topic for localized rollback
+    const prevTopic = topics.find((t) => t.id === topicId);
+    const prevStatus = prevTopic?.status || 'TODO';
 
     // Optimistically update local state immediately
-    setTopics((prev) =>
-      prev.map((t) => (t.id === topicId ? { ...t, status: newStatus } : t))
-    );
+    setTopics((prev) => updateTopicInList(prev, topicId, newStatus));
     setUpdatingTopicId(topicId);
+
+    // If topicId is a client-generated mock ID (e.g. extracted-sub-...), retain optimistic update
+    // without sending a failing request to the server
+    const isClientOnlyId =
+      typeof topicId === 'string' &&
+      (topicId.startsWith('extracted-') ||
+        topicId.startsWith('client-') ||
+        topicId.startsWith('manual-') ||
+        isNaN(Number(topicId)));
+
+    if (isClientOnlyId) {
+      setUpdatingTopicId(null);
+      return;
+    }
 
     try {
       await syllabusApi.updateTopicStatus(topicId, newStatus);
-    } catch {
-      // Rollback on failure
-      setTopics(prevTopics);
+    } catch (err) {
+      console.error('Failed to update topic status for topicId:', topicId, err);
+
+      // If the topic was not found on server (404), refresh topics to sync state
+      if (err?.status === 404 && activeCourseId) {
+        syllabusApi.getCourseTopics(activeCourseId).then((fresh) => {
+          const valid = Array.isArray(fresh) ? fresh : fresh?.topics || [];
+          if (valid.length > 0) setTopics(valid);
+        }).catch(() => {});
+      }
+
+      // Rollback only this specific topic rather than resetting all topics
+      setTopics((prev) => updateTopicInList(prev, topicId, prevStatus));
       setToast({ message: t.updateFailed, type: 'error' });
     } finally {
       setUpdatingTopicId(null);
@@ -303,17 +317,128 @@ export function SyllabusPage() {
   }
 
   // Handle bulk syllabus import from AI extractor
-  function handleImportTopics(importedTopics) {
-    if (!importedTopics || importedTopics.length === 0) return;
-    setTopics((prev) => [...prev, ...importedTopics]);
+  async function handleImportTopics(importedData) {
+    if (!importedData) return;
+    const incomingChapters = importedData.chapters || (Array.isArray(importedData) ? importedData : []);
+    if (incomingChapters.length === 0) return;
+
+    const mode = importedData.mode || 'append';
+    const targetCourseId = activeCourseId || activeCourse?.id;
+
+    if (!targetCourseId) {
+      setToast({
+        message: lang === 'vi' ? 'Chưa chọn môn học để lưu đề cương.' : 'No course selected to save syllabus.',
+        type: 'error',
+      });
+      return;
+    }
+
+    // Sanitize chapters for bulk persistence: clean up any temporary client ids
+    const sanitizedChapters = incomingChapters.map((ch, chIdx) => {
+      const detectedNum = extractChapterNumber(ch.title) ?? extractChapterNumber(ch.sourceFile);
+      const resolvedSortOrder =
+        ch.sortOrder ||
+        (detectedNum && Number.isInteger(detectedNum) && detectedNum > 0 ? detectedNum : chIdx + 1);
+
+      return {
+        title: ch.title,
+        description: ch.description || null,
+        sourceFile: ch.sourceFile || null,
+        sortOrder: resolvedSortOrder,
+        status: ch.status || 'TODO',
+        subtopics: (ch.subtopics || []).map((sub, sIdx) => ({
+          title: sub.title,
+          description: sub.description || null,
+          sortOrder: sub.sortOrder || sIdx + 1,
+          status: sub.status || 'TODO',
+        })),
+      };
+    });
+
+    try {
+      if (typeof syllabusApi.bulkSaveTopics === 'function') {
+        const saved = await syllabusApi.bulkSaveTopics(targetCourseId, {
+          mode,
+          chapters: sanitizedChapters,
+        });
+        const savedTopics = Array.isArray(saved) ? saved : (saved?.topics || []);
+        if (savedTopics.length > 0) {
+          setTopics(savedTopics);
+          setToast({
+            message: t.importSuccess(incomingChapters.length),
+            type: 'success',
+          });
+          return;
+        }
+      }
+    } catch (err) {
+      console.error('bulkSaveTopics API call failed:', err);
+      setToast({
+        message:
+          lang === 'vi'
+            ? `Lưu đề cương thất bại: ${err?.message || 'Lỗi máy chủ'}`
+            : `Failed to save syllabus: ${err?.message || 'Server error'}`,
+        type: 'error',
+      });
+      return;
+    }
+
+    // In testing or standalone mock mode without DB bulk endpoint, preserve sanitized chapters with IDs
+    const clientFallbackChapters = sanitizedChapters.map((ch, cIdx) => ({
+      ...ch,
+      id: ch.id || `client-ch-${Date.now()}-${cIdx}`,
+      subtopics: (ch.subtopics || []).map((sub, sIdx) => ({
+        ...sub,
+        id: sub.id || `client-sub-${Date.now()}-${cIdx}-${sIdx}`,
+      })),
+    }));
+
+    if (mode === 'replace') {
+      setTopics(clientFallbackChapters);
+    } else {
+      setTopics((prev) => [...prev, ...clientFallbackChapters]);
+    }
+
     setToast({
-      message: t.importSuccess(importedTopics.length),
+      message: t.importSuccess(incomingChapters.length),
       type: 'success',
     });
   }
 
+  function handleSelectCourse(courseId) {
+    setActiveCourseId(courseId);
+    if (typeof localStorage !== 'undefined' && courseId) {
+      localStorage.setItem('sfsh_active_course_id', String(courseId));
+    }
+  }
+
+  async function confirmDeleteChapter() {
+    if (!chapterToDelete) return;
+    const targetId = chapterToDelete.id;
+    const prevTopics = [...topics];
+    setChapterToDelete(null);
+
+    // Optimistically remove from local state
+    setTopics((prev) => prev.filter((t) => t.id !== targetId && t.parentId !== targetId));
+
+    try {
+      if (typeof syllabusApi.deleteTopic === 'function') {
+        await syllabusApi.deleteTopic(targetId);
+      }
+      setToast({ message: t.deleteChapterSuccess, type: 'success' });
+    } catch (err) {
+      console.error('Failed to delete chapter:', err);
+      setTopics(prevTopics);
+      setToast({ message: t.deleteChapterFailed, type: 'error' });
+    }
+  }
+
   const activeCourse = courses.find((c) => c.id === activeCourseId) || courses[0];
   const nextSortOrder = topics.length > 0 ? Math.max(...topics.map((t) => t.sortOrder || 0)) + 1 : 1;
+  const topicTree = buildTopicTree(topics);
+  const progressTopics = topicTree.flatMap((ch) =>
+    ch.subtopics && ch.subtopics.length > 0 ? ch.subtopics : [ch]
+  );
 
   // Case 1: If there are NO courses in the timetable (or timetable was cleared)
   if (!loading && courses.length === 0) {
@@ -382,8 +507,7 @@ export function SyllabusPage() {
             onClick={() => setIsUploadModalOpen(true)}
             className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-primary/25 to-primary/10 border border-primary/40 px-4 py-2.5 text-xs font-bold text-primary hover:border-primary hover:bg-primary/20 transition-all cursor-pointer shadow-xs"
           >
-            <span>✨</span>
-            <span>{t.extractAiBtn}</span>
+            <span>{t.extractBtn}</span>
           </button>
           <button
             type="button"
@@ -399,20 +523,20 @@ export function SyllabusPage() {
       <CourseTabs
         courses={courses}
         activeCourseId={activeCourseId}
-        onSelectCourse={(id) => setActiveCourseId(id)}
+        onSelectCourse={handleSelectCourse}
       />
 
       {/* Mastery Progress Card */}
-      {activeCourse && <MasteryHeaderCard course={activeCourse} topics={topics} />}
+      {activeCourse && <MasteryHeaderCard course={activeCourse} topics={progressTopics} />}
 
       {/* Topics list */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-bold text-text tracking-tight">
-            {lang === 'vi' ? 'Danh sách chương mục' : 'Curriculum Chapters'}
+            {lang === 'vi' ? 'Cây kiến thức môn học' : 'Curriculum Knowledge Tree'}
           </h3>
           <span className="text-xs font-mono font-medium text-muted">
-            {topics.length} {topics.length === 1 ? 'topic' : 'topics'}
+            {topicTree.length} {topicTree.length === 1 ? (lang === 'vi' ? 'chương' : 'chapter') : (lang === 'vi' ? 'chương' : 'chapters')}
           </span>
         </div>
 
@@ -434,8 +558,7 @@ export function SyllabusPage() {
                 onClick={() => setIsUploadModalOpen(true)}
                 className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-bold text-primary-fg shadow-md hover:opacity-90 transition-all cursor-pointer"
               >
-                <span>✨</span>
-                <span>{t.extractAiBtn}</span>
+                <span>{t.extractBtn}</span>
               </button>
               <button
                 type="button"
@@ -447,14 +570,15 @@ export function SyllabusPage() {
             </div>
           </div>
         ) : (
-          <div className="space-y-3">
-            {topics.map((topic, index) => (
-              <TopicCard
-                key={topic.id}
-                topic={topic}
+          <div className="space-y-4">
+            {topicTree.map((chapter, index) => (
+              <ChapterCard
+                key={chapter.id ?? `ch-${chapter.sortOrder ?? index}`}
+                chapter={chapter}
                 index={index}
                 onStatusChange={handleStatusChange}
-                isUpdating={updatingTopicId === topic.id}
+                onDeleteChapter={(ch) => setChapterToDelete(ch)}
+                isUpdating={updatingTopicId === chapter.id}
               />
             ))}
           </div>
@@ -478,6 +602,57 @@ export function SyllabusPage() {
         onClose={() => setIsUploadModalOpen(false)}
         onImportSuccess={handleImportTopics}
       />
+
+      {/* Confirm Delete Chapter Modal */}
+      {chapterToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="glass-card border border-border/90 rounded-3xl p-6 sm:p-8 max-w-md w-full space-y-5 shadow-2xl relative">
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-lg">
+                🗑️
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base sm:text-lg font-bold text-text truncate">
+                  {t.deleteModalTitle}
+                </h3>
+                {chapterToDelete.sourceFile && (
+                  <p className="text-[11px] text-muted font-mono truncate">
+                    📄 {chapterToDelete.sourceFile}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <p className="text-xs sm:text-sm text-muted leading-relaxed">
+              {t.deleteModalConfirm(
+                chapterToDelete.title,
+                chapterToDelete.subtopics?.length || 0
+              )}
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-border/40">
+              <button
+                type="button"
+                onClick={() => setChapterToDelete(null)}
+                className="px-4 py-2 rounded-full border border-border/70 text-xs font-semibold text-text hover:bg-surface transition-colors cursor-pointer"
+              >
+                {t.cancel}
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteChapter}
+                className="px-5 py-2 rounded-full bg-rose-500 hover:bg-rose-600 text-xs font-bold text-white shadow-md hover:shadow-lg transition-all cursor-pointer"
+              >
+                {t.deleteModalAction}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notification */}
       <ToastNotification

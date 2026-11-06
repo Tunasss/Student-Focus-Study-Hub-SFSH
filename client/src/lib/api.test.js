@@ -136,15 +136,13 @@ describe('syllabusApi', () => {
     expect(result).toEqual(mockExtracted);
   });
 
-  test('extractSyllabus falls back to simulation when backend returns 404', async () => {
-    mockFetch(() => [404, fail('NOT_FOUND', 'Endpoint not implemented yet')]);
+  test('extractSyllabus throws real ApiError when backend returns error (no mock fallback)', async () => {
+    mockFetch(() => [503, fail('LLM_UNAVAILABLE', 'AI service is out of quota')]);
 
     const fakeFile = new File(['dummy content'], 'csdl.pdf', { type: 'application/pdf' });
-    const result = await syllabusApi.extractSyllabus(1, fakeFile, 'Hệ thống Cơ sở dữ liệu');
-
-    expect(Array.isArray(result)).toBe(true);
-    expect(result.length).toBeGreaterThan(0);
-    expect(result[0].title).toContain('CSDL');
+    await expect(syllabusApi.extractSyllabus(1, fakeFile, 'Hệ thống Cơ sở dữ liệu')).rejects.toThrow(
+      'AI service is out of quota'
+    );
   });
 });
 

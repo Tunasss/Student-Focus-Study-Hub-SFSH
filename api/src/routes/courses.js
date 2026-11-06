@@ -5,7 +5,7 @@ const { ok } = require('../envelope');
 const { timeFromDb, dateFromDb } = require('../ics/time');
 const { parseOrThrow } = require('../validation');
 const { topicInputSchema, topicBulkSchema, idParamSchema } = require('../topics/schemas');
-const { listTopics, createTopic, replaceTopics, serializeTopic } = require('../topics/topicRepo');
+const { listTopics, createTopic, saveHierarchicalTopics, serializeTopic } = require('../topics/topicRepo');
 
 function serializeSchedule(s) {
   return {
@@ -65,11 +65,11 @@ function coursesRouter({ prisma }) {
     res.status(201).json(ok({ topic: serializeTopic(topic) }));
   });
 
-  // POST /api/courses/:id/topics/bulk — save the reviewed syllabus preview; replaces the course's topic list
+  // POST /api/courses/:id/topics/bulk — save the reviewed syllabus preview (hierarchical or flat, append or replace)
   router.post('/:id/topics/bulk', async (req, res) => {
     const { id } = parseOrThrow(idParamSchema, req.params);
-    const { topics } = parseOrThrow(topicBulkSchema, req.body);
-    const result = await replaceTopics(prisma, req.userId, id, topics);
+    const body = parseOrThrow(topicBulkSchema, req.body);
+    const result = await saveHierarchicalTopics(prisma, req.userId, id, body);
     res.status(201).json(ok({ topics: result.topics.map(serializeTopic), replaced: result.replaced }));
   });
 

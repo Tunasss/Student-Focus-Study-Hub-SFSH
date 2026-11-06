@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { fail, mockFetch, ok, renderApp } from './test/utils';
 import { getToken, setToken } from './lib/tokenStorage';
@@ -34,8 +34,8 @@ describe('auth flow & bilingual home', () => {
     );
     renderApp('/login');
 
-    await userEvent.type(screen.getByLabelText(/Email/i), USER.email);
-    await userEvent.type(screen.getByLabelText(/Password|Mật khẩu/i), 'Password123!');
+    fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: USER.email } });
+    fireEvent.change(screen.getByLabelText(/Password|Mật khẩu/i), { target: { value: 'Password123!' } });
     await userEvent.click(screen.getByRole('button', { name: /Sign In|Đăng nhập/i }));
 
     expect(await screen.findByRole('heading', { name: /Deep Focus|Overview|Program|Tập trung sâu|Tổng quan/i })).toBeInTheDocument();

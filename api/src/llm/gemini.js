@@ -8,7 +8,11 @@ const { createMockGemini } = require('./mockGemini');
 function createGeminiClient({ llmMock, geminiApiKey, geminiTimeoutMs }) {
   if (llmMock) return createMockGemini();
   if (!geminiApiKey) return null;
-  return new GoogleGenAI({ apiKey: geminiApiKey, httpOptions: { timeout: geminiTimeoutMs } });
+  return new GoogleGenAI({
+    apiKey: geminiApiKey,
+    apiVersion: 'v1beta',
+    httpOptions: { timeout: geminiTimeoutMs },
+  });
 }
 
 module.exports = { createGeminiClient };

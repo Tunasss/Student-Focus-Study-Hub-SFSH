@@ -178,6 +178,7 @@ export function FocusSubjectPicker({
                 <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
                   {currentTopics.map((tp) => {
                     const isSelected = tp.id === activeTopicId;
+                    const isChild = tp.parentId != null;
                     return (
                       <button
                         key={tp.id}
@@ -187,12 +188,14 @@ export function FocusSubjectPicker({
                           setIsOpen(false);
                         }}
                         className={`w-full text-left rounded-xl px-3 py-1.5 flex items-center justify-between text-xs transition-colors cursor-pointer ${
+                          isChild ? 'pl-6 text-[11px]' : 'font-semibold'
+                        } ${
                           isSelected
                             ? 'bg-primary/20 text-primary font-bold border border-primary/40'
                             : 'hover:bg-surface text-text'
                         }`}
                       >
-                        <span className="truncate">{tp.title}</span>
+                        <span className="truncate">{isChild ? `↳ ${tp.title}` : tp.title}</span>
                         {tp.status === 'DONE' && (
                           <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
                             {t.doneChip}

@@ -13,9 +13,26 @@ const TEXT = 'CS101 Introduction to Programming\nChapter 1: Variables\nChapter 2
 
 const GOOD_REPLY = {
   course_code: 'CS101',
-  topics: [
-    { order: 1, title: 'Variables and types', description: 'Declaring variables, primitive types.' },
-    { order: 2, title: 'Control flow', description: 'if, while, for.' },
+  chapters: [
+    {
+      order: 1,
+      title: 'Chapter 1: Hardware Architecture',
+      description: 'Overview of hardware',
+      source_file: 'Chapter1.pdf',
+      subtopics: [
+        { order: 1, title: 'Von Neumann Architecture', description: 'CPU and memory layout' },
+        { order: 2, title: 'Boolean Logic', description: 'Gates and truth tables' },
+      ],
+    },
+    {
+      order: 2,
+      title: 'Chapter 2: Instruction Set',
+      description: 'Machine instructions',
+      source_file: 'Chapter2.pdf',
+      subtopics: [
+        { order: 1, title: 'ALU Operations', description: 'Math and logic ops' },
+      ],
+    },
   ],
 };
 
@@ -34,18 +51,27 @@ function expectApiError(promise, status, code, pattern) {
 }
 
 describe('responseSchema (sent to Gemini)', () => {
-  test('matches the PRD sample: course_code + topics[order, title, description], topics required', () => {
+  test('matches the hierarchical knowledge tree contract: course_code + chapters[order, title, description, source_file, subtopics]', () => {
     assert.equal(responseSchema.type, Type.OBJECT);
-    assert.deepEqual(responseSchema.required, ['topics']);
+    assert.deepEqual(responseSchema.required, ['chapters']);
     assert.equal(responseSchema.properties.course_code.type, Type.STRING);
-    assert.equal(responseSchema.properties.topics.type, Type.ARRAY);
+    assert.equal(responseSchema.properties.chapters.type, Type.ARRAY);
 
-    const item = responseSchema.properties.topics.items;
-    assert.equal(item.type, Type.OBJECT);
-    assert.equal(item.properties.order.type, Type.INTEGER);
-    assert.equal(item.properties.title.type, Type.STRING);
-    assert.equal(item.properties.description.type, Type.STRING);
-    assert.deepEqual(item.required, ['order', 'title']);
+    const chapter = responseSchema.properties.chapters.items;
+    assert.equal(chapter.type, Type.OBJECT);
+    assert.equal(chapter.properties.order.type, Type.INTEGER);
+    assert.equal(chapter.properties.title.type, Type.STRING);
+    assert.equal(chapter.properties.description.type, Type.STRING);
+    assert.equal(chapter.properties.source_file.type, Type.STRING);
+    assert.equal(chapter.properties.subtopics.type, Type.ARRAY);
+    assert.deepEqual(chapter.required, ['order', 'title', 'subtopics']);
+
+    const subtopic = chapter.properties.subtopics.items;
+    assert.equal(subtopic.type, Type.OBJECT);
+    assert.equal(subtopic.properties.order.type, Type.INTEGER);
+    assert.equal(subtopic.properties.title.type, Type.STRING);
+    assert.equal(subtopic.properties.description.type, Type.STRING);
+    assert.deepEqual(subtopic.required, ['order', 'title']);
   });
 });
 
@@ -56,7 +82,7 @@ describe('buildRequest', () => {
     assert.equal(req.config.responseMimeType, 'application/json');
     assert.equal(req.config.responseSchema, responseSchema);
     assert.equal(req.config.temperature, 0);
-    assert.match(req.config.systemInstruction, /syllabus/i);
+    assert.match(req.config.systemInstruction, /chapter|syllabus/i);
     assert.match(req.contents, /Chapter 1: Variables/);
   });
 
@@ -71,14 +97,29 @@ describe('analyzeSyllabusText', () => {
   test('returns the validated, camelCased structure and calls Gemini once with the constraints', async () => {
     const { result, gemini } = await analyze(GOOD_REPLY);
 
-    assert.deepEqual(result, {
-      courseCode: 'CS101',
-      topics: [
-        { order: 1, title: 'Variables and types', description: 'Declaring variables, primitive types.' },
-        { order: 2, title: 'Control flow', description: 'if, while, for.' },
-      ],
-      source: 'gemini',
-    });
+    assert.equal(result.courseCode, 'CS101');
+    assert.equal(result.source, 'gemini');
+    assert.deepEqual(result.chapters, [
+      {
+        order: 1,
+        title: 'Chapter 1: Hardware Architecture',
+        description: 'Overview of hardware',
+        sourceFile: 'Chapter1.pdf',
+        subtopics: [
+          { order: 1, title: '1.1 Von Neumann Architecture', description: 'CPU and memory layout' },
+          { order: 2, title: '1.2 Boolean Logic', description: 'Gates and truth tables' },
+        ],
+      },
+      {
+        order: 2,
+        title: 'Chapter 2: Instruction Set',
+        description: 'Machine instructions',
+        sourceFile: 'Chapter2.pdf',
+        subtopics: [
+          { order: 1, title: '2.1 ALU Operations', description: 'Math and logic ops' },
+        ],
+      },
+    ]);
     assert.equal(gemini.calls.length, 1);
     const [req] = gemini.calls;
     assert.equal(req.model, MODEL);
@@ -87,42 +128,50 @@ describe('analyzeSyllabusText', () => {
   });
 
   test('missing course_code / description become null; whitespace is trimmed', async () => {
-    const { result } = await analyze({ topics: [{ order: 1, title: '  Intro  ' }] });
-    assert.deepEqual(result, { courseCode: null, topics: [{ order: 1, title: 'Intro', description: null }], source: 'gemini' });
+    const { result } = await analyze({ chapters: [{ order: 1, title: '  Intro  ', subtopics: [] }] });
+    assert.equal(result.courseCode, null);
+    assert.equal(result.chapters[0].title, 'Intro');
+    assert.equal(result.chapters[0].description, null);
+    assert.equal(result.chapters[0].sourceFile, null);
   });
 
-  test('re-sorts by order, drops duplicate titles and renumbers from 1', async () => {
+  test('re-sorts chapters and subtopics by order, renumbering from 1', async () => {
     const { result } = await analyze({
-      topics: [
-        { order: 7, title: 'Graphs' },
-        { order: 3, title: 'Trees' },
-        { order: 5, title: 'trees', description: 'dup' },
-        { order: 0, title: 'Arrays' },
+      chapters: [
+        {
+          order: 7,
+          title: 'Graphs',
+          subtopics: [
+            { order: 5, title: 'Dijkstra' },
+            { order: 2, title: 'BFS' },
+          ],
+        },
+        { order: 2, title: 'Arrays', subtopics: [] },
       ],
     });
-    assert.deepEqual(
-      result.topics.map((t) => [t.order, t.title]),
-      [
-        [1, 'Arrays'],
-        [2, 'Trees'],
-        [3, 'Graphs'],
-      ],
-    );
+    assert.equal(result.chapters[0].order, 1);
+    assert.equal(result.chapters[0].title, 'Arrays');
+    assert.equal(result.chapters[1].order, 2);
+    assert.equal(result.chapters[1].title, 'Graphs');
+    assert.equal(result.chapters[1].subtopics[0].order, 1);
+    assert.equal(result.chapters[1].subtopics[0].title, '2.1 BFS');
+    assert.equal(result.chapters[1].subtopics[1].order, 2);
+    assert.equal(result.chapters[1].subtopics[1].title, '2.2 Dijkstra');
   });
 
-  test('empty topics list -> 422 SYLLABUS_NO_TOPICS pointing to the manual form', async () => {
-    await expectApiError(analyze({ course_code: 'X', topics: [] }), 422, 'SYLLABUS_NO_TOPICS', /manual entry form/);
+  test('empty chapters list -> 422 SYLLABUS_NO_TOPICS pointing to the manual form', async () => {
+    await expectApiError(analyze({ course_code: 'X', chapters: [] }), 422, 'SYLLABUS_NO_TOPICS', /manual entry form/);
   });
 
   describe('zod rejects replies that break the schema (twice) -> 502 LLM_SCHEMA_INVALID', () => {
     const cases = [
-      ['topic without title', { topics: [{ order: 1 }] }, /topics\.0\.title/],
-      ['topic with empty title', { topics: [{ order: 1, title: '   ' }] }, /title/],
-      ['order is not an integer', { topics: [{ order: 1.5, title: 'A' }] }, /order/],
-      ['order is a string', { topics: [{ order: '1', title: 'A' }] }, /order/],
-      ['topics is not an array', { topics: { order: 1, title: 'A' } }, /topics/],
-      ['topics missing', { course_code: 'CS101' }, /topics/],
-      ['too many topics', { topics: Array.from({ length: 101 }, (_, i) => ({ order: i + 1, title: `T${i}` })) }, /topics/],
+      ['chapter without title', { chapters: [{ order: 1, subtopics: [] }] }, /title/],
+      ['chapter with empty title', { chapters: [{ order: 1, title: '   ', subtopics: [] }] }, /title/],
+      ['subtopic without title', { chapters: [{ order: 1, title: 'C', subtopics: [{ order: 1 }] }] }, /title/],
+      ['order is not an integer', { chapters: [{ order: 1.5, title: 'A', subtopics: [] }] }, /order/],
+      ['chapters is not an array', { chapters: { order: 1, title: 'A' } }, /chapters/],
+      ['chapters missing', { course_code: 'CS101' }, /chapters/],
+      ['too many chapters', { chapters: Array.from({ length: 101 }, (_, i) => ({ order: i + 1, title: `T${i}`, subtopics: [] })) }, /chapters/],
       ['top level is an array', [{ order: 1, title: 'A' }], /\$/],
     ];
     for (const [name, reply, pattern] of cases) {
@@ -151,7 +200,7 @@ describe('analyzeSyllabusText', () => {
     });
 
     test('two bad replies -> LLM_SCHEMA_INVALID, exactly MAX_ATTEMPTS (2) calls', async () => {
-      const gemini = createFakeGemini({ topics: [{ order: 1 }] });
+      const gemini = createFakeGemini({ chapters: [{ order: 1 }] });
       await expectApiError(analyzeSyllabusText(TEXT, { gemini, model: MODEL }), 502, 'LLM_SCHEMA_INVALID', /after 2 attempts/);
       assert.equal(MAX_ATTEMPTS, 2);
       assert.equal(gemini.calls.length, 2);
@@ -212,14 +261,14 @@ describe('analyzeSyllabusText', () => {
 
       assert.equal(result.source, 'mock');
       assert.equal(result.courseCode, MOCK_SYLLABUS.course_code);
-      assert.equal(result.topics.length, 5);
+      assert.equal(result.chapters.length, 5);
       assert.deepEqual(
-        result.topics.map((t) => t.order),
+        result.chapters.map((c) => c.order),
         [1, 2, 3, 4, 5],
       );
       assert.deepEqual(
-        result.topics.map((t) => t.title),
-        MOCK_SYLLABUS.topics.map((t) => t.title),
+        result.chapters.map((c) => c.title),
+        MOCK_SYLLABUS.chapters.map((c) => c.title),
       );
       assert.equal(gemini.calls.length, 1); // no network: the mock recorded the call locally
     });

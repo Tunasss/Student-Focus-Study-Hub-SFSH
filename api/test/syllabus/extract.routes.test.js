@@ -112,7 +112,7 @@ describe('POST /api/syllabus/extract', () => {
     const res = await extractWith(mocked, makePdf([SYLLABUS]));
     assert.equal(res.status, 200);
     assert.equal(res.body.data.source, 'mock');
-    assert.equal(res.body.data.topics.length, 5);
+    assert.equal(res.body.data.chapters.length, 5);
     assert.equal(res.body.data.courseCode, 'CS101');
   });
 
@@ -134,8 +134,8 @@ describe('POST /api/syllabus/extract', () => {
     assert.match(res.body.error.message, /manual entry form/);
   });
 
-  test('answers 400 PDF_TOO_MANY_PAGES above 30 pages', async () => {
-    const res = await extract(makePdf(Array.from({ length: 31 }, () => SYLLABUS)));
+  test('answers 400 PDF_TOO_MANY_PAGES above 200 pages', async () => {
+    const res = await extract(makePdf(Array.from({ length: 201 }, () => SYLLABUS)));
     assert.equal(res.status, 400);
     assert.equal(res.body.error.code, 'PDF_TOO_MANY_PAGES');
   });
@@ -171,7 +171,23 @@ describe('POST /api/syllabus/extract', () => {
       .attach('pdf', makePdf([SYLLABUS]), 'syllabus.pdf');
     assert.equal(res.status, 400);
     assert.equal(res.body.error.code, 'INVALID_PDF_FORMAT');
-    assert.match(res.body.error.message, /"file" field/);
+    assert.match(res.body.error.message, /field/);
+  });
+
+  test('accepts multiple PDF files uploaded under the "files" field simultaneously', async () => {
+    const pdf1 = makePdf([SYLLABUS]);
+    const pdf2 = makePdf(['CS102 Data Structures\nTrees and Binary Heaps\n' + SYLLABUS]);
+
+    const res = await request(app)
+      .post('/api/syllabus/extract')
+      .set('Authorization', `Bearer ${token}`)
+      .attach('files', pdf1, 'Chapter1.pdf')
+      .attach('files', pdf2, 'Chapter2.pdf');
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.success, true);
+    assert.ok(Array.isArray(res.body.data.chapters));
+    assert.deepEqual(res.body.data.fileNames, ['Chapter1.pdf', 'Chapter2.pdf']);
   });
 
   test('requires a bearer token', async () => {

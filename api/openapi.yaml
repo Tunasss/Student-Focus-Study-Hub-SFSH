@@ -28,7 +28,7 @@ info:
     | `INVALID_JSON` | 400 | The request body is not valid JSON |
     | `INVALID_ICS_FORMAT` | 400 | The uploaded timetable is not a usable .ics file |
     | `INVALID_PDF_FORMAT` | 400 | The uploaded syllabus is not a usable .pdf file (missing, wrong extension, over 5 MB, corrupt, encrypted) |
-    | `PDF_TOO_MANY_PAGES` | 400 | The syllabus PDF has more than 30 pages |
+    | `PDF_TOO_MANY_PAGES` | 400 | The syllabus PDF has more than 200 pages |
     | `PDF_NO_TEXT_LAYER` | 422 | The syllabus PDF is a scanned image without a text layer; use the manual entry form |
     | `SYLLABUS_NO_TOPICS` | 422 | The AI found no course topics in the syllabus text; use the manual entry form |
     | `LLM_SCHEMA_INVALID` | 502 | The AI reply was not valid JSON or failed the topics schema (zod), even after one retry |
@@ -471,7 +471,7 @@ paths:
         code and the ordered list of topics. The reply is forced to JSON (`responseMimeType: application/json` +
         a fixed `responseSchema`) and re-validated with zod before it is returned.
 
-        - Accepted: `.pdf` extension, at most 5 MB, at most 30 pages, `%PDF-` header, not password protected.
+        - Accepted: `.pdf` extension, at most 5 MB, at most 200 pages, `%PDF-` header, not password protected.
         - Text is read with `pdf-parse`; runs of spaces are collapsed and blank lines dropped.
         - **Scanned PDFs**: when fewer than 200 non-whitespace characters can be read from the whole file, the
           pipeline stops with `422 PDF_NO_TEXT_LAYER`. The message tells the user to add the topics with the
@@ -511,7 +511,7 @@ paths:
         '400':
           description: |
             `INVALID_PDF_FORMAT` (missing file, wrong field or extension, over 5 MB, no `%PDF-` header, corrupt
-            or password protected) or `PDF_TOO_MANY_PAGES` (more than 30 pages).
+            or password protected) or `PDF_TOO_MANY_PAGES` (more than 200 pages).
           content:
             application/json:
               schema:
@@ -521,7 +521,7 @@ paths:
                 data: null
                 error:
                   code: PDF_TOO_MANY_PAGES
-                  message: PDF has 31 pages; the limit is 30
+                  message: PDF has 201 pages; the limit is 200
                 timestamp: '2026-11-06T00:00:00.000Z'
         '401':
           $ref: '#/components/responses/Unauthorized'
@@ -1301,6 +1301,45 @@ components:
                 task:
                   $ref: '#/components/schemas/Task'
 
+    SyllabusSubtopic:
+      type: object
+      additionalProperties: false
+      required: [order, title]
+      properties:
+        order:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: [string, 'null']
+          maxLength: 1000
+
+    SyllabusChapter:
+      type: object
+      additionalProperties: false
+      required: [order, title, subtopics]
+      properties:
+        order:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: [string, 'null']
+          maxLength: 1000
+        sourceFile:
+          type: [string, 'null']
+          maxLength: 255
+        subtopics:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyllabusSubtopic'
+
     SyllabusTopic:
       type: object
       additionalProperties: false
@@ -1328,10 +1367,14 @@ components:
         fileName:
           type: string
           example: MATH201-syllabus.pdf
+        fileNames:
+          type: array
+          items:
+            type: string
         pageCount:
           type: integer
           minimum: 1
-          maximum: 30
+          maximum: 200
           example: 3
         charCount:
           type: integer
@@ -1342,6 +1385,10 @@ components:
           type: [string, 'null']
           description: Course code found by the model, e.g. MATH201; null when the syllabus shows none.
           example: MATH201
+        chapters:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyllabusChapter'
         topics:
           type: array
           minItems: 1
@@ -1352,6 +1399,9 @@ components:
           type: string
           enum: [gemini, mock]
           description: '`mock` when the server runs with `LLM_MOCK=true` (fixed sample, Gemini not called).'
+        model:
+          type: string
+          description: 'Model identifier used for extraction.'
         text:
           type: string
           description: Text of all pages, pages separated by a blank line.
@@ -1369,6 +1419,21 @@ components:
                 minimum: 1
               text:
                 type: string
+        files:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [fileName, text, pageCount, charCount]
+            properties:
+              fileName:
+                type: string
+              text:
+                type: string
+              pageCount:
+                type: integer
+              charCount:
+                type: integer
 
     TopicStatus:
       type: string
@@ -1377,12 +1442,14 @@ components:
     Topic:
       type: object
       additionalProperties: false
-      required: [id, courseId, sortOrder, title, description, status]
+      required: [id, courseId, parentId, sortOrder, title, description, sourceFile, status]
       properties:
         id:
           type: integer
         courseId:
           type: integer
+        parentId:
+          type: [integer, 'null']
         sortOrder:
           type: integer
           minimum: 1
@@ -1391,6 +1458,8 @@ components:
           type: string
           example: 'Chapter 3: Control Flow'
         description:
+          type: [string, 'null']
+        sourceFile:
           type: [string, 'null']
         status:
           $ref: '#/components/schemas/TopicStatus'
@@ -1407,6 +1476,10 @@ components:
         description:
           type: [string, 'null']
           maxLength: 2000
+        sourceFile:
+          type: [string, 'null']
+        parentId:
+          type: [integer, 'null']
         status:
           allOf:
             - $ref: '#/components/schemas/TopicStatus'
@@ -1419,17 +1492,69 @@ components:
     TopicBulkInput:
       type: object
       additionalProperties: false
-      required: [topics]
       properties:
-        topics:
+        mode:
+          type: string
+          enum: [append, replace]
+          default: append
+        chapters:
           type: array
-          minItems: 1
-          maxItems: 100
           items:
             type: object
             additionalProperties: false
             required: [title]
             properties:
+              id:
+                oneOf:
+                  - type: integer
+                  - type: string
+                description: Optional client-side identifier; ignored when persisting.
+              order:
+                type: integer
+              sortOrder:
+                type: integer
+              title:
+                type: string
+              description:
+                type: [string, 'null']
+              sourceFile:
+                type: [string, 'null']
+              status:
+                $ref: '#/components/schemas/TopicStatus'
+              subtopics:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  required: [title]
+                  properties:
+                    id:
+                      oneOf:
+                        - type: integer
+                        - type: string
+                      description: Optional client-side identifier; ignored when persisting.
+                    order:
+                      type: integer
+                    sortOrder:
+                      type: integer
+                    title:
+                      type: string
+                    description:
+                      type: [string, 'null']
+                    status:
+                      $ref: '#/components/schemas/TopicStatus'
+        topics:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [title]
+            properties:
+              id:
+                oneOf:
+                  - type: integer
+                  - type: string
+                description: Optional client-side identifier; ignored when persisting.
               order:
                 type: integer
                 minimum: 1
@@ -1445,6 +1570,10 @@ components:
               description:
                 type: [string, 'null']
                 maxLength: 2000
+              sourceFile:
+                type: [string, 'null']
+              parentId:
+                type: [integer, 'null']
               status:
                 $ref: '#/components/schemas/TopicStatus'
 

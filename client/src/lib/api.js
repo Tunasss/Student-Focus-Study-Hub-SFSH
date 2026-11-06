@@ -1,5 +1,4 @@
 import { getToken } from './tokenStorage';
-import { simulateSyllabusExtraction } from '../utils/syllabusMock';
 
 const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/$/, '');
 
@@ -89,21 +88,47 @@ export const syllabusApi = {
     });
     return data?.topic ?? data;
   },
-  extractSyllabus: async (courseId, file, courseName = '') => {
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      const data = await apiFetch(`/api/courses/${courseId}/syllabus/extract`, {
-        method: 'POST',
-        body: formData,
-      });
-      return data?.topics || (Array.isArray(data) ? data : []);
-    } catch (err) {
-      if (err?.status === 404 || err?.code === 'NETWORK_ERROR' || err?.status === 501) {
-        return simulateSyllabusExtraction(courseName, file.name);
-      }
-      throw err;
+  deleteTopic: async (topicId) => {
+    const data = await apiFetch(`/api/topics/${topicId}`, {
+      method: 'DELETE',
+    });
+    return data;
+  },
+  bulkSaveTopics: async (courseId, payload) => {
+    const data = await apiFetch(`/api/courses/${courseId}/topics/bulk`, {
+      method: 'POST',
+      body: payload,
+    });
+    return data?.topics ?? data ?? [];
+  },
+  extractSyllabus: async (courseIdOrFiles, filesOrCourseName = [], _courseNameFallback = '') => {
+    let files;
+    let courseId = null;
+
+    if (typeof courseIdOrFiles === 'number' || (typeof courseIdOrFiles === 'string' && /^\d+$/.test(courseIdOrFiles))) {
+      courseId = courseIdOrFiles;
+      files = Array.isArray(filesOrCourseName) ? filesOrCourseName : [filesOrCourseName];
+    } else {
+      files = Array.isArray(courseIdOrFiles) ? courseIdOrFiles : [courseIdOrFiles];
     }
+
+    const formData = new FormData();
+    for (const f of files) {
+      if (f) formData.append('files', f);
+    }
+    if (files[0]) {
+      formData.append('file', files[0]);
+    }
+
+    const endpoint = courseId ? `/api/courses/${courseId}/syllabus/extract` : '/api/syllabus/extract';
+
+    // Directly query the API endpoint without fallback to mock data
+    const data = await apiFetch(endpoint, {
+      method: 'POST',
+      body: formData,
+    });
+    if (data?.chapters) return data;
+    return data?.topics || (Array.isArray(data) ? data : []);
   },
 };
 

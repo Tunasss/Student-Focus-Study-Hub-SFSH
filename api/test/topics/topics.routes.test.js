@@ -40,9 +40,9 @@ describe('POST /api/courses/:id/topics/bulk', () => {
     assert.equal(res.body.success, true);
     assert.equal(res.body.data.replaced, 0);
     assert.deepEqual(res.body.data.topics, [
-      { id: 1, courseId: alice.course.id, sortOrder: 1, title: 'Chapter 1: Introduction', description: 'What programs are.', status: 'TODO' },
-      { id: 2, courseId: alice.course.id, sortOrder: 2, title: 'Chapter 2: Variables', description: null, status: 'TODO' },
-      { id: 3, courseId: alice.course.id, sortOrder: 3, title: 'Chapter 3: Control flow', description: null, status: 'TODO' },
+      { id: 1, courseId: alice.course.id, parentId: null, sortOrder: 1, title: 'Chapter 1: Introduction', description: 'What programs are.', sourceFile: null, status: 'TODO' },
+      { id: 2, courseId: alice.course.id, parentId: null, sortOrder: 2, title: 'Chapter 2: Variables', description: null, sourceFile: null, status: 'TODO' },
+      { id: 3, courseId: alice.course.id, parentId: null, sortOrder: 3, title: 'Chapter 3: Control flow', description: null, sourceFile: null, status: 'TODO' },
     ]);
     assert.equal(prisma.topics[0].sortOrder, 1); // stored in sort_order, never `order`
   });
@@ -57,6 +57,116 @@ describe('POST /api/courses/:id/topics/bulk', () => {
     assert.equal(res.body.data.replaced, 3);
     assert.equal(res.body.data.topics.length, 1);
     assert.equal(prisma.topics.length, 1);
+  });
+
+  test('saves hierarchical chapters and subtopics in one transaction', async () => {
+    const HIERARCHICAL_PREVIEW = {
+      mode: 'replace',
+      chapters: [
+        {
+          title: 'Chương 1: Kiến trúc máy tính',
+          description: 'Phần cứng cơ bản',
+          sourceFile: 'Chuong1.pdf',
+          subtopics: [
+            { title: '1.1 CPU và Bộ nhớ', description: 'Cấu trúc Von Neumann' },
+            { title: '1.2 Bus hệ thống' },
+          ],
+        },
+        {
+          title: 'Chương 2: Hệ điều hành',
+          description: 'Phần mềm hệ thống',
+          sourceFile: 'Chuong2.pdf',
+          subtopics: [
+            { title: '2.1 Tiến trình và Luồng' },
+          ],
+        },
+      ],
+    };
+
+    const res = await alice
+      .as(request(app).post(`/api/courses/${alice.course.id}/topics/bulk`))
+      .send(HIERARCHICAL_PREVIEW);
+
+    assert.equal(res.status, 201);
+    assert.equal(res.body.success, true);
+    const topics = res.body.data.topics;
+    assert.equal(topics.length, 5);
+
+    const ch1 = topics.find((t) => t.title === 'Chương 1: Kiến trúc máy tính');
+    assert.ok(ch1);
+    assert.equal(ch1.parentId, null);
+    assert.equal(ch1.sourceFile, 'Chuong1.pdf');
+    assert.equal(ch1.sortOrder, 1);
+
+    const sub1 = topics.find((t) => t.title === '1.1 CPU và Bộ nhớ');
+    assert.ok(sub1);
+    assert.equal(sub1.parentId, ch1.id);
+    assert.equal(sub1.sourceFile, 'Chuong1.pdf');
+    assert.equal(sub1.sortOrder, 1);
+
+    const sub2 = topics.find((t) => t.title === '1.2 Bus hệ thống');
+    assert.ok(sub2);
+    assert.equal(sub2.parentId, ch1.id);
+    assert.equal(sub2.sortOrder, 2);
+
+    const ch2 = topics.find((t) => t.title === 'Chương 2: Hệ điều hành');
+    assert.ok(ch2);
+    assert.equal(ch2.parentId, null);
+    assert.equal(ch2.sortOrder, 2);
+
+    const sub3 = topics.find((t) => t.title === '2.1 Tiến trình và Luồng');
+    assert.ok(sub3);
+    assert.equal(sub3.parentId, ch2.id);
+    assert.equal(sub3.sortOrder, 1);
+  });
+
+  test('mode: append appends chapters without destroying existing topics or breaking linked tasks', async () => {
+    await alice.as(request(app).post(`/api/courses/${alice.course.id}/topics/bulk`)).send({
+      mode: 'replace',
+      chapters: [
+        {
+          title: 'Chapter 1: Basics',
+          sourceFile: 'ch1.pdf',
+          subtopics: [{ title: '1.1 Intro' }],
+        },
+      ],
+    });
+
+    const initial = await alice.as(request(app).get(`/api/courses/${alice.course.id}/topics`));
+    const ch1 = initial.body.data.topics.find((t) => t.title === 'Chapter 1: Basics');
+    assert.ok(ch1);
+    const ch1Id = ch1.id;
+
+    const taskRes = await alice.as(request(app).post('/api/tasks')).send({
+      courseId: alice.course.id,
+      topicId: ch1Id,
+      title: 'Study Chapter 1',
+      dueAt: '2026-12-01T10:00:00Z',
+    });
+    assert.equal(taskRes.status, 201);
+    const taskId = taskRes.body.data.task.id;
+
+    const appendRes = await alice.as(request(app).post(`/api/courses/${alice.course.id}/topics/bulk`)).send({
+      mode: 'append',
+      chapters: [
+        {
+          title: 'Chapter 2: Advanced',
+          sourceFile: 'ch2.pdf',
+          subtopics: [{ title: '2.1 Trees' }],
+        },
+      ],
+    });
+    assert.equal(appendRes.status, 201);
+    assert.equal(appendRes.body.data.replaced, 0);
+
+    const getTask = await alice.as(request(app).get(`/api/tasks`));
+    const task = getTask.body.data.tasks.find((t) => t.id === taskId);
+    assert.equal(task.topicId, ch1Id);
+
+    const ch2 = appendRes.body.data.topics.find((t) => t.title === 'Chapter 2: Advanced');
+    assert.ok(ch2);
+    assert.equal(ch2.sortOrder, 2);
+    assert.equal(ch2.parentId, null);
   });
 
   test('validates the body with zod', async () => {

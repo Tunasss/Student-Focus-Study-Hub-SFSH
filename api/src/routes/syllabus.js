@@ -1,10 +1,13 @@
-// WBS 2.2.1 — syllabus PDF text extraction.
+// WBS 2.2 — syllabus PDF -> topics.
 //   POST /api/syllabus/extract   (multipart/form-data, field "file": .pdf ≤ 5 MB, ≤ 30 pages)
+//   2.2.1 reads the text layer, 2.2.2 asks Gemini for { courseCode, topics } (JSON schema + zod).
 const express = require('express');
+const { config } = require('../config');
 const { requireAuth } = require('../middleware/auth');
 const { singleFileUpload } = require('../middleware/upload');
 const { ok } = require('../envelope');
 const { PDF_LIMITS, readPdfUpload, extractPdfText } = require('../syllabus/extractPdf');
+const { analyzeSyllabusText } = require('../syllabus/analyzeSyllabus');
 
 const uploadPdf = singleFileUpload({
   field: 'file',
@@ -13,14 +16,15 @@ const uploadPdf = singleFileUpload({
   label: '.pdf',
 });
 
-function syllabusRouter() {
+function syllabusRouter({ gemini = null } = {}) {
   const router = express.Router();
   router.use(requireAuth);
 
   router.post('/extract', uploadPdf, async (req, res) => {
     const buffer = readPdfUpload(req.file);
     const { pageCount, charCount, text, pages } = await extractPdfText(buffer);
-    res.json(ok({ fileName: req.file.originalname, pageCount, charCount, text, pages }));
+    const { courseCode, topics } = await analyzeSyllabusText(text, { gemini, model: config.geminiModel });
+    res.json(ok({ fileName: req.file.originalname, pageCount, charCount, courseCode, topics, text, pages }));
   });
 
   return router;

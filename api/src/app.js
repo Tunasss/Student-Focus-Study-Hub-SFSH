@@ -10,8 +10,8 @@ const { scheduleRouter } = require('./routes/schedule');
 const { tasksRouter } = require('./routes/tasks');
 const { syllabusRouter } = require('./routes/syllabus');
 
-// prisma is injected so tests can pass a fake client.
-function createApp({ prisma }) {
+// prisma and the Gemini client are injected so tests can pass fakes. gemini may be null (not configured).
+function createApp({ prisma, gemini = null }) {
   const app = express();
 
   app.disable('x-powered-by');
@@ -28,7 +28,7 @@ function createApp({ prisma }) {
   app.use('/api/courses', coursesRouter({ prisma }));
   app.use('/api/schedule', scheduleRouter({ prisma }));
   app.use('/api/tasks', tasksRouter({ prisma }));
-  app.use('/api/syllabus', syllabusRouter());
+  app.use('/api/syllabus', syllabusRouter({ gemini }));
 
   app.use(notFound);
   app.use(errorHandler);

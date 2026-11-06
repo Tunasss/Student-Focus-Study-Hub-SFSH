@@ -30,6 +30,10 @@ info:
     | `INVALID_PDF_FORMAT` | 400 | The uploaded syllabus is not a usable .pdf file (missing, wrong extension, over 5 MB, corrupt, encrypted) |
     | `PDF_TOO_MANY_PAGES` | 400 | The syllabus PDF has more than 30 pages |
     | `PDF_NO_TEXT_LAYER` | 422 | The syllabus PDF is a scanned image without a text layer; use the manual entry form |
+    | `SYLLABUS_NO_TOPICS` | 422 | The AI found no course topics in the syllabus text; use the manual entry form |
+    | `LLM_INVALID_OUTPUT` | 502 | The AI reply was not valid JSON or failed the topics schema (zod) |
+    | `LLM_UNAVAILABLE` | 502 / 503 | The AI service failed (502), is rate limited or rejected the key (503) |
+    | `LLM_NOT_CONFIGURED` | 503 | `GEMINI_API_KEY` is not set on this server |
     | `UNAUTHORIZED` | 401 | Missing, malformed or invalid bearer token |
     | `TOKEN_EXPIRED` | 401 | The bearer token has expired; log in again |
     | `INVALID_CREDENTIALS` | 401 | Wrong email or password |
@@ -50,7 +54,7 @@ tags:
   - name: Tasks
     description: Deadlines (assignments, labs, exams) attached to a course and optionally a syllabus topic.
   - name: Syllabus
-    description: Turn a syllabus PDF into topics. Step 1 (WBS 2.2.1) extracts the text layer.
+    description: "Turn a syllabus PDF into topics (WBS 2.2): text-layer extraction, then Gemini structured output."
 
 paths:
   /api/health:
@@ -455,16 +459,20 @@ paths:
   /api/syllabus/extract:
     post:
       tags: [Syllabus]
-      summary: Extract the text layer of a syllabus PDF
+      summary: Extract topics from a syllabus PDF
       description: |
-        Uploads a syllabus PDF and returns its text layer, page by page, so the client (or the next pipeline step)
-        can turn it into topics.
+        Uploads a syllabus PDF, reads its text layer and asks Gemini (`GEMINI_MODEL`, a Flash model) for the course
+        code and the ordered list of topics. The reply is forced to JSON (`responseMimeType: application/json` +
+        a fixed `responseSchema`) and re-validated with zod before it is returned.
 
         - Accepted: `.pdf` extension, at most 5 MB, at most 30 pages, `%PDF-` header, not password protected.
         - Text is read with `pdf-parse`; runs of spaces are collapsed and blank lines dropped.
         - **Scanned PDFs**: when fewer than 200 non-whitespace characters can be read from the whole file, the
           pipeline stops with `422 PDF_NO_TEXT_LAYER`. The message tells the user to add the topics with the
           manual entry form instead.
+        - Topics are sorted by the model's `order`, de-duplicated by title and renumbered from 1, ready to become
+          `topics.sort_order`. `courseCode` is null when the syllabus has none.
+        - The raw `text` and per-page `pages` are returned as well, so the client can show the source.
       operationId: extractSyllabus
       requestBody:
         required: true
@@ -507,7 +515,10 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '422':
-          description: '`PDF_NO_TEXT_LAYER`: scanned (image-only) PDF; fewer than 200 characters of text could be read.'
+          description: |
+            The file was read but no topics can be produced; the message points the user to the manual entry form.
+            `PDF_NO_TEXT_LAYER`: scanned (image-only) PDF, fewer than 200 characters of text.
+            `SYLLABUS_NO_TOPICS`: the AI found no course topics in the text.
           content:
             application/json:
               schema:
@@ -519,6 +530,18 @@ paths:
                   code: PDF_NO_TEXT_LAYER
                   message: This PDF has no readable text layer (it looks like a scanned image). Please add the syllabus topics with the manual entry form instead.
                 timestamp: '2026-11-06T00:00:00.000Z'
+        '502':
+          description: '`LLM_INVALID_OUTPUT` (reply not valid JSON or failed the schema) or `LLM_UNAVAILABLE` (AI service error).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: '`LLM_NOT_CONFIGURED` (no `GEMINI_API_KEY`) or `LLM_UNAVAILABLE` (rate limited / key rejected). Retry later.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
 
 components:
   securitySchemes:
@@ -651,6 +674,10 @@ components:
                 - INVALID_PDF_FORMAT
                 - PDF_TOO_MANY_PAGES
                 - PDF_NO_TEXT_LAYER
+                - SYLLABUS_NO_TOPICS
+                - LLM_INVALID_OUTPUT
+                - LLM_UNAVAILABLE
+                - LLM_NOT_CONFIGURED
                 - UNAUTHORIZED
                 - TOKEN_EXPIRED
                 - INVALID_CREDENTIALS
@@ -1044,10 +1071,29 @@ components:
                 task:
                   $ref: '#/components/schemas/Task'
 
+    SyllabusTopic:
+      type: object
+      additionalProperties: false
+      required: [order, title, description]
+      properties:
+        order:
+          type: integer
+          minimum: 1
+          description: 1-based position; consecutive.
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: Techniques of integration
+        description:
+          type: [string, 'null']
+          maxLength: 1000
+          example: Substitution, integration by parts, partial fractions.
+
     SyllabusText:
       type: object
       additionalProperties: false
-      required: [fileName, pageCount, charCount, text, pages]
+      required: [fileName, pageCount, charCount, courseCode, topics, text, pages]
       properties:
         fileName:
           type: string
@@ -1062,6 +1108,16 @@ components:
           minimum: 200
           description: Non-whitespace characters in `text`.
           example: 2840
+        courseCode:
+          type: [string, 'null']
+          description: Course code found by the model, e.g. MATH201; null when the syllabus shows none.
+          example: MATH201
+        topics:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/SyllabusTopic'
         text:
           type: string
           description: Text of all pages, pages separated by a blank line.

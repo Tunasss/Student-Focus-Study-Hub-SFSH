@@ -13,7 +13,7 @@ const Ajv2020 = require('ajv/dist/2020');
 const addFormats = require('ajv-formats');
 const { createApp } = require('../src/app');
 const { loadSpec } = require('../src/docs');
-const { createFakePrisma } = require('./helpers');
+const { createFakePrisma, createFakeGemini, SAMPLE_ANALYSIS } = require('./helpers');
 const { makePdf } = require('./fixtures/makePdf');
 
 const spec = loadSpec();
@@ -106,7 +106,7 @@ describe('responses match openapi.yaml (Rule 02 envelope)', () => {
   let token;
 
   before(async () => {
-    app = createApp({ prisma: createFakePrisma() });
+    app = createApp({ prisma: createFakePrisma(), gemini: createFakeGemini(SAMPLE_ANALYSIS) });
     const res = await request(app).post('/api/auth/register').send({ email: 'a@sfsh.dev', password: 'Password123!' });
     token = res.body.data.token;
   });
@@ -160,6 +160,14 @@ describe('responses match openapi.yaml (Rule 02 envelope)', () => {
     assertMatchesSpec(await upload(makePdf(['']), 'scanned.pdf'), 'post', '/api/syllabus/extract'); // 422
     assertMatchesSpec(await upload(makePdf([text]), 'syllabus.txt'), 'post', '/api/syllabus/extract'); // 400
     assertMatchesSpec(await request(app).post('/api/syllabus/extract'), 'post', '/api/syllabus/extract'); // 401
+
+    const noTopics = createApp({ prisma: createFakePrisma(), gemini: createFakeGemini({ topics: [] }) });
+    const noKey = createApp({ prisma: createFakePrisma(), gemini: null });
+    const badReply = createApp({ prisma: createFakePrisma(), gemini: createFakeGemini('not json') });
+    const route = (a) => auth(request(a).post('/api/syllabus/extract')).attach('file', makePdf([text]), 'syllabus.pdf');
+    assertMatchesSpec(await route(noTopics), 'post', '/api/syllabus/extract'); // 422 SYLLABUS_NO_TOPICS
+    assertMatchesSpec(await route(noKey), 'post', '/api/syllabus/extract'); // 503
+    assertMatchesSpec(await route(badReply), 'post', '/api/syllabus/extract'); // 502
   });
 
   test('GET /api/courses', async () => {

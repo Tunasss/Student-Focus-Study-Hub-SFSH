@@ -156,4 +156,33 @@ function createFakePrisma() {
   return prisma;
 }
 
-module.exports = { createFakePrisma };
+// Stand-in for the @google/genai client used by src/syllabus/analyzeSyllabus.js.
+//   createFakeGemini({ course_code: 'CS101', topics: [...] })  -> replies with that JSON
+//   createFakeGemini('not json')                                -> replies with raw text
+//   createFakeGemini((request) => reply | throw)                -> custom per call
+// Every generateContent request is recorded in `calls`.
+function createFakeGemini(reply) {
+  const calls = [];
+  return {
+    calls,
+    models: {
+      async generateContent(request) {
+        calls.push(request);
+        const value = typeof reply === 'function' ? reply(request) : reply;
+        return { text: typeof value === 'string' ? value : JSON.stringify(value) };
+      },
+    },
+  };
+}
+
+// A plausible Gemini reply for route tests.
+const SAMPLE_ANALYSIS = {
+  course_code: 'MATH201',
+  topics: [
+    { order: 1, title: 'Techniques of integration', description: 'Substitution, parts, partial fractions.' },
+    { order: 2, title: 'Improper integrals and applications', description: 'Area, volume, arc length.' },
+    { order: 3, title: 'Sequences and series' },
+  ],
+};
+
+module.exports = { createFakePrisma, createFakeGemini, SAMPLE_ANALYSIS };

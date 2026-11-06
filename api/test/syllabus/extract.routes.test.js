@@ -3,7 +3,7 @@ const { test, describe, before } = require('node:test');
 const assert = require('node:assert/strict');
 const request = require('supertest');
 const { createApp } = require('../../src/app');
-const { createFakePrisma } = require('../helpers');
+const { createFakePrisma, createFakeGemini, SAMPLE_ANALYSIS } = require('../helpers');
 const { makePdf } = require('../fixtures/makePdf');
 const { PDF_LIMITS } = require('../../src/syllabus/extractPdf');
 
@@ -17,15 +17,18 @@ const SYLLABUS = [
 
 let app;
 let token;
+let gemini;
 
 before(async () => {
-  app = createApp({ prisma: createFakePrisma() });
+  gemini = createFakeGemini(SAMPLE_ANALYSIS);
+  app = createApp({ prisma: createFakePrisma(), gemini });
   const res = await request(app).post('/api/auth/register').send({ email: 'pdf@sfsh.dev', password: 'Password123!' });
   token = res.body.data.token;
 });
 
-const extract = (buffer, name = 'syllabus.pdf') =>
-  request(app).post('/api/syllabus/extract').set('Authorization', `Bearer ${token}`).attach('file', buffer, name);
+const extractWith = (application, buffer, name = 'syllabus.pdf') =>
+  request(application).post('/api/syllabus/extract').set('Authorization', `Bearer ${token}`).attach('file', buffer, name);
+const extract = (buffer, name) => extractWith(app, buffer, name);
 
 describe('POST /api/syllabus/extract', () => {
   test('returns the extracted text layer with page and character counts', async () => {
@@ -42,6 +45,48 @@ describe('POST /api/syllabus/extract', () => {
       data.pages.map((p) => p.page),
       [1, 2],
     );
+  });
+
+  test('sends the extracted text to Gemini as JSON-schema output and returns the validated topics', async () => {
+    gemini.calls.length = 0;
+    const res = await extract(makePdf([SYLLABUS]), 'MATH201.pdf');
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.data.courseCode, 'MATH201');
+    assert.deepEqual(res.body.data.topics, [
+      { order: 1, title: 'Techniques of integration', description: 'Substitution, parts, partial fractions.' },
+      { order: 2, title: 'Improper integrals and applications', description: 'Area, volume, arc length.' },
+      { order: 3, title: 'Sequences and series', description: null },
+    ]);
+
+    assert.equal(gemini.calls.length, 1);
+    const [req] = gemini.calls;
+    assert.equal(req.config.responseMimeType, 'application/json');
+    assert.ok(req.config.responseSchema);
+    assert.match(req.contents, /Techniques of integration/);
+  });
+
+  test('answers 503 LLM_NOT_CONFIGURED when no Gemini key is configured (text is not returned)', async () => {
+    const unconfigured = createApp({ prisma: createFakePrisma(), gemini: null });
+    const res = await extractWith(unconfigured, makePdf([SYLLABUS]));
+    assert.equal(res.status, 503);
+    assert.equal(res.body.error.code, 'LLM_NOT_CONFIGURED');
+    assert.equal(res.body.data, null);
+  });
+
+  test('answers 502 LLM_INVALID_OUTPUT when the model reply fails zod validation', async () => {
+    const broken = createApp({ prisma: createFakePrisma(), gemini: createFakeGemini({ topics: [{ order: 1 }] }) });
+    const res = await extractWith(broken, makePdf([SYLLABUS]));
+    assert.equal(res.status, 502);
+    assert.equal(res.body.error.code, 'LLM_INVALID_OUTPUT');
+  });
+
+  test('answers 422 SYLLABUS_NO_TOPICS when the model finds no topics', async () => {
+    const empty = createApp({ prisma: createFakePrisma(), gemini: createFakeGemini({ course_code: '', topics: [] }) });
+    const res = await extractWith(empty, makePdf([SYLLABUS]));
+    assert.equal(res.status, 422);
+    assert.equal(res.body.error.code, 'SYLLABUS_NO_TOPICS');
+    assert.match(res.body.error.message, /manual entry form/);
   });
 
   test('answers 422 PDF_NO_TEXT_LAYER for a scanned (image-only) PDF and points to the manual form', async () => {

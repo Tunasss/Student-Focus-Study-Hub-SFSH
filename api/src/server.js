@@ -1,8 +1,12 @@
 const { config } = require('./config');
 const { prisma } = require('./db/client');
 const { createApp } = require('./app');
+const { createGeminiClient } = require('./llm/gemini');
 
-const app = createApp({ prisma });
+const gemini = createGeminiClient(config);
+if (!gemini) console.warn('GEMINI_API_KEY is not set: POST /api/syllabus/extract will answer 503 LLM_NOT_CONFIGURED');
+
+const app = createApp({ prisma, gemini });
 
 const server = app.listen(config.port, () => {
   console.log(`SFSH API listening on port ${config.port}`);

@@ -6,6 +6,7 @@ export function ChapterCard({
   index = 0,
   onStatusChange,
   onCreateTask,
+  onDeleteChapter,
   isUpdating = false,
 }) {
   const { lang } = useLanguage();
@@ -40,6 +41,7 @@ export function ChapterCard({
       updating: 'Saving…',
       addTask: '+ Task',
       toggleChapter: 'Toggle chapter',
+      deleteChapter: 'Delete chapter',
     },
     vi: {
       chapter: `Chương ${chapterNum}`,
@@ -51,6 +53,7 @@ export function ChapterCard({
       updating: 'Đang lưu…',
       addTask: '+ Nhiệm vụ',
       toggleChapter: 'Thu gọn / Mở rộng chương',
+      deleteChapter: 'Xóa chương học',
     },
   }[lang] || {
     chapter: `Chapter ${chapterNum}`,
@@ -62,6 +65,7 @@ export function ChapterCard({
     updating: 'Saving…',
     addTask: '+ Task',
     toggleChapter: 'Toggle chapter',
+    deleteChapter: 'Delete chapter',
   };
 
   const statusOptions = [
@@ -134,19 +138,34 @@ export function ChapterCard({
           )}
         </div>
 
-        {/* Right: Progress bar & Accordion Toggle */}
-        <div className="flex items-center gap-3 shrink-0 self-start sm:self-center">
+        {/* Right: Progress bar, Actions & Accordion Toggle */}
+        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 self-start sm:self-center">
           {hasSubtopics ? (
-            <div className="flex items-center gap-3 bg-surface/80 border border-border/70 px-3 py-1.5 rounded-2xl shadow-xs">
-              <div className="text-right">
-                <div className="text-xs font-mono font-bold text-text">{progressPercent}%</div>
-                <div className="text-[10px] text-muted font-mono">{t.subtopicsCount(doneCount, totalCount)}</div>
-              </div>
-              <div className="w-14 h-2 bg-surface rounded-full overflow-hidden border border-border/50">
-                <div
-                  className="h-full bg-primary rounded-full transition-all duration-300"
-                  style={{ width: `${progressPercent}%` }}
-                />
+            <div className="flex items-center gap-3 bg-surface/90 border border-border/80 px-3.5 py-2 rounded-2xl shadow-xs">
+              <div className="flex flex-col gap-1 w-28 sm:w-36">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    {progressPercent === 100 && (
+                      <span className="text-primary text-xs font-bold">✓</span>
+                    )}
+                    <span className="text-xs sm:text-sm font-mono font-extrabold text-primary tracking-tight">
+                      {progressPercent}%
+                    </span>
+                  </div>
+                  <span className="text-[10px] sm:text-[11px] font-mono text-muted/90 font-semibold">
+                    {t.subtopicsCount(doneCount, totalCount)}
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-background/90 rounded-full overflow-hidden border border-border/50 flex items-center p-0.5">
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ease-out ${
+                      progressPercent === 100
+                        ? 'bg-primary shadow-[0_0_8px_rgba(219,239,144,0.6)]'
+                        : 'bg-primary/90'
+                    }`}
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
               </div>
             </div>
           ) : (
@@ -177,6 +196,29 @@ export function ChapterCard({
                 );
               })}
             </div>
+          )}
+
+          {/* Delete Chapter Button */}
+          {onDeleteChapter && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteChapter(chapter);
+              }}
+              aria-label={t.deleteChapter}
+              title={t.deleteChapter}
+              className="p-2 rounded-xl text-muted/70 hover:text-rose-400 hover:bg-rose-500/10 border border-border/60 hover:border-rose-500/30 transition-colors cursor-pointer"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+            </button>
           )}
 
           {/* Expand/Collapse Chevron Button */}

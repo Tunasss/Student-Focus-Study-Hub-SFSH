@@ -7,6 +7,7 @@
 
 const { PDFParse, VerbosityLevel } = require('pdf-parse');
 const { ApiError } = require('../errors');
+const { compareChapterItems } = require('./chapterOrder');
 
 const PDF_LIMITS = Object.freeze({
   maxBytes: 5 * 1024 * 1024,
@@ -109,7 +110,8 @@ async function extractMultiplePdfs(files) {
   }
 
   const results = [];
-  for (const file of files) {
+  const sortedFiles = [...files].sort((a, b) => compareChapterItems(a.originalname, b.originalname));
+  for (const file of sortedFiles) {
     const buffer = readPdfUpload(file);
     try {
       const extracted = await extractPdfText(buffer);

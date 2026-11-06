@@ -17,6 +17,7 @@
 
 const { ApiError } = require('../errors');
 const { responseSchema, syllabusOutputSchema, LIMITS } = require('./geminiSchema');
+const { sortChaptersNaturally } = require('./chapterOrder');
 
 // Gemini Flash has a very large context window; this cap only protects against runaway input (30 pages ≈ 100k chars).
 const MAX_INPUT_CHARS = 200_000;
@@ -32,6 +33,7 @@ const SYSTEM_INSTRUCTION = [
   '  2. Set source_file to the respective filename.',
   '  3. Extract 3 to 6 key sections/concepts inside that slide deck as its subtopics.',
   '  4. NEVER artificially break down a single chapter slide deck into multiple fake top-level chapters.',
+  '  5. Maintain correct numerical chapter ordering (e.g., Chapter 1 / Overview first, Chapter 2 second, etc.) based on titles or file names.',
   '- When a single master syllabus is provided: identify the main chapters/units and extract their subtopics.',
   '- Ignore administrative text, grading policies, professor contacts, office hours, and exam dates.',
   '- Keep titles clear and concise (under 100 characters), in the original language of the material (Vietnamese or English).',
@@ -104,10 +106,10 @@ function parseReply(response) {
   return parsed.data;
 }
 
-// Normalizes chapters and nested subtopics: re-sorts by order and renumbers 1..n
+// Normalizes chapters and nested subtopics: re-sorts naturally by chapter order and renumbers 1..n
 function normalizeChapters(chapters) {
   if (!Array.isArray(chapters)) return [];
-  const ordered = [...chapters].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const ordered = sortChaptersNaturally(chapters);
   const seenChapters = new Set();
   const out = [];
 

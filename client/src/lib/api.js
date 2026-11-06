@@ -89,6 +89,12 @@ export const syllabusApi = {
     });
     return data?.topic ?? data;
   },
+  deleteTopic: async (topicId) => {
+    const data = await apiFetch(`/api/topics/${topicId}`, {
+      method: 'DELETE',
+    });
+    return data;
+  },
   bulkSaveTopics: async (courseId, payload) => {
     const data = await apiFetch(`/api/courses/${courseId}/topics/bulk`, {
       method: 'POST',

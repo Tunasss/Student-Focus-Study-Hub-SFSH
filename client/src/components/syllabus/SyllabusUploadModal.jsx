@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../../i18n/languageContext';
 import { syllabusApi } from '../../lib/api';
 import { formatCourseInfo } from '../../utils/courseFormat';
+import { sortFilesNaturally, sortChaptersNaturally } from '../../utils/chapterOrder';
 
 export function SyllabusUploadModal({
   isOpen,
@@ -181,7 +182,7 @@ export function SyllabusUploadModal({
       added.push(f);
     }
 
-    setFiles((prev) => [...prev, ...added]);
+    setFiles((prev) => sortFilesNaturally([...prev, ...added]));
   }
 
   function handleRemoveFile(idx) {
@@ -233,8 +234,9 @@ export function SyllabusUploadModal({
 
       // Normalize response: may be raw array or { chapters: [...], topics: [...] }
       const rawChapters = response?.chapters || (Array.isArray(response) ? response : (response?.topics || []));
+      const sortedChapters = sortChaptersNaturally(rawChapters);
 
-      const formatted = rawChapters.map((ch, idx) => ({
+      const formatted = sortedChapters.map((ch, idx) => ({
         id: `extracted-ch-${Date.now()}-${idx}`,
         title: ch.title || `${t.chapterBadge} ${idx + 1}`,
         description: ch.description || '',
@@ -344,6 +346,21 @@ export function SyllabusUploadModal({
         };
       })
     );
+  }
+
+  function handleMoveChapter(chIdx, direction) {
+    const targetIdx = chIdx + direction;
+    if (targetIdx < 0 || targetIdx >= extractedChapters.length) return;
+    setExtractedChapters((prev) => {
+      const next = [...prev];
+      const temp = next[chIdx];
+      next[chIdx] = next[targetIdx];
+      next[targetIdx] = temp;
+      return next.map((ch, idx) => ({
+        ...ch,
+        sortOrder: currentTopicsCount + idx + 1,
+      }));
+    });
   }
 
   async function handleConfirmImport() {
@@ -591,15 +608,37 @@ export function SyllabusUploadModal({
                           )}
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteChapter(chIdx)}
-                          className="p-1 rounded-lg text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                          aria-label="Remove chapter"
-                          title={t.deleteTopicTooltip}
-                        >
-                          ✕
-                        </button>
+                        <div className="flex items-center gap-1">
+                          {chIdx > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleMoveChapter(chIdx, -1)}
+                              className="px-1.5 py-0.5 rounded-lg text-muted hover:text-text hover:bg-surface border border-border/50 text-[10px] font-mono transition-colors cursor-pointer"
+                              title={lang === 'vi' ? 'Di chuyển lên' : 'Move up'}
+                            >
+                              ▲
+                            </button>
+                          )}
+                          {chIdx < extractedChapters.length - 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleMoveChapter(chIdx, 1)}
+                              className="px-1.5 py-0.5 rounded-lg text-muted hover:text-text hover:bg-surface border border-border/50 text-[10px] font-mono transition-colors cursor-pointer"
+                              title={lang === 'vi' ? 'Di chuyển xuống' : 'Move down'}
+                            >
+                              ▼
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteChapter(chIdx)}
+                            className="p-1 rounded-lg text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                            aria-label="Remove chapter"
+                            title={t.deleteTopicTooltip}
+                          >
+                            ✕
+                          </button>
+                        </div>
                       </div>
 
                       {/* Chapter Title & Description */}

@@ -66,12 +66,19 @@ export function SyllabusPage() {
   const containerRef = useRef(null);
 
   const [courses, setCourses] = useState([]);
-  const [activeCourseId, setActiveCourseId] = useState(null);
+  const [activeCourseId, setActiveCourseId] = useState(() => {
+    if (typeof localStorage !== 'undefined') {
+      const saved = Number(localStorage.getItem('sfsh_active_course_id'));
+      return Number.isInteger(saved) && saved > 0 ? saved : null;
+    }
+    return null;
+  });
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(
     () => !(typeof localStorage !== 'undefined' && localStorage.getItem('sfsh_timetable_cleared') === 'true')
   );
   const [updatingTopicId, setUpdatingTopicId] = useState(null);
+  const [chapterToDelete, setChapterToDelete] = useState(null);
   const [toast, setToast] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -89,6 +96,13 @@ export function SyllabusPage() {
       updateFailed: 'Failed to update topic status. Changes rolled back.',
       createSuccess: 'New topic chapter added successfully.',
       createFailed: 'Failed to create topic.',
+      deleteChapterSuccess: 'Chapter deleted successfully.',
+      deleteChapterFailed: 'Failed to delete chapter.',
+      deleteModalTitle: 'Delete Chapter?',
+      deleteModalConfirm: (title, count) =>
+        `Are you sure you want to delete "${title}" and its ${count} subtopics? This action cannot be undone.`,
+      deleteModalAction: 'Delete Chapter',
+      cancel: 'Cancel',
       // Timetable Constraint Requirement View
       reqBadge: 'TIMETABLE REQUIRED · SYSTEM PREREQUISITE',
       reqTitle: 'No Enrolled Courses Found in Timetable',
@@ -109,6 +123,13 @@ export function SyllabusPage() {
       updateFailed: 'Không thể cập nhật trạng thái chương. Đã hoàn tác lại thay đổi.',
       createSuccess: 'Đã thêm chương học mới thành công.',
       createFailed: 'Không thể tạo chương học mới.',
+      deleteChapterSuccess: 'Đã xóa chương học thành công.',
+      deleteChapterFailed: 'Không thể xóa chương học.',
+      deleteModalTitle: 'Xóa chương học?',
+      deleteModalConfirm: (title, count) =>
+        `Bạn có chắc chắn muốn xóa "${title}" cùng ${count} mục kiến thức con? Thao tác này không thể hoàn tác.`,
+      deleteModalAction: 'Xóa chương',
+      cancel: 'Hủy',
       // Timetable Constraint Requirement View
       reqBadge: 'YÊU CẦU THỜI KHÓA BIỂU · RÀNG BUỘC HỆ THỐNG',
       reqTitle: 'Chưa có môn học nào từ Thời khóa biểu',
@@ -129,6 +150,13 @@ export function SyllabusPage() {
     updateFailed: 'Failed to update topic status. Changes rolled back.',
     createSuccess: 'New topic chapter added successfully.',
     createFailed: 'Failed to create topic.',
+    deleteChapterSuccess: 'Chapter deleted successfully.',
+    deleteChapterFailed: 'Failed to delete chapter.',
+    deleteModalTitle: 'Delete Chapter?',
+    deleteModalConfirm: (title, count) =>
+      `Are you sure you want to delete "${title}" and its ${count} subtopics?`,
+    deleteModalAction: 'Delete Chapter',
+    cancel: 'Cancel',
     reqBadge: 'TIMETABLE REQUIRED',
     reqTitle: 'No Courses in Timetable',
     reqSubtitle: 'Import a timetable to track syllabus topics.',
@@ -156,8 +184,16 @@ export function SyllabusPage() {
           setCourses(deduplicated);
           if (deduplicated.length > 0) {
             setActiveCourseId((prev) => {
-              const stillExists = deduplicated.some((c) => c.id === prev);
-              return stillExists ? prev : deduplicated[0].id;
+              const saved = typeof localStorage !== 'undefined'
+                ? Number(localStorage.getItem('sfsh_active_course_id'))
+                : null;
+              const preferredId = prev || saved;
+              const match = deduplicated.find((c) => c.id === preferredId);
+              const targetId = match ? match.id : deduplicated[0].id;
+              if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('sfsh_active_course_id', String(targetId));
+              }
+              return targetId;
             });
           } else {
             setActiveCourseId(null);
@@ -364,6 +400,34 @@ export function SyllabusPage() {
     });
   }
 
+  function handleSelectCourse(courseId) {
+    setActiveCourseId(courseId);
+    if (typeof localStorage !== 'undefined' && courseId) {
+      localStorage.setItem('sfsh_active_course_id', String(courseId));
+    }
+  }
+
+  async function confirmDeleteChapter() {
+    if (!chapterToDelete) return;
+    const targetId = chapterToDelete.id;
+    const prevTopics = [...topics];
+    setChapterToDelete(null);
+
+    // Optimistically remove from local state
+    setTopics((prev) => prev.filter((t) => t.id !== targetId && t.parentId !== targetId));
+
+    try {
+      if (typeof syllabusApi.deleteTopic === 'function') {
+        await syllabusApi.deleteTopic(targetId);
+      }
+      setToast({ message: t.deleteChapterSuccess, type: 'success' });
+    } catch (err) {
+      console.error('Failed to delete chapter:', err);
+      setTopics(prevTopics);
+      setToast({ message: t.deleteChapterFailed, type: 'error' });
+    }
+  }
+
   const activeCourse = courses.find((c) => c.id === activeCourseId) || courses[0];
   const nextSortOrder = topics.length > 0 ? Math.max(...topics.map((t) => t.sortOrder || 0)) + 1 : 1;
   const topicTree = buildTopicTree(topics);
@@ -455,7 +519,7 @@ export function SyllabusPage() {
       <CourseTabs
         courses={courses}
         activeCourseId={activeCourseId}
-        onSelectCourse={(id) => setActiveCourseId(id)}
+        onSelectCourse={handleSelectCourse}
       />
 
       {/* Mastery Progress Card */}
@@ -510,6 +574,7 @@ export function SyllabusPage() {
                 chapter={chapter}
                 index={index}
                 onStatusChange={handleStatusChange}
+                onDeleteChapter={(ch) => setChapterToDelete(ch)}
                 isUpdating={updatingTopicId === chapter.id}
               />
             ))}
@@ -534,6 +599,57 @@ export function SyllabusPage() {
         onClose={() => setIsUploadModalOpen(false)}
         onImportSuccess={handleImportTopics}
       />
+
+      {/* Confirm Delete Chapter Modal */}
+      {chapterToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="glass-card border border-border/90 rounded-3xl p-6 sm:p-8 max-w-md w-full space-y-5 shadow-2xl relative">
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-lg">
+                🗑️
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base sm:text-lg font-bold text-text truncate">
+                  {t.deleteModalTitle}
+                </h3>
+                {chapterToDelete.sourceFile && (
+                  <p className="text-[11px] text-muted font-mono truncate">
+                    📄 {chapterToDelete.sourceFile}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <p className="text-xs sm:text-sm text-muted leading-relaxed">
+              {t.deleteModalConfirm(
+                chapterToDelete.title,
+                chapterToDelete.subtopics?.length || 0
+              )}
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-border/40">
+              <button
+                type="button"
+                onClick={() => setChapterToDelete(null)}
+                className="px-4 py-2 rounded-full border border-border/70 text-xs font-semibold text-text hover:bg-surface transition-colors cursor-pointer"
+              >
+                {t.cancel}
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteChapter}
+                className="px-5 py-2 rounded-full bg-rose-500 hover:bg-rose-600 text-xs font-bold text-white shadow-md hover:shadow-lg transition-all cursor-pointer"
+              >
+                {t.deleteModalAction}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notification */}
       <ToastNotification

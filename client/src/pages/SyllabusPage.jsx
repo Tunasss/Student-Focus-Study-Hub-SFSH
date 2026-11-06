@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { CourseTabs } from '../components/syllabus/CourseTabs';
 import { MasteryHeaderCard } from '../components/syllabus/MasteryHeaderCard';
+import { ChapterCard } from '../components/syllabus/ChapterCard';
 import { TopicCard } from '../components/syllabus/TopicCard';
 import { AddTopicModal } from '../components/syllabus/AddTopicModal';
 import { SyllabusUploadModal } from '../components/syllabus/SyllabusUploadModal';
@@ -10,6 +11,58 @@ import { ToastNotification } from '../components/syllabus/ToastNotification';
 import { useLanguage } from '../i18n/languageContext';
 import { scheduleApi, syllabusApi } from '../lib/api';
 import { deduplicateSyllabusCourses } from '../utils/courseFormat';
+
+export function buildTopicTree(topics = []) {
+  if (!Array.isArray(topics) || topics.length === 0) return [];
+
+  // If topics are already structured with subtopics and have no parentId links, preserve them
+  const hasParentId = topics.some((t) => t.parentId != null);
+  if (!hasParentId && topics.some((t) => Array.isArray(t.subtopics) && t.subtopics.length > 0)) {
+    return topics.map((t) => ({ ...t, subtopics: [...(t.subtopics || [])] }));
+  }
+
+  const topicMap = new Map();
+  for (const t of topics) {
+    topicMap.set(t.id, {
+      ...t,
+      subtopics: Array.isArray(t.subtopics) ? [...t.subtopics] : [],
+    });
+  }
+
+  const chapters = [];
+  for (const topic of topics) {
+    if (topic.parentId != null && topicMap.has(topic.parentId)) {
+      const parent = topicMap.get(topic.parentId);
+      if (!parent.subtopics.some((s) => s.id === topic.id)) {
+        parent.subtopics.push(topicMap.get(topic.id));
+      }
+    } else {
+      chapters.push(topicMap.get(topic.id));
+    }
+  }
+
+  for (const ch of chapters) {
+    ch.subtopics.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  }
+
+  chapters.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  return chapters;
+}
+
+export function updateTopicInList(list = [], topicId, newStatus) {
+  return list.map((item) => {
+    if (item.id === topicId) {
+      return { ...item, status: newStatus };
+    }
+    if (Array.isArray(item.subtopics) && item.subtopics.length > 0) {
+      return {
+        ...item,
+        subtopics: updateTopicInList(item.subtopics, topicId, newStatus),
+      };
+    }
+    return item;
+  });
+}
 
 const DEFAULT_TOPICS = {
   1: [
@@ -262,9 +315,7 @@ export function SyllabusPage() {
     const prevTopics = [...topics];
 
     // Optimistically update local state immediately
-    setTopics((prev) =>
-      prev.map((t) => (t.id === topicId ? { ...t, status: newStatus } : t))
-    );
+    setTopics((prev) => updateTopicInList(prev, topicId, newStatus));
     setUpdatingTopicId(topicId);
 
     try {
@@ -303,17 +354,50 @@ export function SyllabusPage() {
   }
 
   // Handle bulk syllabus import from AI extractor
-  function handleImportTopics(importedTopics) {
-    if (!importedTopics || importedTopics.length === 0) return;
-    setTopics((prev) => [...prev, ...importedTopics]);
+  async function handleImportTopics(importedData) {
+    if (!importedData) return;
+    const incomingChapters = importedData.chapters || (Array.isArray(importedData) ? importedData : []);
+    if (incomingChapters.length === 0) return;
+
+    const mode = importedData.mode || 'append';
+
+    try {
+      if (activeCourseId && typeof syllabusApi.bulkSaveTopics === 'function') {
+        const saved = await syllabusApi.bulkSaveTopics(activeCourseId, {
+          mode,
+          chapters: incomingChapters,
+        });
+        if (saved?.topics && Array.isArray(saved.topics)) {
+          setTopics(saved.topics);
+          setToast({
+            message: t.importSuccess(incomingChapters.length),
+            type: 'success',
+          });
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('bulkSaveTopics API call failed, falling back to local state:', err);
+    }
+
+    if (mode === 'replace') {
+      setTopics(incomingChapters);
+    } else {
+      setTopics((prev) => [...prev, ...incomingChapters]);
+    }
+
     setToast({
-      message: t.importSuccess(importedTopics.length),
+      message: t.importSuccess(incomingChapters.length),
       type: 'success',
     });
   }
 
   const activeCourse = courses.find((c) => c.id === activeCourseId) || courses[0];
   const nextSortOrder = topics.length > 0 ? Math.max(...topics.map((t) => t.sortOrder || 0)) + 1 : 1;
+  const topicTree = buildTopicTree(topics);
+  const progressTopics = topicTree.flatMap((ch) =>
+    ch.subtopics && ch.subtopics.length > 0 ? ch.subtopics : [ch]
+  );
 
   // Case 1: If there are NO courses in the timetable (or timetable was cleared)
   if (!loading && courses.length === 0) {
@@ -403,16 +487,16 @@ export function SyllabusPage() {
       />
 
       {/* Mastery Progress Card */}
-      {activeCourse && <MasteryHeaderCard course={activeCourse} topics={topics} />}
+      {activeCourse && <MasteryHeaderCard course={activeCourse} topics={progressTopics} />}
 
       {/* Topics list */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-bold text-text tracking-tight">
-            {lang === 'vi' ? 'Danh sách chương mục' : 'Curriculum Chapters'}
+            {lang === 'vi' ? 'Cây kiến thức môn học' : 'Curriculum Knowledge Tree'}
           </h3>
           <span className="text-xs font-mono font-medium text-muted">
-            {topics.length} {topics.length === 1 ? 'topic' : 'topics'}
+            {topicTree.length} {topicTree.length === 1 ? (lang === 'vi' ? 'chương' : 'chapter') : (lang === 'vi' ? 'chương' : 'chapters')}
           </span>
         </div>
 
@@ -447,14 +531,14 @@ export function SyllabusPage() {
             </div>
           </div>
         ) : (
-          <div className="space-y-3">
-            {topics.map((topic, index) => (
-              <TopicCard
-                key={topic.id}
-                topic={topic}
+          <div className="space-y-4">
+            {topicTree.map((chapter, index) => (
+              <ChapterCard
+                key={chapter.id}
+                chapter={chapter}
                 index={index}
                 onStatusChange={handleStatusChange}
-                isUpdating={updatingTopicId === topic.id}
+                isUpdating={updatingTopicId === chapter.id}
               />
             ))}
           </div>

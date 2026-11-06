@@ -14,6 +14,7 @@ vi.mock('../lib/api', () => ({
     updateTopicStatus: vi.fn(),
     createTopic: vi.fn(),
     extractSyllabus: vi.fn(),
+    bulkSaveTopics: vi.fn(),
   },
 }));
 
@@ -218,5 +219,72 @@ describe('SyllabusPage Integration', () => {
 
     // Enrolled count should show 1 course, not 2
     expect(screen.getByText(/1 Enrolled Course|1 Môn học/i)).toBeInTheDocument();
+  });
+
+  test('renders hierarchical knowledge tree with chapters, sourceFile badges, and subtopics', async () => {
+    const mockHierarchicalTopics = [
+      { id: 1, courseId: 1, parentId: null, sortOrder: 1, title: 'Chapter 1: Architecture', sourceFile: 'deck1.pdf', status: 'TODO' },
+      { id: 2, courseId: 1, parentId: 1, sortOrder: 1, title: '1.1 Logic Gates', description: 'AND/OR gates', status: 'DONE' },
+      { id: 3, courseId: 1, parentId: 1, sortOrder: 2, title: '1.2 ALU Design', description: 'Arithmetic unit', status: 'TODO' },
+      { id: 4, courseId: 1, parentId: null, sortOrder: 2, title: 'Chapter 2: Memory Systems', sourceFile: 'deck2.pdf', status: 'TODO' },
+      { id: 5, courseId: 1, parentId: 4, sortOrder: 1, title: '2.1 Cache Hierarchy', description: 'L1/L2 caches', status: 'TODO' },
+    ];
+    syllabusApi.getCourseTopics.mockResolvedValue(mockHierarchicalTopics);
+
+    render(
+      <MemoryRouter>
+        <LanguageProvider>
+          <SyllabusPage />
+        </LanguageProvider>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Chapter 1: Architecture')).toBeInTheDocument();
+      expect(screen.getByText(/deck1\.pdf/)).toBeInTheDocument();
+      expect(screen.getByText('1.1 Logic Gates')).toBeInTheDocument();
+      expect(screen.getByText('1.2 ALU Design')).toBeInTheDocument();
+      expect(screen.getByText('Chapter 2: Memory Systems')).toBeInTheDocument();
+      expect(screen.getByText(/deck2\.pdf/)).toBeInTheDocument();
+      expect(screen.getByText('2.1 Cache Hierarchy')).toBeInTheDocument();
+    });
+
+    // 1 subtopic done out of 3 total subtopics = 33%
+    expect(screen.getByText('33%')).toBeInTheDocument();
+  });
+
+  test('optimistically updates subtopic status and recalculates chapter progress in knowledge tree', async () => {
+    const mockHierarchicalTopics = [
+      { id: 1, courseId: 1, parentId: null, sortOrder: 1, title: 'Chapter 1: Architecture', sourceFile: 'deck1.pdf', status: 'TODO' },
+      { id: 2, courseId: 1, parentId: 1, sortOrder: 1, title: '1.1 Logic Gates', description: 'AND/OR gates', status: 'DONE' },
+      { id: 3, courseId: 1, parentId: 1, sortOrder: 2, title: '1.2 ALU Design', description: 'Arithmetic unit', status: 'TODO' },
+    ];
+    syllabusApi.getCourseTopics.mockResolvedValue(mockHierarchicalTopics);
+    syllabusApi.updateTopicStatus.mockResolvedValue({ id: 3, status: 'DONE' });
+
+    render(
+      <MemoryRouter>
+        <LanguageProvider>
+          <SyllabusPage />
+        </LanguageProvider>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('1.2 ALU Design')).toBeInTheDocument();
+    });
+
+    // Subtopic 1.2 is currently TODO. Find its DONE radio
+    const subtopicRadios = screen.getAllByRole('radio', { name: /Completed|Hoàn thành/i });
+    // Subtopic 1.1 has done radio (index 0), subtopic 1.2 has done radio (index 1)
+    const aluDoneRadio = subtopicRadios[1];
+    fireEvent.click(aluDoneRadio);
+
+    // Both subtopics are now done -> ChapterCard and MasteryHeaderCard both show 100%
+    await waitFor(() => {
+      expect(screen.getAllByText('100%').length).toBeGreaterThanOrEqual(2);
+    });
+
+    expect(syllabusApi.updateTopicStatus).toHaveBeenCalledWith(3, 'DONE');
   });
 });

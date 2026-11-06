@@ -4,7 +4,8 @@ const { createApp } = require('./app');
 const { createGeminiClient } = require('./llm/gemini');
 
 const gemini = createGeminiClient(config);
-if (!gemini) console.warn('GEMINI_API_KEY is not set: POST /api/syllabus/extract will answer 503 LLM_NOT_CONFIGURED');
+if (config.llmMock) console.warn('LLM_MOCK=true: syllabus analysis returns the fixed 5-chapter sample, Gemini is not called');
+else if (!gemini) console.warn('GEMINI_API_KEY is not set: POST /api/syllabus/extract will answer 503 LLM_NOT_CONFIGURED');
 
 const app = createApp({ prisma, gemini });
 

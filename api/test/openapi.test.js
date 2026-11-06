@@ -167,7 +167,14 @@ describe('responses match openapi.yaml (Rule 02 envelope)', () => {
     const route = (a) => auth(request(a).post('/api/syllabus/extract')).attach('file', makePdf([text]), 'syllabus.pdf');
     assertMatchesSpec(await route(noTopics), 'post', '/api/syllabus/extract'); // 422 SYLLABUS_NO_TOPICS
     assertMatchesSpec(await route(noKey), 'post', '/api/syllabus/extract'); // 503
-    assertMatchesSpec(await route(badReply), 'post', '/api/syllabus/extract'); // 502
+    assertMatchesSpec(await route(badReply), 'post', '/api/syllabus/extract'); // 502 LLM_SCHEMA_INVALID
+    const offline = createApp({
+      prisma: createFakePrisma(),
+      gemini: createFakeGemini(() => {
+        throw new TypeError('fetch failed');
+      }),
+    });
+    assertMatchesSpec(await route(offline), 'post', '/api/syllabus/extract'); // 503 LLM_UNAVAILABLE
   });
 
   test('GET /api/courses', async () => {

@@ -141,16 +141,21 @@ default `gemini-2.5-flash`) with `responseMimeType: "application/json"` and the 
 The reply is parsed and validated with zod (`syllabusOutputSchema`), then topics are sorted by `order`, de-duplicated by
 title and renumbered from 1. The response adds `courseCode` and `topics` to the extraction payload.
 
-| Situation | Error |
-|---|---|
-| `GEMINI_API_KEY` not set | `503 LLM_NOT_CONFIGURED` (the server still boots and logs a warning) |
-| Gemini rate limited (429) or key rejected (401/403) | `503 LLM_UNAVAILABLE` |
-| other Gemini / network failure | `502 LLM_UNAVAILABLE` |
-| reply is not JSON or fails the zod schema | `502 LLM_INVALID_OUTPUT` |
-| reply has no topics | `422 SYLLABUS_NO_TOPICS`, message points to the manual entry form |
-
 The client is injected into `createApp({ prisma, gemini })`; tests use `createFakeGemini()` from `test/helpers.js`
 and never call the network. Set `GEMINI_API_KEY` in `.env` (see `.env.example`) to use the real model.
+
+### Resilience, mock mode and LLM errors (WBS 2.2.3)
+
+| Situation | Behaviour |
+|---|---|
+| `LLM_MOCK=true` | Gemini is never called: `src/llm/mockGemini.js` answers with a fixed 5-chapter sample (`source: "mock"`). Works without an API key; for UI work and offline tests |
+| reply is not JSON or fails the zod schema | retried **once** (the retry prompt quotes the problem), then `502 LLM_SCHEMA_INVALID` |
+| Gemini HTTP 429 (quota), connection lost, key rejected | `503 LLM_UNAVAILABLE` at once, **no retry**: the web UI should open the manual entry form |
+| `GEMINI_API_KEY` not set and `LLM_MOCK` not set | `503 LLM_NOT_CONFIGURED` (the server still boots and logs a warning) |
+| valid reply with no topics | `422 SYLLABUS_NO_TOPICS`, message points to the manual entry form |
+
+Every failure is a Rule 02 error envelope; the process never crashes on an AI problem (unexpected exceptions still go
+through `errorHandler` as `500 INTERNAL_ERROR`). Successful responses carry `source: "gemini" | "mock"`.
 
 
 

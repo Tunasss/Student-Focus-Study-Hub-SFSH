@@ -19,6 +19,8 @@ const config = {
     .map((o) => o.trim())
     .filter(Boolean),
   // Google Gen AI (syllabus analysis, WBS 2.2.2). Without a key the endpoint answers 503 LLM_NOT_CONFIGURED.
+  // LLM_MOCK=true answers with a fixed 5-chapter sample instead of calling Gemini (offline UI work, no quota).
+  llmMock: process.env.LLM_MOCK === 'true',
   geminiApiKey: process.env.GEMINI_API_KEY || '',
   geminiModel: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
   geminiTimeoutMs: Number(process.env.GEMINI_TIMEOUT_MS) || 60_000,

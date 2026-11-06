@@ -31,8 +31,8 @@ info:
     | `PDF_TOO_MANY_PAGES` | 400 | The syllabus PDF has more than 30 pages |
     | `PDF_NO_TEXT_LAYER` | 422 | The syllabus PDF is a scanned image without a text layer; use the manual entry form |
     | `SYLLABUS_NO_TOPICS` | 422 | The AI found no course topics in the syllabus text; use the manual entry form |
-    | `LLM_INVALID_OUTPUT` | 502 | The AI reply was not valid JSON or failed the topics schema (zod) |
-    | `LLM_UNAVAILABLE` | 502 / 503 | The AI service failed (502), is rate limited or rejected the key (503) |
+    | `LLM_SCHEMA_INVALID` | 502 | The AI reply was not valid JSON or failed the topics schema (zod), even after one retry |
+    | `LLM_UNAVAILABLE` | 503 | The AI service is out of quota (429), unreachable or rejected the key: switch to the manual entry form |
     | `LLM_NOT_CONFIGURED` | 503 | `GEMINI_API_KEY` is not set on this server |
     | `UNAUTHORIZED` | 401 | Missing, malformed or invalid bearer token |
     | `TOKEN_EXPIRED` | 401 | The bearer token has expired; log in again |
@@ -473,6 +473,11 @@ paths:
         - Topics are sorted by the model's `order`, de-duplicated by title and renumbered from 1, ready to become
           `topics.sort_order`. `courseCode` is null when the syllabus has none.
         - The raw `text` and per-page `pages` are returned as well, so the client can show the source.
+
+        Resilience (WBS 2.2.3): a reply that fails the schema is retried once, then `502 LLM_SCHEMA_INVALID`.
+        Quota (429) or connection problems answer `503 LLM_UNAVAILABLE` immediately, so the client should open the
+        manual entry form. With `LLM_MOCK=true` the server skips Gemini and returns a fixed 5-chapter sample
+        (`source: mock`).
       operationId: extractSyllabus
       requestBody:
         required: true
@@ -531,17 +536,33 @@ paths:
                   message: This PDF has no readable text layer (it looks like a scanned image). Please add the syllabus topics with the manual entry form instead.
                 timestamp: '2026-11-06T00:00:00.000Z'
         '502':
-          description: '`LLM_INVALID_OUTPUT` (reply not valid JSON or failed the schema) or `LLM_UNAVAILABLE` (AI service error).'
+          description: '`LLM_SCHEMA_INVALID`: the AI reply was not valid JSON or failed the topics schema twice (one retry).'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                data: null
+                error:
+                  code: LLM_SCHEMA_INVALID
+                  message: 'The AI reply did not match the expected syllabus structure after 2 attempts (topics.0.title: Invalid input: expected string, received undefined); please add the topics manually'
+                timestamp: '2026-11-06T00:00:00.000Z'
         '503':
-          description: '`LLM_NOT_CONFIGURED` (no `GEMINI_API_KEY`) or `LLM_UNAVAILABLE` (rate limited / key rejected). Retry later.'
+          description: |
+            `LLM_UNAVAILABLE` (out of quota / HTTP 429, unreachable, or key rejected) or `LLM_NOT_CONFIGURED`
+            (no `GEMINI_API_KEY`). The client should open the manual entry form right away.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                data: null
+                error:
+                  code: LLM_UNAVAILABLE
+                  message: The AI service is out of quota or rate limited; please add the topics manually or try again later
+                timestamp: '2026-11-06T00:00:00.000Z'
 
 components:
   securitySchemes:
@@ -675,7 +696,7 @@ components:
                 - PDF_TOO_MANY_PAGES
                 - PDF_NO_TEXT_LAYER
                 - SYLLABUS_NO_TOPICS
-                - LLM_INVALID_OUTPUT
+                - LLM_SCHEMA_INVALID
                 - LLM_UNAVAILABLE
                 - LLM_NOT_CONFIGURED
                 - UNAUTHORIZED
@@ -1093,7 +1114,7 @@ components:
     SyllabusText:
       type: object
       additionalProperties: false
-      required: [fileName, pageCount, charCount, courseCode, topics, text, pages]
+      required: [fileName, pageCount, charCount, courseCode, topics, source, text, pages]
       properties:
         fileName:
           type: string
@@ -1118,6 +1139,10 @@ components:
           maxItems: 100
           items:
             $ref: '#/components/schemas/SyllabusTopic'
+        source:
+          type: string
+          enum: [gemini, mock]
+          description: '`mock` when the server runs with `LLM_MOCK=true` (fixed sample, Gemini not called).'
         text:
           type: string
           description: Text of all pages, pages separated by a blank line.

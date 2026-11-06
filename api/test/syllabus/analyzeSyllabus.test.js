@@ -1,8 +1,10 @@
-// WBS 2.2.2 — Gemini structured output: request constraints, zod validation of the reply, error mapping.
+// WBS 2.2.2 / 2.2.3 — Gemini structured output: request constraints, zod validation, retry, mock mode, error mapping.
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { Type } = require('@google/genai');
-const { analyzeSyllabusText, buildRequest, normalizeTopics, MAX_INPUT_CHARS } = require('../../src/syllabus/analyzeSyllabus');
+const { analyzeSyllabusText, buildRequest, normalizeTopics, MAX_INPUT_CHARS, MAX_ATTEMPTS } = require('../../src/syllabus/analyzeSyllabus');
+const { createGeminiClient } = require('../../src/llm/gemini');
+const { MOCK_SYLLABUS } = require('../../src/llm/mockGemini');
 const { responseSchema, syllabusOutputSchema } = require('../../src/syllabus/geminiSchema');
 const { createFakeGemini } = require('../helpers');
 
@@ -75,6 +77,7 @@ describe('analyzeSyllabusText', () => {
         { order: 1, title: 'Variables and types', description: 'Declaring variables, primitive types.' },
         { order: 2, title: 'Control flow', description: 'if, while, for.' },
       ],
+      source: 'gemini',
     });
     assert.equal(gemini.calls.length, 1);
     const [req] = gemini.calls;
@@ -85,7 +88,7 @@ describe('analyzeSyllabusText', () => {
 
   test('missing course_code / description become null; whitespace is trimmed', async () => {
     const { result } = await analyze({ topics: [{ order: 1, title: '  Intro  ' }] });
-    assert.deepEqual(result, { courseCode: null, topics: [{ order: 1, title: 'Intro', description: null }] });
+    assert.deepEqual(result, { courseCode: null, topics: [{ order: 1, title: 'Intro', description: null }], source: 'gemini' });
   });
 
   test('re-sorts by order, drops duplicate titles and renumbers from 1', async () => {
@@ -111,7 +114,7 @@ describe('analyzeSyllabusText', () => {
     await expectApiError(analyze({ course_code: 'X', topics: [] }), 422, 'SYLLABUS_NO_TOPICS', /manual entry form/);
   });
 
-  describe('zod rejects replies that break the schema -> 502 LLM_INVALID_OUTPUT', () => {
+  describe('zod rejects replies that break the schema (twice) -> 502 LLM_SCHEMA_INVALID', () => {
     const cases = [
       ['topic without title', { topics: [{ order: 1 }] }, /topics\.0\.title/],
       ['topic with empty title', { topics: [{ order: 1, title: '   ' }] }, /title/],
@@ -123,30 +126,103 @@ describe('analyzeSyllabusText', () => {
       ['top level is an array', [{ order: 1, title: 'A' }], /\$/],
     ];
     for (const [name, reply, pattern] of cases) {
-      test(name, () => expectApiError(analyze(reply), 502, 'LLM_INVALID_OUTPUT', pattern));
+      test(name, () => expectApiError(analyze(reply), 502, 'LLM_SCHEMA_INVALID', pattern));
     }
   });
 
-  test('non-JSON or empty replies -> 502 LLM_INVALID_OUTPUT', async () => {
-    await expectApiError(analyze('Sure! Here are the topics: ...'), 502, 'LLM_INVALID_OUTPUT', /not valid JSON/);
-    await expectApiError(analyze(''), 502, 'LLM_INVALID_OUTPUT', /empty/);
+  test('non-JSON or empty replies -> 502 LLM_SCHEMA_INVALID', async () => {
+    await expectApiError(analyze('Sure! Here are the topics: ...'), 502, 'LLM_SCHEMA_INVALID', /not valid JSON/);
+    await expectApiError(analyze(''), 502, 'LLM_SCHEMA_INVALID', /empty/);
   });
 
-  test('upstream failures map to LLM_UNAVAILABLE (503 for rate limit / bad key, 502 otherwise)', async () => {
-    const rateLimited = createFakeGemini(() => {
-      throw Object.assign(new Error('quota exceeded'), { status: 429 });
-    });
-    await expectApiError(analyzeSyllabusText(TEXT, { gemini: rateLimited, model: MODEL }), 503, 'LLM_UNAVAILABLE', /rate limited/);
+  describe('retry on schema errors (WBS 2.2.3)', () => {
+    test('a schema-invalid reply is retried once, and the retry prompt names the problem', async () => {
+      const replies = ['garbage', GOOD_REPLY];
+      const gemini = createFakeGemini(() => replies.shift());
 
-    const badKey = createFakeGemini(() => {
-      throw Object.assign(new Error('API key not valid'), { status: 403 });
-    });
-    await expectApiError(analyzeSyllabusText(TEXT, { gemini: badKey, model: MODEL }), 503, 'LLM_UNAVAILABLE', /GEMINI_API_KEY/);
+      const result = await analyzeSyllabusText(TEXT, { gemini, model: MODEL });
 
-    const down = createFakeGemini(() => {
-      throw new Error('fetch failed');
+      assert.equal(result.courseCode, 'CS101');
+      assert.equal(gemini.calls.length, 2);
+      assert.doesNotMatch(gemini.calls[0].contents, /previous reply was rejected/);
+      assert.match(gemini.calls[1].contents, /previous reply was rejected \(not valid JSON\)/);
+      assert.match(gemini.calls[1].contents, /Chapter 1: Variables/); // the syllabus text is sent again
+      assert.equal(gemini.calls[1].config.responseMimeType, 'application/json');
     });
-    await expectApiError(analyzeSyllabusText(TEXT, { gemini: down, model: MODEL }), 502, 'LLM_UNAVAILABLE');
+
+    test('two bad replies -> LLM_SCHEMA_INVALID, exactly MAX_ATTEMPTS (2) calls', async () => {
+      const gemini = createFakeGemini({ topics: [{ order: 1 }] });
+      await expectApiError(analyzeSyllabusText(TEXT, { gemini, model: MODEL }), 502, 'LLM_SCHEMA_INVALID', /after 2 attempts/);
+      assert.equal(MAX_ATTEMPTS, 2);
+      assert.equal(gemini.calls.length, 2);
+    });
+
+    test('a valid reply is never retried', async () => {
+      const { gemini } = await analyze(GOOD_REPLY);
+      assert.equal(gemini.calls.length, 1);
+    });
+  });
+
+  describe('upstream failures -> 503 LLM_UNAVAILABLE at once, no retry (WBS 2.2.3)', () => {
+    const failing = (error) =>
+      createFakeGemini(() => {
+        throw error;
+      });
+
+    test('HTTP 429 (quota exhausted)', async () => {
+      const gemini = failing(Object.assign(new Error('quota exceeded'), { status: 429 }));
+      await expectApiError(analyzeSyllabusText(TEXT, { gemini, model: MODEL }), 503, 'LLM_UNAVAILABLE', /quota/);
+      assert.equal(gemini.calls.length, 1);
+    });
+
+    test('connection lost', async () => {
+      const gemini = failing(Object.assign(new TypeError('fetch failed'), { code: 'ECONNRESET' }));
+      await expectApiError(analyzeSyllabusText(TEXT, { gemini, model: MODEL }), 503, 'LLM_UNAVAILABLE', /could not be reached/);
+      assert.equal(gemini.calls.length, 1);
+    });
+
+    test('rejected API key', async () => {
+      const gemini = failing(Object.assign(new Error('API key not valid'), { status: 403 }));
+      await expectApiError(analyzeSyllabusText(TEXT, { gemini, model: MODEL }), 503, 'LLM_UNAVAILABLE', /GEMINI_API_KEY/);
+    });
+
+    test('upstream failure on the retry call is also LLM_UNAVAILABLE', async () => {
+      let n = 0;
+      const gemini = createFakeGemini(() => {
+        n += 1;
+        if (n === 1) return 'garbage';
+        throw Object.assign(new Error('quota'), { status: 429 });
+      });
+      await expectApiError(analyzeSyllabusText(TEXT, { gemini, model: MODEL }), 503, 'LLM_UNAVAILABLE');
+      assert.equal(gemini.calls.length, 2);
+    });
+  });
+
+  describe('LLM mock mode (LLM_MOCK=true)', () => {
+    test('createGeminiClient returns the mock even without an API key', () => {
+      const client = createGeminiClient({ llmMock: true, geminiApiKey: '', geminiTimeoutMs: 1 });
+      assert.equal(client.isMock, true);
+      assert.equal(typeof client.models.generateContent, 'function');
+      assert.equal(createGeminiClient({ llmMock: false, geminiApiKey: '', geminiTimeoutMs: 1 }), null);
+    });
+
+    test('answers with the fixed 5-chapter sample, validated like a real reply, source = mock', async () => {
+      const gemini = createGeminiClient({ llmMock: true });
+      const result = await analyzeSyllabusText('anything', { gemini, model: MODEL });
+
+      assert.equal(result.source, 'mock');
+      assert.equal(result.courseCode, MOCK_SYLLABUS.course_code);
+      assert.equal(result.topics.length, 5);
+      assert.deepEqual(
+        result.topics.map((t) => t.order),
+        [1, 2, 3, 4, 5],
+      );
+      assert.deepEqual(
+        result.topics.map((t) => t.title),
+        MOCK_SYLLABUS.topics.map((t) => t.title),
+      );
+      assert.equal(gemini.calls.length, 1); // no network: the mock recorded the call locally
+    });
   });
 
   test('no client configured -> 503 LLM_NOT_CONFIGURED', async () => {

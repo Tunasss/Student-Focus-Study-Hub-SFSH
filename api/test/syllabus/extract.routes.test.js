@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const request = require('supertest');
 const { createApp } = require('../../src/app');
 const { createFakePrisma, createFakeGemini, SAMPLE_ANALYSIS } = require('../helpers');
+const { createGeminiClient } = require('../../src/llm/gemini');
 const { makePdf } = require('../fixtures/makePdf');
 const { PDF_LIMITS } = require('../../src/syllabus/extractPdf');
 
@@ -52,6 +53,7 @@ describe('POST /api/syllabus/extract', () => {
     const res = await extract(makePdf([SYLLABUS]), 'MATH201.pdf');
 
     assert.equal(res.status, 200);
+    assert.equal(res.body.data.source, 'gemini');
     assert.equal(res.body.data.courseCode, 'MATH201');
     assert.deepEqual(res.body.data.topics, [
       { order: 1, title: 'Techniques of integration', description: 'Substitution, parts, partial fractions.' },
@@ -74,11 +76,44 @@ describe('POST /api/syllabus/extract', () => {
     assert.equal(res.body.data, null);
   });
 
-  test('answers 502 LLM_INVALID_OUTPUT when the model reply fails zod validation', async () => {
-    const broken = createApp({ prisma: createFakePrisma(), gemini: createFakeGemini({ topics: [{ order: 1 }] }) });
+  test('answers 502 LLM_SCHEMA_INVALID after one retry when the model reply keeps failing zod validation', async () => {
+    const fake = createFakeGemini({ topics: [{ order: 1 }] });
+    const broken = createApp({ prisma: createFakePrisma(), gemini: fake });
     const res = await extractWith(broken, makePdf([SYLLABUS]));
     assert.equal(res.status, 502);
-    assert.equal(res.body.error.code, 'LLM_INVALID_OUTPUT');
+    assert.equal(res.body.error.code, 'LLM_SCHEMA_INVALID');
+    assert.equal(fake.calls.length, 2);
+  });
+
+  test('answers 503 LLM_UNAVAILABLE on quota (429) or connection loss so the UI can open the manual form', async () => {
+    const quota = createApp({
+      prisma: createFakePrisma(),
+      gemini: createFakeGemini(() => {
+        throw Object.assign(new Error('quota'), { status: 429 });
+      }),
+    });
+    const res = await extractWith(quota, makePdf([SYLLABUS]));
+    assert.equal(res.status, 503);
+    assert.equal(res.body.error.code, 'LLM_UNAVAILABLE');
+
+    const offline = createApp({
+      prisma: createFakePrisma(),
+      gemini: createFakeGemini(() => {
+        throw new TypeError('fetch failed');
+      }),
+    });
+    const res2 = await extractWith(offline, makePdf([SYLLABUS]));
+    assert.equal(res2.status, 503);
+    assert.equal(res2.body.error.code, 'LLM_UNAVAILABLE');
+  });
+
+  test('LLM_MOCK mode returns the fixed 5-chapter sample without any Gemini call', async () => {
+    const mocked = createApp({ prisma: createFakePrisma(), gemini: createGeminiClient({ llmMock: true }) });
+    const res = await extractWith(mocked, makePdf([SYLLABUS]));
+    assert.equal(res.status, 200);
+    assert.equal(res.body.data.source, 'mock');
+    assert.equal(res.body.data.topics.length, 5);
+    assert.equal(res.body.data.courseCode, 'CS101');
   });
 
   test('answers 422 SYLLABUS_NO_TOPICS when the model finds no topics', async () => {

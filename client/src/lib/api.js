@@ -128,7 +128,16 @@ export const syllabusApi = {
       if (data?.chapters) return data;
       return data?.topics || (Array.isArray(data) ? data : []);
     } catch (err) {
-      if (err?.status === 404 || err?.code === 'NETWORK_ERROR' || err?.status === 501) {
+      if (
+        err?.status === 404 ||
+        err?.code === 'NETWORK_ERROR' ||
+        err?.status === 501 ||
+        err?.status === 502 ||
+        err?.status === 503 ||
+        err?.code === 'LLM_NOT_CONFIGURED' ||
+        err?.code === 'LLM_UNAVAILABLE' ||
+        err?.code === 'LLM_SCHEMA_INVALID'
+      ) {
         if (courseId) {
           try {
             const fallbackData = await apiFetch('/api/syllabus/extract', {
@@ -141,7 +150,7 @@ export const syllabusApi = {
             // fallback to simulation
           }
         }
-        return simulateSyllabusExtraction(courseName, files[0]?.name || 'syllabus.pdf');
+        return simulateSyllabusExtraction(courseName, files);
       }
       throw err;
     }

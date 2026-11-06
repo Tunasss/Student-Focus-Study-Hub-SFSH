@@ -252,9 +252,15 @@ export function SyllabusUploadModal({
 
       setExtractedChapters(formatted);
       setStep('PREVIEW');
-    } catch {
+    } catch (err) {
       clearInterval(stageTimer);
-      setError('AI extraction failed. Please try again or check the file.');
+      const errorMsg =
+        err?.message ||
+        err?.error?.message ||
+        (lang === 'vi'
+          ? 'Không thể phân tích tài liệu bằng AI. Vui lòng kiểm tra lại file hoặc thử lại sau.'
+          : 'AI extraction failed. Please try again or check the file.');
+      setError(errorMsg);
       setStep('UPLOAD');
     }
   }

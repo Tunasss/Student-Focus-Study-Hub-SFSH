@@ -12,7 +12,7 @@ const { analyzeSyllabusText } = require('../syllabus/analyzeSyllabus');
 const uploadPdf = multiFileUpload({
   field: 'files',
   maxCount: 20,
-  maxBytes: 10 * 1024 * 1024,
+  maxBytes: 5 * 1024 * 1024,
   errorCode: 'INVALID_PDF_FORMAT',
   label: '.pdf',
 });

@@ -206,19 +206,22 @@ async function analyzeSyllabusText(input, { gemini, model }) {
   // Flattened topics list for backward compatibility
   const flattenedTopics = [];
   for (const ch of chapters) {
-    flattenedTopics.push({
+    const chTopic = {
       order: flattenedTopics.length + 1,
       title: ch.title,
       description: ch.description,
-      sourceFile: ch.sourceFile,
-    });
+    };
+    if (ch.sourceFile) chTopic.sourceFile = ch.sourceFile;
+    flattenedTopics.push(chTopic);
+
     for (const sub of ch.subtopics) {
-      flattenedTopics.push({
+      const subTopic = {
         order: flattenedTopics.length + 1,
         title: sub.title,
         description: sub.description,
-        sourceFile: ch.sourceFile,
-      });
+      };
+      if (ch.sourceFile) subTopic.sourceFile = ch.sourceFile;
+      flattenedTopics.push(subTopic);
     }
   }
 

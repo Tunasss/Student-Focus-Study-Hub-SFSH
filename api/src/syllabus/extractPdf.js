@@ -124,7 +124,7 @@ async function extractMultiplePdfs(files) {
         throw new ApiError(
           422,
           'PDF_NO_TEXT_LAYER',
-          `File "${file.originalname || 'syllabus.pdf'}" has no readable text layer (it looks like a scanned image).`,
+          `File "${file.originalname || 'syllabus.pdf'}" has no readable text layer (it looks like a scanned image). Please add the syllabus topics with the manual entry form instead.`,
         );
       }
       throw err;

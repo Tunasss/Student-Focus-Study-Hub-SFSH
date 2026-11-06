@@ -1301,6 +1301,45 @@ components:
                 task:
                   $ref: '#/components/schemas/Task'
 
+    SyllabusSubtopic:
+      type: object
+      additionalProperties: false
+      required: [order, title]
+      properties:
+        order:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: [string, 'null']
+          maxLength: 1000
+
+    SyllabusChapter:
+      type: object
+      additionalProperties: false
+      required: [order, title, subtopics]
+      properties:
+        order:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: [string, 'null']
+          maxLength: 1000
+        sourceFile:
+          type: [string, 'null']
+          maxLength: 255
+        subtopics:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyllabusSubtopic'
+
     SyllabusTopic:
       type: object
       additionalProperties: false
@@ -1328,6 +1367,10 @@ components:
         fileName:
           type: string
           example: MATH201-syllabus.pdf
+        fileNames:
+          type: array
+          items:
+            type: string
         pageCount:
           type: integer
           minimum: 1
@@ -1342,6 +1385,10 @@ components:
           type: [string, 'null']
           description: Course code found by the model, e.g. MATH201; null when the syllabus shows none.
           example: MATH201
+        chapters:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyllabusChapter'
         topics:
           type: array
           minItems: 1
@@ -1369,6 +1416,21 @@ components:
                 minimum: 1
               text:
                 type: string
+        files:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [fileName, text, pageCount, charCount]
+            properties:
+              fileName:
+                type: string
+              text:
+                type: string
+              pageCount:
+                type: integer
+              charCount:
+                type: integer
 
     TopicStatus:
       type: string
@@ -1377,12 +1439,14 @@ components:
     Topic:
       type: object
       additionalProperties: false
-      required: [id, courseId, sortOrder, title, description, status]
+      required: [id, courseId, parentId, sortOrder, title, description, sourceFile, status]
       properties:
         id:
           type: integer
         courseId:
           type: integer
+        parentId:
+          type: [integer, 'null']
         sortOrder:
           type: integer
           minimum: 1
@@ -1391,6 +1455,8 @@ components:
           type: string
           example: 'Chapter 3: Control Flow'
         description:
+          type: [string, 'null']
+        sourceFile:
           type: [string, 'null']
         status:
           $ref: '#/components/schemas/TopicStatus'
@@ -1407,6 +1473,10 @@ components:
         description:
           type: [string, 'null']
           maxLength: 2000
+        sourceFile:
+          type: [string, 'null']
+        parentId:
+          type: [integer, 'null']
         status:
           allOf:
             - $ref: '#/components/schemas/TopicStatus'
@@ -1419,12 +1489,49 @@ components:
     TopicBulkInput:
       type: object
       additionalProperties: false
-      required: [topics]
       properties:
+        mode:
+          type: string
+          enum: [append, replace]
+          default: append
+        chapters:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [title]
+            properties:
+              order:
+                type: integer
+              sortOrder:
+                type: integer
+              title:
+                type: string
+              description:
+                type: [string, 'null']
+              sourceFile:
+                type: [string, 'null']
+              status:
+                $ref: '#/components/schemas/TopicStatus'
+              subtopics:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  required: [title]
+                  properties:
+                    order:
+                      type: integer
+                    sortOrder:
+                      type: integer
+                    title:
+                      type: string
+                    description:
+                      type: [string, 'null']
+                    status:
+                      $ref: '#/components/schemas/TopicStatus'
         topics:
           type: array
-          minItems: 1
-          maxItems: 100
           items:
             type: object
             additionalProperties: false
@@ -1445,6 +1552,10 @@ components:
               description:
                 type: [string, 'null']
                 maxLength: 2000
+              sourceFile:
+                type: [string, 'null']
+              parentId:
+                type: [integer, 'null']
               status:
                 $ref: '#/components/schemas/TopicStatus'
 

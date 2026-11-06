@@ -1,8 +1,7 @@
 // WBS 2.2.4 — data access for the `topics` table.
 //
 // Rule 06: topics have no user_id; they are scoped through their course (byCourseOwner). A course or topic that
-// belongs to another user answers 404 NOT_FOUND. JSON field `sortOrder` <-> column `sort_order`
-// (unique per course: @@unique([courseId, sortOrder])).
+// belongs to another user answers 404 NOT_FOUND. JSON field `sortOrder` <-> column `sort_order`.
 
 const { ApiError } = require('../errors');
 const { byUser, byCourseOwner } = require('../db/scope');
@@ -15,9 +14,11 @@ function serializeTopic(topic) {
   return {
     id: topic.id,
     courseId: topic.courseId,
+    parentId: topic.parentId ?? null,
     sortOrder: topic.sortOrder,
     title: topic.title,
     description: topic.description ?? null,
+    sourceFile: topic.sourceFile ?? null,
     status: topic.status,
   };
 }
@@ -29,26 +30,38 @@ async function assertCourseOwned(prisma, userId, courseId) {
 
 async function listTopics(prisma, userId, courseId) {
   await assertCourseOwned(prisma, userId, courseId);
-  return prisma.topic.findMany({ where: byCourseOwner(userId, { courseId }), orderBy: { sortOrder: 'asc' } });
+  return prisma.topic.findMany({
+    where: byCourseOwner(userId, { courseId }),
+    orderBy: [{ parentId: 'asc' }, { sortOrder: 'asc' }],
+  });
 }
 
-async function nextSortOrder(prisma, userId, courseId) {
+async function nextSortOrder(prisma, userId, courseId, parentId = null) {
   const last = await prisma.topic.findFirst({
-    where: byCourseOwner(userId, { courseId }),
+    where: byCourseOwner(userId, { courseId, parentId }),
     orderBy: { sortOrder: 'desc' },
     select: { sortOrder: true },
   });
   return (last?.sortOrder ?? 0) + 1;
 }
 
-// input: { title, description, status, sortOrder? }
+// input: { title, description, status, sortOrder?, parentId?, sourceFile? }
 async function createTopic(prisma, userId, courseId, input) {
   await assertCourseOwned(prisma, userId, courseId);
-  const sortOrder = input.sortOrder ?? (await nextSortOrder(prisma, userId, courseId));
+  const parentId = input.parentId ?? null;
+  const sortOrder = input.sortOrder ?? (await nextSortOrder(prisma, userId, courseId, parentId));
 
   try {
     return await prisma.topic.create({
-      data: { courseId, sortOrder, title: input.title, description: input.description ?? null, status: input.status ?? 'TODO' },
+      data: {
+        courseId,
+        parentId,
+        sortOrder,
+        title: input.title,
+        description: input.description ?? null,
+        sourceFile: input.sourceFile ?? null,
+        status: input.status ?? 'TODO',
+      },
     });
   } catch (err) {
     if (isUniqueViolation(err)) {
@@ -68,43 +81,110 @@ function normalizeBulkTopics(items) {
       sortOrder: i + 1,
       title: item.title,
       description: item.description ?? null,
+      sourceFile: item.sourceFile ?? null,
+      parentId: item.parentId ?? null,
       status: item.status,
     }));
 }
 
-// Replaces the course's topic list with the confirmed one, in one transaction.
-// Learning status is carried over from an existing topic with the same title (case-insensitive) unless the
-// item sets its own status. Tasks and sessions linked to removed topics keep running with topic_id = null.
-async function replaceTopics(prisma, userId, courseId, items) {
+// Persists topics hierarchically (chapters + subtopics) or flat.
+// Supports `mode: 'append'` (keeps existing topics, appends after max sortOrder)
+// and `mode: 'replace'` (replaces existing topics).
+async function saveHierarchicalTopics(prisma, userId, courseId, payload) {
   await assertCourseOwned(prisma, userId, courseId);
-  const rows = normalizeBulkTopics(items);
+
+  const items = Array.isArray(payload) ? payload : (payload.topics || payload.chapters || []);
+  const isChapters = !Array.isArray(payload) && Array.isArray(payload.chapters) && payload.chapters.length > 0;
+  const mode = payload.mode ?? (isChapters ? 'append' : 'replace');
 
   return prisma.$transaction(async (tx) => {
     const existing = await tx.topic.findMany({ where: byCourseOwner(userId, { courseId }) });
     const statusByTitle = new Map(existing.map((t) => [t.title.trim().toLowerCase(), t.status]));
+    let replacedCount = 0;
 
-    await tx.topic.deleteMany({ where: byCourseOwner(userId, { courseId }) });
-    await tx.topic.createMany({
-      data: rows.map((row) => ({
-        courseId,
-        sortOrder: row.sortOrder,
-        title: row.title,
-        description: row.description,
-        status: row.status ?? statusByTitle.get(row.title.toLowerCase()) ?? 'TODO',
-      })),
+    if (mode === 'replace') {
+      replacedCount = existing.length;
+      await tx.topic.deleteMany({ where: byCourseOwner(userId, { courseId }) });
+    }
+
+    if (isChapters) {
+      const existingChapters = mode === 'append' ? existing.filter((t) => t.parentId === null) : [];
+      let baseOrder = existingChapters.reduce((max, ch) => Math.max(max, ch.sortOrder), 0);
+
+      for (let i = 0; i < payload.chapters.length; i++) {
+        const ch = payload.chapters[i];
+        baseOrder += 1;
+        const createdChapter = await tx.topic.create({
+          data: {
+            courseId,
+            parentId: null,
+            sortOrder: baseOrder,
+            title: ch.title,
+            description: ch.description ?? null,
+            sourceFile: ch.sourceFile ?? null,
+            status: ch.status ?? statusByTitle.get(ch.title.trim().toLowerCase()) ?? 'TODO',
+          },
+        });
+
+        if (Array.isArray(ch.subtopics)) {
+          for (let j = 0; j < ch.subtopics.length; j++) {
+            const sub = ch.subtopics[j];
+            await tx.topic.create({
+              data: {
+                courseId,
+                parentId: createdChapter.id,
+                sortOrder: j + 1,
+                title: sub.title,
+                description: sub.description ?? null,
+                sourceFile: ch.sourceFile ?? null,
+                status: sub.status ?? statusByTitle.get(sub.title.trim().toLowerCase()) ?? 'TODO',
+              },
+            });
+          }
+        }
+      }
+    } else {
+      const rows = normalizeBulkTopics(items);
+      const existingTop = mode === 'append' ? existing.filter((t) => t.parentId === null) : [];
+      let baseOrder = existingTop.reduce((max, ch) => Math.max(max, ch.sortOrder), 0);
+
+      for (const row of rows) {
+        baseOrder += 1;
+        await tx.topic.create({
+          data: {
+            courseId,
+            parentId: row.parentId ?? null,
+            sortOrder: mode === 'append' ? baseOrder : row.sortOrder,
+            title: row.title,
+            description: row.description,
+            sourceFile: row.sourceFile ?? null,
+            status: row.status ?? statusByTitle.get(row.title.trim().toLowerCase()) ?? 'TODO',
+          },
+        });
+      }
+    }
+
+    const topics = await tx.topic.findMany({
+      where: byCourseOwner(userId, { courseId }),
+      orderBy: [{ parentId: 'asc' }, { sortOrder: 'asc' }],
     });
 
-    const topics = await tx.topic.findMany({ where: byCourseOwner(userId, { courseId }), orderBy: { sortOrder: 'asc' } });
-    return { topics, replaced: existing.length };
+    return { topics, replaced: replacedCount };
   });
 }
 
-// patch: any subset of { title, description, status }
+// Replaces the course's topic list with the confirmed one, in one transaction.
+async function replaceTopics(prisma, userId, courseId, items) {
+  return saveHierarchicalTopics(prisma, userId, courseId, { mode: 'replace', topics: items });
+}
+
+// patch: any subset of { title, description, status, sourceFile }
 async function updateTopic(prisma, userId, id, patch) {
   const data = {};
   if (patch.title !== undefined) data.title = patch.title;
   if (patch.description !== undefined) data.description = patch.description;
   if (patch.status !== undefined) data.status = patch.status;
+  if (patch.sourceFile !== undefined) data.sourceFile = patch.sourceFile;
 
   try {
     return await prisma.topic.update({ where: byCourseOwner(userId, { id }), data });
@@ -128,6 +208,7 @@ module.exports = {
   listTopics,
   createTopic,
   replaceTopics,
+  saveHierarchicalTopics,
   normalizeBulkTopics,
   updateTopic,
   deleteTopic,

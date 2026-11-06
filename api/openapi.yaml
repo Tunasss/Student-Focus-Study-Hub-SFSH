@@ -1399,6 +1399,9 @@ components:
           type: string
           enum: [gemini, mock]
           description: '`mock` when the server runs with `LLM_MOCK=true` (fixed sample, Gemini not called).'
+        model:
+          type: string
+          description: 'Model identifier used for extraction.'
         text:
           type: string
           description: Text of all pages, pages separated by a blank line.

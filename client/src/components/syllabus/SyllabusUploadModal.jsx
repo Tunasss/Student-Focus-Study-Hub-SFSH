@@ -19,10 +19,10 @@ export function SyllabusUploadModal({
   const [files, setFiles] = useState([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState('');
-  const [scanningStage, setScanningStage] = useState(0);
   const [extractedChapters, setExtractedChapters] = useState([]);
   const [importMode, setImportMode] = useState('append'); // 'append' | 'replace'
   const [isSaving, setIsSaving] = useState(false);
+  const [fileProgress, setFileProgress] = useState({ current: 0, total: 0, fileName: '', percent: 0, statusText: '' });
 
   const courseInfo = course ? formatCourseInfo(course) : { code: 'COURSE', name: 'Course' };
 
@@ -132,10 +132,10 @@ export function SyllabusUploadModal({
     setFiles([]);
     setIsDragOver(false);
     setError('');
-    setScanningStage(0);
     setExtractedChapters([]);
     setImportMode('append');
     setIsSaving(false);
+    setFileProgress({ current: 0, total: 0, fileName: '', percent: 0, statusText: '' });
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, []);
 
@@ -209,32 +209,68 @@ export function SyllabusUploadModal({
     if (e.dataTransfer.files) validateAndAddFiles(e.dataTransfer.files);
   }
 
-  // Step 1 -> Step 2: Extraction execution
+  // Step 1 -> Step 2: Real File-by-File Extraction execution
   async function handleStartExtraction() {
     if (files.length === 0 || !course?.id) return;
     setStep('SCANNING');
     setError('');
-    setScanningStage(0);
 
-    const stageTimer = setInterval(() => {
-      setScanningStage((prev) => (prev < 3 ? prev + 1 : prev));
-    }, 450);
-
+    const totalFiles = files.length;
+    const accumulatedRawChapters = [];
     const startTime = Date.now();
 
     try {
-      const response = await syllabusApi.extractSyllabus(files, course.name);
+      for (let i = 0; i < totalFiles; i++) {
+        const file = files[i];
+        const fileIndex = i + 1;
+        const basePercent = Math.round((i / totalFiles) * 100);
+
+        setFileProgress({
+          current: fileIndex,
+          total: totalFiles,
+          fileName: file.name,
+          percent: basePercent,
+          statusText:
+            lang === 'vi'
+              ? `Đang phân tích file ${fileIndex}/${totalFiles}: ${file.name}…`
+              : `Analyzing file ${fileIndex}/${totalFiles}: ${file.name}…`,
+        });
+
+        // Call real AI extraction endpoint for this specific file
+        const response = await syllabusApi.extractSyllabus(file, course.name);
+
+        const rawChapters = response?.chapters || (Array.isArray(response) ? response : (response?.topics || []));
+        for (const ch of rawChapters) {
+          accumulatedRawChapters.push({
+            ...ch,
+            sourceFile: ch.sourceFile || ch.source_file || file.name,
+          });
+        }
+
+        const completedPercent = Math.round(((i + 1) / totalFiles) * 100);
+        setFileProgress({
+          current: fileIndex,
+          total: totalFiles,
+          fileName: file.name,
+          percent: completedPercent,
+          statusText:
+            lang === 'vi'
+              ? `Đã trích xuất xong file ${fileIndex}/${totalFiles}: ${file.name}`
+              : `Extracted file ${fileIndex}/${totalFiles}: ${file.name}`,
+        });
+
+        if (totalFiles > 1) {
+          await new Promise((r) => setTimeout(r, 200));
+        }
+      }
 
       const elapsed = Date.now() - startTime;
       if (minScanDelayMs > 0 && elapsed < minScanDelayMs) {
         await new Promise((resolve) => setTimeout(resolve, minScanDelayMs - elapsed));
       }
 
-      clearInterval(stageTimer);
-
-      // Normalize response: may be raw array or { chapters: [...], topics: [...] }
-      const rawChapters = response?.chapters || (Array.isArray(response) ? response : (response?.topics || []));
-      const sortedChapters = sortChaptersNaturally(rawChapters);
+      // Sort all accumulated chapters naturally across files
+      const sortedChapters = sortChaptersNaturally(accumulatedRawChapters);
 
       const formatted = sortedChapters.map((ch, idx) => {
         const detectedNum = extractChapterNumber(ch.title) ?? extractChapterNumber(ch.sourceFile ?? ch.source_file);
@@ -290,7 +326,6 @@ export function SyllabusUploadModal({
       setExtractedChapters(formatted);
       setStep('PREVIEW');
     } catch (err) {
-      clearInterval(stageTimer);
       const errorMsg =
         err?.message ||
         err?.error?.message ||
@@ -556,31 +591,43 @@ export function SyllabusUploadModal({
             </div>
           )}
 
-          {/* STEP 2: SCANNING ANIMATION */}
+          {/* STEP 2: SCANNING ANIMATION WITH REAL FILE-BY-FILE PROGRESS */}
           {step === 'SCANNING' && (
             <div className="py-12 px-4 flex flex-col items-center justify-center text-center space-y-6">
               <div className="relative">
                 <div className="w-20 h-20 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
                 <div className="absolute inset-0 flex items-center justify-center text-primary text-xs font-bold font-mono">
-                  DOCS
+                  {fileProgress.percent > 0 ? `${fileProgress.percent}%` : 'DOCS'}
                 </div>
               </div>
 
               <div className="space-y-1.5 max-w-md">
                 <h3 className="text-base font-bold text-text tracking-tight">{t.scanningTitle}</h3>
-                <p className="text-xs text-muted">{t.scanningSubtitle(files.length)}</p>
+                <p className="text-xs text-muted">
+                  {fileProgress.total > 1
+                    ? (lang === 'vi'
+                        ? `Đang trích xuất từng file (${fileProgress.current || 1}/${fileProgress.total})`
+                        : `Extracting file by file (${fileProgress.current || 1}/${fileProgress.total})`)
+                    : t.scanningSubtitle(files.length)}
+                </p>
               </div>
 
-              {/* Dynamic stage progress indicator */}
+              {/* Dynamic real file progress bar */}
               <div className="w-full max-w-sm space-y-2">
-                <div className="h-1.5 w-full bg-surface rounded-full overflow-hidden border border-border/60">
+                <div className="flex items-center justify-between text-[11px] font-mono text-muted">
+                  <span className="truncate max-w-[240px] text-left">
+                    📄 {fileProgress.fileName || files[0]?.name || ''}
+                  </span>
+                  <span className="font-bold text-primary">{fileProgress.percent}%</span>
+                </div>
+                <div className="h-2 w-full bg-surface rounded-full overflow-hidden border border-border/60 p-0.5">
                   <div
-                    className="h-full bg-primary rounded-full transition-all duration-300"
-                    style={{ width: `${((scanningStage + 1) / 4) * 100}%` }}
+                    className="h-full bg-primary rounded-full transition-all duration-300 ease-out shadow-[0_0_8px_rgba(219,239,144,0.4)]"
+                    style={{ width: `${Math.max(6, fileProgress.percent)}%` }}
                   />
                 </div>
                 <p className="text-[11px] font-mono text-primary font-medium animate-pulse">
-                  {t.stages[scanningStage] || t.stages[0]}
+                  {fileProgress.statusText || t.stages[0]}
                 </p>
               </div>
             </div>

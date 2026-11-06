@@ -1,5 +1,4 @@
 import { getToken } from './tokenStorage';
-import { simulateSyllabusExtraction } from '../utils/syllabusMock';
 
 const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/$/, '');
 
@@ -102,18 +101,15 @@ export const syllabusApi = {
     });
     return data?.topics ?? data ?? [];
   },
-  extractSyllabus: async (courseIdOrFiles, filesOrCourseName = [], courseNameFallback = '') => {
+  extractSyllabus: async (courseIdOrFiles, filesOrCourseName = [], _courseNameFallback = '') => {
     let files;
-    let courseName;
     let courseId = null;
 
     if (typeof courseIdOrFiles === 'number' || (typeof courseIdOrFiles === 'string' && /^\d+$/.test(courseIdOrFiles))) {
       courseId = courseIdOrFiles;
       files = Array.isArray(filesOrCourseName) ? filesOrCourseName : [filesOrCourseName];
-      courseName = courseNameFallback || '';
     } else {
       files = Array.isArray(courseIdOrFiles) ? courseIdOrFiles : [courseIdOrFiles];
-      courseName = typeof filesOrCourseName === 'string' ? filesOrCourseName : courseNameFallback || '';
     }
 
     const formData = new FormData();
@@ -126,40 +122,13 @@ export const syllabusApi = {
 
     const endpoint = courseId ? `/api/courses/${courseId}/syllabus/extract` : '/api/syllabus/extract';
 
-    try {
-      const data = await apiFetch(endpoint, {
-        method: 'POST',
-        body: formData,
-      });
-      if (data?.chapters) return data;
-      return data?.topics || (Array.isArray(data) ? data : []);
-    } catch (err) {
-      if (
-        err?.status === 404 ||
-        err?.code === 'NETWORK_ERROR' ||
-        err?.status === 501 ||
-        err?.status === 502 ||
-        err?.status === 503 ||
-        err?.code === 'LLM_NOT_CONFIGURED' ||
-        err?.code === 'LLM_UNAVAILABLE' ||
-        err?.code === 'LLM_SCHEMA_INVALID'
-      ) {
-        if (courseId) {
-          try {
-            const fallbackData = await apiFetch('/api/syllabus/extract', {
-              method: 'POST',
-              body: formData,
-            });
-            if (fallbackData?.chapters) return fallbackData;
-            return fallbackData?.topics || (Array.isArray(fallbackData) ? fallbackData : []);
-          } catch {
-            // fallback to simulation
-          }
-        }
-        return simulateSyllabusExtraction(courseName, files);
-      }
-      throw err;
-    }
+    // Directly query the API endpoint without fallback to mock data
+    const data = await apiFetch(endpoint, {
+      method: 'POST',
+      body: formData,
+    });
+    if (data?.chapters) return data;
+    return data?.topics || (Array.isArray(data) ? data : []);
   },
 };
 

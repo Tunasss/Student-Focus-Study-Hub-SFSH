@@ -28,7 +28,7 @@ function syllabusRouter({ gemini = null } = {}) {
     }
 
     const extractedFiles = await extractMultiplePdfs(fileList);
-    const { courseCode, chapters, topics, source } = await analyzeSyllabusText(extractedFiles, {
+    const { courseCode, chapters, topics, source, model } = await analyzeSyllabusText(extractedFiles, {
       gemini,
       model: config.geminiModel,
     });
@@ -57,6 +57,7 @@ function syllabusRouter({ gemini = null } = {}) {
         chapters,
         topics,
         source,
+        model,
         text: combinedText,
         pages: singlePages,
         files: extractedFiles,

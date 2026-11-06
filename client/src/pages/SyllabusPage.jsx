@@ -13,55 +13,6 @@ import { deduplicateSyllabusCourses } from '../utils/courseFormat';
 import { buildTopicTree, updateTopicInList } from '../utils/topicTree';
 import { extractChapterNumber } from '../utils/chapterOrder';
 
-const DEFAULT_TOPICS = {
-  1: [
-    {
-      id: 101,
-      courseId: 1,
-      sortOrder: 1,
-      title: 'Chapter 1: Hardware Foundations & Logic Gates',
-      description: 'Boolean algebra, binary logic, CPU register architecture and Von Neumann model.',
-      status: 'DONE',
-    },
-    {
-      id: 102,
-      courseId: 1,
-      sortOrder: 2,
-      title: 'Chapter 2: Data Structures & Asymptotic Complexity',
-      description: 'Linked lists, hash tables, Big-O notation, tree traversals and recursion.',
-      status: 'DONE',
-    },
-    {
-      id: 103,
-      courseId: 1,
-      sortOrder: 3,
-      title: 'Chapter 3: Relational DB & Express REST Endpoints',
-      description: 'Schema normalization, SQL queries, Prisma ORM and HTTP controller routing.',
-      status: 'DOING',
-    },
-    {
-      id: 104,
-      courseId: 1,
-      sortOrder: 4,
-      title: 'Chapter 4: Distributed Systems & Consensus Protocols',
-      description: 'Two-phase commit (2PC), Paxos/Raft consensus and event-driven microservices.',
-      status: 'TODO',
-    },
-    {
-      id: 105,
-      courseId: 1,
-      sortOrder: 5,
-      title: 'Chapter 5: Operating System Virtual Memory & Threads',
-      description: 'Paging algorithms, mutex locks, semaphores and concurrency deadlocks.',
-      status: 'TODO',
-    },
-  ],
-  2: [
-    { id: 201, courseId: 2, sortOrder: 1, title: 'Chapter 1: Multivariable Derivatives', description: 'Partial derivatives and gradients', status: 'DONE' },
-    { id: 202, courseId: 2, sortOrder: 2, title: 'Chapter 2: Vector Spaces & Matrices', description: 'Eigenvalues and Gaussian elimination', status: 'TODO' },
-  ],
-};
-
 export function SyllabusPage() {
   const { lang } = useLanguage();
   const containerRef = useRef(null);
@@ -252,15 +203,11 @@ export function SyllabusPage() {
         const fetched = await syllabusApi.getCourseTopics(activeCourseId);
         if (!cancelled) {
           const validList = Array.isArray(fetched) ? fetched : fetched?.topics || [];
-          if (validList.length > 0) {
-            setTopics(validList);
-          } else {
-            setTopics(DEFAULT_TOPICS[activeCourseId] || []);
-          }
+          setTopics(validList);
         }
       } catch {
         if (!cancelled) {
-          setTopics(DEFAULT_TOPICS[activeCourseId] || []);
+          setTopics([]);
         }
       } finally {
         if (!cancelled) setLoading(false);

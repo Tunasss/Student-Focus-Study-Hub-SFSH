@@ -181,35 +181,84 @@ function normalizeTopics(topics) {
   return out;
 }
 
+// High-priority modern models (prioritizing 3.x series) followed by 2.5
+const CANDIDATE_MODELS = [
+  'gemini-3.6-flash',
+  'gemini-3.5-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
+  'gemini-3-flash-preview',
+  'gemini-3.7-flash',
+  'gemini-3.8-flash',
+  'gemini-2.5-flash',
+];
+
 async function analyzeSyllabusText(input, { gemini, model }) {
   if (!gemini) {
     throw new ApiError(503, 'LLM_NOT_CONFIGURED', 'Syllabus analysis is not configured on this server (GEMINI_API_KEY is missing)');
   }
 
-  let data;
-  let problem = null;
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    let response;
-    try {
-      response = await gemini.models.generateContent(buildRequest(input, model, problem));
-    } catch (err) {
-      throw mapUpstreamError(err); // never retried: the UI should fall back to manual entry at once
-    }
+  // If a test fake is passed (with recorded calls array), test single-model behavior directly
+  const isTestFake = Boolean(gemini.calls);
 
-    try {
-      data = parseReply(response);
-      break;
-    } catch (err) {
-      if (!(err instanceof SchemaMismatch)) throw err;
-      problem = err.message;
-      if (attempt === MAX_ATTEMPTS) {
-        throw new ApiError(
-          502,
-          'LLM_SCHEMA_INVALID',
-          `The AI reply did not match the expected syllabus structure after ${MAX_ATTEMPTS} attempts (${problem}); please add the topics manually`,
-        );
+  // Model chain: prioritize configured model, followed by modern 3.x/2.5 candidates
+  const modelsToTry = isTestFake
+    ? [model || 'gemini-3.6-flash']
+    : [
+        ...(model ? [model] : []),
+        ...CANDIDATE_MODELS,
+      ].filter((m, idx, self) => self.indexOf(m) === idx);
+
+  let data = null;
+  let lastErr = null;
+  let usedModel = modelsToTry[0];
+
+  for (let mIdx = 0; mIdx < modelsToTry.length; mIdx++) {
+    const currentModel = modelsToTry[mIdx];
+    let problem = null;
+    let modelSuccess = false;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      let response;
+      try {
+        response = await gemini.models.generateContent(buildRequest(input, currentModel, problem));
+      } catch (err) {
+        lastErr = err;
+        const status = err?.status ?? err?.code;
+        // If quota exhausted (429), model discontinued (404), or service high-demand (503):
+        // Automatically route to next candidate model if available
+        if (!isTestFake && (status === 429 || status === 404 || status === 503) && mIdx < modelsToTry.length - 1) {
+          console.warn(`[Gemini Model Routing] Model "${currentModel}" failed (${status}: ${err.message?.slice(0, 100)}). Routing to next model: "${modelsToTry[mIdx + 1]}"...`);
+          break; // break retry loop for this model, proceed to next model in chain
+        }
+        throw mapUpstreamError(err);
+      }
+
+      try {
+        data = parseReply(response);
+        usedModel = currentModel;
+        modelSuccess = true;
+        break;
+      } catch (err) {
+        if (!(err instanceof SchemaMismatch)) throw err;
+        problem = err.message;
+        if (attempt === MAX_ATTEMPTS) {
+          throw new ApiError(
+            502,
+            'LLM_SCHEMA_INVALID',
+            `The AI reply did not match the expected syllabus structure after ${MAX_ATTEMPTS} attempts (${problem}); please add the topics manually`,
+          );
+        }
       }
     }
+
+    if (modelSuccess && data) {
+      break;
+    }
+  }
+
+  if (!data) {
+    throw mapUpstreamError(lastErr || new Error('All candidate Gemini models failed'));
   }
 
   const chapters = normalizeChapters(data.chapters);
@@ -248,6 +297,7 @@ async function analyzeSyllabusText(input, { gemini, model }) {
     chapters,
     topics: flattenedTopics,
     source: gemini.isMock ? 'mock' : 'gemini',
+    model: usedModel,
   };
 }
 

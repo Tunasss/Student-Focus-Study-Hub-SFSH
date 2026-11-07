@@ -169,9 +169,17 @@ The PRD names the fields `due_at` and `score_breakdown { base_urgency_score, top
 the API's camelCase spelling. `tz` must be an IANA timezone (`400 VALIDATION_ERROR` otherwise) and only affects the local
 `nextClass.start` / `nextClass.end` strings.
 
-Tests live in `test/recommend/`: `score.test.js` (every term, auto-link order, tie-break), `recommendRepo.test.js`
-(scoping, DONE skipped, link not persisted), `fallback.test.js` (nearest class, DOING-then-TODO, empty state) and
-`nextAction.routes.test.js` (the endpoint for all three kinds, `tz`, Rule 06).
+### Tests (WBS 3.1.4)
+
+`npm test` (Node test runner, see WBS 2.4a.4). Suites live in `test/recommend/`, all with a fixed clock:
+
+| File | Covers |
+|---|---|
+| `mandatory.test.js` | the five mandatory cases, run through the whole algorithm (`scoreUserTasks` → `nextAction`): **1** deadline in 2 days on a DOING topic (4 + 5 = 9), **2** overdue task (20 + 3, outranks everything), **3** `topic_id = null` (auto-link to the first open topic for +2 / +5, 0 without topics, link not persisted), **4** equal scores (sooner `dueAt`, then older `createdAt`), **5** no open task (DOING / first TODO topic of the course with the nearest class, else empty state) |
+| `score.test.js` | every term of the formula, syllabus-order auto-link, ranking and tie-break on pure data |
+| `recommendRepo.test.js` | Rule 06 scoping, DONE tasks skipped, link not written back |
+| `fallback.test.js` | next class per course, DOING-then-TODO choice, courses without a timetable, empty state |
+| `nextAction.routes.test.js` | `GET /api/recommendation/next-action` for all three kinds, `tz`, 400 / 401, Rule 06 |
 
 ## Syllabus PDF extraction (WBS 2.2.1)
 

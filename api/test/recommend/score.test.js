@@ -93,13 +93,13 @@ describe('scoreTask', () => {
     assert.equal(result.daysLeft, -1);
     assert.equal(result.effDays, 0);
     assert.equal(result.isOverdue, true);
-    assert.deepEqual(result.breakdown, { deadline: 20, topic: 5, overdue: 3 });
+    assert.deepEqual(result.breakdown, { baseUrgencyScore: 20, topicDoingBonus: 5, overdueBonus: 3 });
   });
 
   test('due right now (days_left 0), no topic: 20 + 0 + 0 = 20', () => {
     const result = scoreTask(task(0), { topic: null, now: NOW });
     assert.equal(result.score, 20);
-    assert.deepEqual(result.breakdown, { deadline: 20, topic: 0, overdue: 0 });
+    assert.deepEqual(result.breakdown, { baseUrgencyScore: 20, topicDoingBonus: 0, overdueBonus: 0 });
   });
 
   test('due in 1 hour already counts as 1 day (ceil): 10 / 1.5 = 6.667', () => {
@@ -113,7 +113,7 @@ describe('scoreTask', () => {
   test('due in 7 days with a DOING topic: 10/7.5 + 5 = 6.333', () => {
     const result = scoreTask(task(7 * DAY_MS), { topic: DOING, now: NOW });
     assert.equal(result.score, 6.333);
-    assert.equal(result.breakdown.deadline, 1.333);
+    assert.equal(result.breakdown.baseUrgencyScore, 1.333);
   });
 
   test('due in 30 days, no topic, is worth less than any overdue task', () => {
@@ -125,7 +125,7 @@ describe('scoreTask', () => {
 
   test('an hour into the next day counts as the next day (ceil), like daysLeft', () => {
     // 2 days + 1 hour -> days_left 3 -> 10 / 3.5
-    assert.equal(scoreTask(task(2 * DAY_MS + HOUR), { now: NOW }).breakdown.deadline, 2.857);
+    assert.equal(scoreTask(task(2 * DAY_MS + HOUR), { now: NOW }).breakdown.baseUrgencyScore, 2.857);
   });
 
   test('defaults `now` to the current clock', () => {
@@ -249,16 +249,57 @@ describe('rankTasks', () => {
     assert.equal(r.score, 25);
   });
 
-  test('ties break on the sooner deadline, then the lower id', () => {
-    const b = task(-3 * DAY_MS, { id: 50, topic: TODO });
-    const a = task(-DAY_MS, { id: 60, topic: TODO });
-    const c = task(-DAY_MS, { id: 40, topic: TODO });
-    const ranked = rankTasks([a, b, c], { now: NOW });
+  describe('tie-break (WBS 3.1.2): same score -> sooner due_at -> older created_at', () => {
+    test('the sooner due_at wins on an equal score', () => {
+      const later = task(-DAY_MS, { id: 60, topic: TODO, createdAt: at(-10 * DAY_MS) });
+      const sooner = task(-3 * DAY_MS, { id: 50, topic: TODO, createdAt: at(-DAY_MS) });
+      const ranked = rankTasks([later, sooner], { now: NOW });
+      assert.deepEqual(
+        ranked.map((r) => r.task.id),
+        [50, 60],
+      );
+      assert.ok(ranked.every((r) => r.score === 25));
+    });
+
+    test('on an equal due_at the task created first wins, whatever its id', () => {
+      const newer = task(-DAY_MS, { id: 40, topic: TODO, createdAt: at(-2 * DAY_MS) });
+      const older = task(-DAY_MS, { id: 60, topic: TODO, createdAt: at(-9 * DAY_MS) });
+      assert.deepEqual(
+        rankTasks([newer, older], { now: NOW }).map((r) => r.task.id),
+        [60, 40],
+      );
+    });
+
+    test('identical due_at and created_at fall back to the lower id', () => {
+      const a = task(-DAY_MS, { id: 60, topic: TODO, createdAt: NOW });
+      const c = task(-DAY_MS, { id: 40, topic: TODO, createdAt: NOW });
+      assert.deepEqual(
+        rankTasks([a, c], { now: NOW }).map((r) => r.task.id),
+        [40, 60],
+      );
+    });
+
+    test('rows without created_at fall back to the lower id', () => {
+      const a = task(-DAY_MS, { id: 60, topic: TODO });
+      const c = task(-DAY_MS, { id: 40, topic: TODO });
+      assert.deepEqual(
+        rankTasks([a, c], { now: NOW }).map((r) => r.task.id),
+        [40, 60],
+      );
+    });
+  });
+
+  test('syllabusOrder walks chapters and their subtopics depth-first', () => {
+    const { syllabusOrder } = require('../../src/recommend/score');
+    const ch1 = { id: 1, sortOrder: 1, parentId: null };
+    const ch2 = { id: 2, sortOrder: 2, parentId: null };
+    const s11 = { id: 3, sortOrder: 1, parentId: 1 };
+    const s12 = { id: 4, sortOrder: 2, parentId: 1 };
+    const s21 = { id: 5, sortOrder: 1, parentId: 2 };
     assert.deepEqual(
-      ranked.map((r) => r.task.id),
-      [50, 40, 60],
+      syllabusOrder([s21, s12, ch2, s11, ch1]).map((t) => t.id),
+      [1, 3, 4, 2, 5],
     );
-    assert.ok(ranked.every((r) => r.score === 25));
   });
 
   test('empty input -> empty ranking', () => {

@@ -117,19 +117,20 @@ CI runs `npm test`). Tasks-related suites live in `test/tasks/`:
 | `taskRepo.test.js` | Rule 06 scoping: cross-user access is `404`, course and topic ownership checks |
 | `tasks.routes.test.js` | the five endpoints end to end against the in-memory Prisma stand-in (`test/helpers.js`) |
 
-## Recommendation score (WBS 3.1.1)
+## Recommendation (WBS 3.1)
+
+### Score (WBS 3.1.1)
 
 `src/recommend/score.js` is the pure math engine behind task recommendations; `src/recommend/recommendRepo.js`
 (`scoreUserTasks(prisma, userId, { now })`) loads the caller's open tasks under Rule 06 scoping and ranks them with it.
-No route yet (that is a later 3.1 PRD).
 
 ```
 days_left = ceil((due_at - now) / 24h)                 // src/tasks/urgency.js
 eff_days  = max(days_left, 0)
 
-score = 10 / (eff_days + 0.5)                          // 20 overdue or due now, 6.67 within 24h, 4 in 2 days
-      + (topic.status == 'DOING' ? 5 : 2)              // 0 when the course has no topic to link
-      + (is_overdue ? 3 : 0)                           // due_at < now and status != DONE
+score = 10 / (eff_days + 0.5)                          // base_urgency_score: 20 overdue or due now, 6.67 within 24h, 4 in 2 days
+      + (topic.status == 'DOING' ? 5 : 2)              // topic_doing_bonus: 0 when the course has no topic to link
+      + (is_overdue ? 3 : 0)                           // overdue_bonus: due_at < now and status != DONE
 ```
 
 | Rule | Behaviour |
@@ -137,12 +138,40 @@ score = 10 / (eff_days + 0.5)                          // 20 overdue or due now,
 | `DONE` tasks | skipped entirely (`rankTasks` drops them, `scoreUserTasks` never loads them) |
 | `topic_id` is `null` | scored against the course's first topic that is not `DONE` in syllabus order (chapters and their subtopics, by `sort_order`; lowest id on a tie). The link is computed for the score only and is **not** written to `tasks.topic_id`; the result flags it with `topicAutoLinked: true` |
 | course without an open topic | topic term is `0` |
-| ranking | score descending, then sooner `dueAt`, then lower id |
 
-Each ranked entry is `{ task, topic, topicAutoLinked, score, daysLeft, effDays, isOverdue, breakdown: { deadline, topic, overdue } }`;
-`score` and `breakdown.deadline` are rounded to 3 decimals, the `breakdown` is what the UI shows as the explanation.
-Tests: `test/recommend/score.test.js` (every term, auto-link order, ranking) and `test/recommend/recommendRepo.test.js`
-(scoping, DONE skipped, link not persisted).
+Each ranked entry is `{ task, topic, topicAutoLinked, score, daysLeft, effDays, isOverdue, breakdown: { baseUrgencyScore, topicDoingBonus, overdueBonus } }`;
+`score` and `baseUrgencyScore` are rounded to 3 decimals.
+
+### Tie-break and empty state (WBS 3.1.2)
+
+Ranking is score descending, then the sooner `dueAt`, then the older `createdAt` (then the lower id, for rows created in the
+same millisecond). When the user has **no open task**, `src/recommend/fallback.js` suggests a topic instead:
+
+1. courses are ordered by their next class on the timetable (`expandSchedules` over the next 28 days, soonest first);
+   courses with no upcoming class come after those with one, so a student without an `.ics` import still gets a topic;
+2. the first course that has one gives its `DOING` topic, else its first `TODO` topic (syllabus order);
+3. no course with an open topic → empty state.
+
+### `GET /api/recommendation/next-action?tz=` (WBS 3.1.3)
+
+Answers `{ kind, task, topic, topicAutoLinked, course, score, scoreBreakdown, nextClass, openTaskCount, reason }`;
+the keys are always present and `null` when they do not apply, so the client only switches on `kind`:
+
+| `kind` | When | Filled |
+|---|---|---|
+| `TASK` | at least one open task | `task` (same JSON as `/api/tasks`), `topic` `{ id, title, status }` (own or auto-linked), `course`, `score`, `scoreBreakdown` `{ baseUrgencyScore, topicDoingBonus, overdueBonus }`, `openTaskCount` |
+| `TOPIC` | no open task, some open topic | `topic`, `course`, `nextClass` (a `ClassOccurrence` in `tz`, or `null` without a timetable) |
+| `EMPTY` | nothing to suggest | only `reason` |
+
+`reason` is a one-sentence explanation for the demo, e.g.
+`Top of 4 open task(s): overdue by 1 day(s) (+20), on "Chương 2: SQL Basics", in progress (+5), overdue bonus (+3) = 28.`
+The PRD names the fields `due_at` and `score_breakdown { base_urgency_score, topic_doing_bonus, overdue_bonus }`; the JSON uses
+the API's camelCase spelling. `tz` must be an IANA timezone (`400 VALIDATION_ERROR` otherwise) and only affects the local
+`nextClass.start` / `nextClass.end` strings.
+
+Tests live in `test/recommend/`: `score.test.js` (every term, auto-link order, tie-break), `recommendRepo.test.js`
+(scoping, DONE skipped, link not persisted), `fallback.test.js` (nearest class, DOING-then-TODO, empty state) and
+`nextAction.routes.test.js` (the endpoint for all three kinds, `tz`, Rule 06).
 
 ## Syllabus PDF extraction (WBS 2.2.1)
 

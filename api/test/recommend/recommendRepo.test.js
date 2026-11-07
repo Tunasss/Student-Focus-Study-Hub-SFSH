@@ -72,7 +72,7 @@ describe('scoreUserTasks', () => {
     assert.equal(essay.task.id, unlinked.id);
     assert.equal(essay.topic.id, alice.topics.ch2.id);
     assert.equal(essay.topicAutoLinked, true);
-    assert.deepEqual(essay.breakdown, { deadline: 6.667, topic: 2, overdue: 0 });
+    assert.deepEqual(essay.breakdown, { baseUrgencyScore: 6.667, topicDoingBonus: 2, overdueBonus: 0 });
   });
 
   test('skips DONE tasks entirely', async () => {

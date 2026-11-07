@@ -1,12 +1,13 @@
 // WBS 3.1.1 — Core recommendation math engine: the priority score of a task.
+// WBS 3.1.2 — tie-break: same score -> sooner due_at -> older created_at (-> lower id).
 //
 //   days_left = ceil((due_at - now) / 24h)                     (src/tasks/urgency.js, WBS 2.4a.3)
 //   eff_days  = max(days_left, 0)
 //
-//   score = 10 / (eff_days + 0.5)                              deadline pressure: 20 when overdue or due now,
+//   score = 10 / (eff_days + 0.5)                              base_urgency_score: 20 when overdue or due now,
 //                                                              6.67 within 24h, 4 in two days, ~1 in ten days
-//         + (topic.status == 'DOING' ? 5 : 2)                  topic link; 0 when there is no topic to link
-//         + (is_overdue ? 3 : 0)                               is_overdue: due_at < now and status != DONE
+//         + (topic.status == 'DOING' ? 5 : 2)                  topic_doing_bonus; 0 when there is no topic to link
+//         + (is_overdue ? 3 : 0)                               overdue_bonus; is_overdue: due_at < now, not DONE
 //
 // Rules:
 //   - DONE tasks are never scored (rankTasks drops them).
@@ -70,15 +71,19 @@ function comparePaths(a, b) {
   return a.length - b.length; // a chapter comes before its own subtopics
 }
 
-// The topic a task without topic_id is linked to: the course's first not-DONE topic in syllabus order, or null.
+// The topics of one course sorted in syllabus order (chapter 1, 1.1, 1.2, chapter 2, ...; lowest id on a tie).
 // Pass every topic of the course (DONE ones included) so subtopics can be placed under their chapter.
-function defaultTopic(courseTopics = []) {
+function syllabusOrder(courseTopics = []) {
   const byId = new Map(courseTopics.map((t) => [t.id, t]));
-  const candidates = courseTopics
-    .filter((t) => t.status !== 'DONE')
-    .map((t) => ({ topic: t, path: syllabusPath(t, byId) }))
-    .sort((a, b) => comparePaths(a.path, b.path) || a.topic.id - b.topic.id);
-  return candidates[0]?.topic ?? null;
+  return courseTopics
+    .map((topic) => ({ topic, path: syllabusPath(topic, byId) }))
+    .sort((a, b) => comparePaths(a.path, b.path) || a.topic.id - b.topic.id)
+    .map((entry) => entry.topic);
+}
+
+// The topic a task without topic_id is linked to: the course's first not-DONE topic in syllabus order, or null.
+function defaultTopic(courseTopics = []) {
+  return syllabusOrder(courseTopics).find((t) => t.status !== 'DONE') ?? null;
 }
 
 // { topic, autoLinked }: the task's own topic when it has one, else defaultTopic(courseTopics).
@@ -93,7 +98,7 @@ function resolveTopic(task, courseTopics = []) {
 }
 
 // Scores one task against an already resolved topic (or null).
-//   -> { score, daysLeft, effDays, isOverdue, breakdown: { deadline, topic, overdue } }
+//   -> { score, daysLeft, effDays, isOverdue, breakdown: { baseUrgencyScore, topicDoingBonus, overdueBonus } }
 function scoreTask(task, { topic = null, now = new Date() } = {}) {
   const days = daysLeft(task.dueAt, now);
   const effDays = effectiveDays(days);
@@ -101,26 +106,29 @@ function scoreTask(task, { topic = null, now = new Date() } = {}) {
 
   const deadline = deadlineScore(effDays);
   const breakdown = {
-    deadline: round(deadline),
-    topic: topicScore(topic),
-    overdue: overdueScore(overdue),
+    baseUrgencyScore: round(deadline),
+    topicDoingBonus: topicScore(topic),
+    overdueBonus: overdueScore(overdue),
   };
-  const score = round(deadline + breakdown.topic + breakdown.overdue);
+  const score = round(deadline + breakdown.topicDoingBonus + breakdown.overdueBonus);
 
   return { score, daysLeft: days, effDays, isOverdue: overdue, breakdown };
 }
 
-// Highest score first; ties go to the sooner deadline, then the lower id.
+const time = (value) => (value == null ? Number.POSITIVE_INFINITY : new Date(value).getTime());
+
+// WBS 3.1.2 tie-break: highest score first; same score -> sooner due_at -> older created_at -> lower id.
 function compareRanked(a, b) {
   if (a.score !== b.score) return b.score - a.score;
-  const aDue = new Date(a.task.dueAt).getTime();
-  const bDue = new Date(b.task.dueAt).getTime();
-  if (aDue !== bDue) return aDue - bDue;
+  const due = time(a.task.dueAt) - time(b.task.dueAt);
+  if (due !== 0) return due;
+  const created = time(a.task.createdAt) - time(b.task.createdAt);
+  if (created !== 0 && Number.isFinite(created)) return created;
   return a.task.id - b.task.id;
 }
 
 // Scores and ranks a list of tasks. DONE tasks are skipped.
-//   tasks:          rows with { id, courseId, topicId, dueAt, status, topic? } (topic needs `status`)
+//   tasks:          rows with { id, courseId, topicId, dueAt, createdAt, status, topic? } (topic needs `status`)
 //   topicsByCourse: Map<courseId, Topic[]> (or plain object) used to auto-link tasks without a topic
 //   -> [{ task, topic, topicAutoLinked, score, daysLeft, effDays, isOverdue, breakdown }] sorted by score desc
 function rankTasks(tasks, { topicsByCourse = new Map(), now = new Date() } = {}) {
@@ -143,8 +151,10 @@ module.exports = {
   topicScore,
   isOverdue,
   overdueScore,
+  syllabusOrder,
   defaultTopic,
   resolveTopic,
   scoreTask,
+  compareRanked,
   rankTasks,
 };

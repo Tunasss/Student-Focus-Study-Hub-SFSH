@@ -3,8 +3,8 @@ info:
   title: Student Focus & Study Hub (SFSH) API
   version: 0.1.0
   description: |
-    REST API for SFSH: authentication, ICS timetable import, courses, the weekly class schedule, tasks (deadlines)
-    and syllabus PDF text extraction.
+    REST API for SFSH: authentication, ICS timetable import, courses, the weekly class schedule, tasks (deadlines),
+    syllabus PDF text extraction and the explainable "next action" recommendation.
 
     ## Response envelope (Rule 02)
     Every response, success or error, uses the same envelope:
@@ -61,6 +61,11 @@ tags:
       Syllabus topics (chapters) of a course and their learning status. The Gemini preview from
       `POST /api/syllabus/extract` is **not** stored: the user reviews it on the web, then the client saves the
       confirmed list with `POST /api/courses/{id}/topics/bulk`. JSON `sortOrder` maps to the `sort_order` column.
+  - name: Recommendation
+    description: |
+      "What should I do next?" (WBS 3.1). Every open task gets a priority score
+      `10 / (max(daysLeft, 0) + 0.5) + (topic DOING ? 5 : 2, 0 without topic) + (overdue ? 3 : 0)`;
+      the answer carries the breakdown so the UI can explain it.
 
 paths:
   /api/health:
@@ -745,6 +750,94 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/TopicNotFound'
+
+  /api/recommendation/next-action:
+    get:
+      tags: [Recommendation]
+      summary: Next recommended action
+      description: |
+        The single thing the student should work on now, with the reasoning.
+
+        - `kind: TASK`: the open task (not `DONE`) with the highest score. Ties go to the sooner `dueAt`,
+          then the older `createdAt`. A task without `topicId` is scored against the course's first topic that is
+          not `DONE` in syllabus order (`topicAutoLinked: true`); the link is not saved.
+        - `kind: TOPIC`: no open task. The `DOING` topic (else the first `TODO` topic) of the course whose next
+          class is soonest on the timetable; courses without an upcoming class come last. `nextClass` is that
+          occurrence (local times in `tz`), or `null` when the course has no upcoming class.
+        - `kind: EMPTY`: no open task, no open topic.
+
+        `score` and `scoreBreakdown` are `null` unless `kind` is `TASK`; `task`, `topic`, `course`
+        and `nextClass` are `null` when they do not apply. `reason` is a one-sentence explanation for the UI / demo.
+        PRD names: `due_at`, `score_breakdown.base_urgency_score / topic_doing_bonus / overdue_bonus`.
+      operationId: getNextAction
+      parameters:
+        - name: tz
+          in: query
+          description: IANA timezone for the local `nextClass.start` / `nextClass.end` strings.
+          schema:
+            type: string
+            default: Asia/Ho_Chi_Minh
+      responses:
+        '200':
+          description: The recommended next action.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NextActionResponse'
+              examples:
+                task:
+                  summary: An overdue task on a topic in progress
+                  value:
+                    success: true
+                    data:
+                      kind: TASK
+                      task:
+                        id: 1
+                        title: 'Bài tập 1'
+                        dueAt: '2026-11-08T16:59:00.000Z'
+                        status: TODO
+                        daysLeft: -1
+                        urgencyBadge: OVERDUE
+                        courseId: 3
+                        topicId: 2
+                        course: { id: 3, code: CS101, name: Introduction to Programming }
+                        topic: { id: 2, title: 'Chương 2: SQL Basics' }
+                        createdAt: '2026-11-01T08:00:00.000Z'
+                      topic: { id: 2, title: 'Chương 2: SQL Basics', status: DOING }
+                      topicAutoLinked: false
+                      course: { id: 3, code: CS101, name: Introduction to Programming }
+                      score: 28
+                      scoreBreakdown: { baseUrgencyScore: 20, topicDoingBonus: 5, overdueBonus: 3 }
+                      nextClass: null
+                      openTaskCount: 4
+                      reason: 'Top of 4 open task(s): overdue by 1 day(s) (+20), on "Chương 2: SQL Basics", in progress (+5), overdue bonus (+3) = 28.'
+                    error: null
+                    timestamp: '2026-11-09T09:00:00.000Z'
+                empty:
+                  summary: Nothing to suggest yet
+                  value:
+                    success: true
+                    data:
+                      kind: EMPTY
+                      task: null
+                      topic: null
+                      topicAutoLinked: false
+                      course: null
+                      score: null
+                      scoreBreakdown: null
+                      nextClass: null
+                      openTaskCount: 0
+                      reason: 'Nothing to do yet: add a course, import your timetable or save syllabus topics, then add tasks.'
+                    error: null
+                    timestamp: '2026-11-09T09:00:00.000Z'
+        '400':
+          description: '`VALIDATION_ERROR`: `tz` is not an IANA timezone.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
 components:
   securitySchemes:
@@ -1617,6 +1710,96 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/Topic'
+
+    ScoreBreakdown:
+      type: object
+      additionalProperties: false
+      required: [baseUrgencyScore, topicDoingBonus, overdueBonus]
+      description: |
+        The three terms of the task score (WBS 3.1.1); `score` is their sum, rounded to 3 decimals.
+      properties:
+        baseUrgencyScore:
+          type: number
+          description: '`10 / (max(daysLeft, 0) + 0.5)`: 20 when overdue or due now, 6.667 within 24 h, 4 in two days.'
+          example: 20
+        topicDoingBonus:
+          type: number
+          enum: [5, 2, 0]
+          description: 5 when the linked topic is `DOING`, 2 for any other linked topic, 0 when the course has no topic to link.
+          example: 5
+        overdueBonus:
+          type: number
+          enum: [3, 0]
+          description: 3 when `dueAt` is in the past and the task is not `DONE`.
+          example: 3
+
+    NextAction:
+      type: object
+      additionalProperties: false
+      required: [kind, task, topic, topicAutoLinked, course, score, scoreBreakdown, nextClass, openTaskCount, reason]
+      properties:
+        kind:
+          type: string
+          enum: [TASK, TOPIC, EMPTY]
+        task:
+          oneOf:
+            - $ref: '#/components/schemas/Task'
+            - type: 'null'
+          description: "The recommended task (`kind: TASK`), else `null`."
+        topic:
+          type: [object, 'null']
+          additionalProperties: false
+          required: [id, title, status]
+          description: "The task's topic (own or auto-linked) or the suggested topic (`kind: TOPIC`); `null` when there is none."
+          properties:
+            id:
+              type: integer
+            title:
+              type: string
+              example: 'Chương 2: SQL Basics'
+            status:
+              $ref: '#/components/schemas/TopicStatus'
+        topicAutoLinked:
+          type: boolean
+          description: '`true` when the task had no `topicId` and `topic` is the course default used for the score (not saved).'
+        course:
+          type: [object, 'null']
+          additionalProperties: false
+          required: [id, code, name]
+          properties:
+            id:
+              type: integer
+            code:
+              type: [string, 'null']
+            name:
+              type: string
+        score:
+          type: [number, 'null']
+          description: "Priority score of the task (`kind: TASK`), rounded to 3 decimals; `null` otherwise."
+          example: 28
+        scoreBreakdown:
+          oneOf:
+            - $ref: '#/components/schemas/ScoreBreakdown'
+            - type: 'null'
+        nextClass:
+          oneOf:
+            - $ref: '#/components/schemas/ClassOccurrence'
+            - type: 'null'
+          description: "Next class of the suggested topic's course (`kind: TOPIC` with a timetable), else `null`."
+        openTaskCount:
+          type: integer
+          minimum: 0
+          description: How many open (not `DONE`) tasks were ranked.
+        reason:
+          type: string
+          description: One sentence explaining the choice, for the UI and the demo.
+
+    NextActionResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - properties:
+            data:
+              $ref: '#/components/schemas/NextAction'
 
 security:
   - bearerAuth: []

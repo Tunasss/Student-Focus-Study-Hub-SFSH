@@ -117,6 +117,33 @@ CI runs `npm test`). Tasks-related suites live in `test/tasks/`:
 | `taskRepo.test.js` | Rule 06 scoping: cross-user access is `404`, course and topic ownership checks |
 | `tasks.routes.test.js` | the five endpoints end to end against the in-memory Prisma stand-in (`test/helpers.js`) |
 
+## Recommendation score (WBS 3.1.1)
+
+`src/recommend/score.js` is the pure math engine behind task recommendations; `src/recommend/recommendRepo.js`
+(`scoreUserTasks(prisma, userId, { now })`) loads the caller's open tasks under Rule 06 scoping and ranks them with it.
+No route yet (that is a later 3.1 PRD).
+
+```
+days_left = ceil((due_at - now) / 24h)                 // src/tasks/urgency.js
+eff_days  = max(days_left, 0)
+
+score = 10 / (eff_days + 0.5)                          // 20 overdue or due now, 6.67 within 24h, 4 in 2 days
+      + (topic.status == 'DOING' ? 5 : 2)              // 0 when the course has no topic to link
+      + (is_overdue ? 3 : 0)                           // due_at < now and status != DONE
+```
+
+| Rule | Behaviour |
+|---|---|
+| `DONE` tasks | skipped entirely (`rankTasks` drops them, `scoreUserTasks` never loads them) |
+| `topic_id` is `null` | scored against the course's first topic that is not `DONE` in syllabus order (chapters and their subtopics, by `sort_order`; lowest id on a tie). The link is computed for the score only and is **not** written to `tasks.topic_id`; the result flags it with `topicAutoLinked: true` |
+| course without an open topic | topic term is `0` |
+| ranking | score descending, then sooner `dueAt`, then lower id |
+
+Each ranked entry is `{ task, topic, topicAutoLinked, score, daysLeft, effDays, isOverdue, breakdown: { deadline, topic, overdue } }`;
+`score` and `breakdown.deadline` are rounded to 3 decimals, the `breakdown` is what the UI shows as the explanation.
+Tests: `test/recommend/score.test.js` (every term, auto-link order, ranking) and `test/recommend/recommendRepo.test.js`
+(scoping, DONE skipped, link not persisted).
+
 ## Syllabus PDF extraction (WBS 2.2.1)
 
 `POST /api/syllabus/extract` (multipart field `file`) reads the text layer of a syllabus PDF with `pdf-parse`

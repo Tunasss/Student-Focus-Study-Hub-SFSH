@@ -296,6 +296,37 @@ describe('responses match openapi.yaml (Rule 02 envelope)', () => {
     });
   });
 
+  describe('recommendation', () => {
+    const route = '/api/recommendation/next-action';
+    const get = (a = app, qs = '') => request(a).get(`${route}${qs}`);
+
+    test('GET /api/recommendation/next-action: TOPIC (timetable + topics, no open task), 400, 401', async () => {
+      // The tasks block deleted its task and the topics block left open topics + the imported timetable.
+      const topicAnswer = await auth(get());
+      assert.equal(topicAnswer.body.data.kind, 'TOPIC');
+      assertMatchesSpec(topicAnswer, 'get', route);
+      assertMatchesSpec(await auth(get(app, '?tz=Mars/Base')), 'get', route); // 400
+      assertMatchesSpec(await get(), 'get', route); // 401
+    });
+
+    test('GET /api/recommendation/next-action: TASK with the score breakdown', async () => {
+      const courses = await auth(request(app).get('/api/courses'));
+      const courseId = courses.body.data.courses[0].id;
+      await auth(request(app).post('/api/tasks')).send({ title: 'Lab 2', dueAt: '2026-11-01T23:59:00+07:00', courseId });
+      const taskAnswer = await auth(get());
+      assert.equal(taskAnswer.body.data.kind, 'TASK');
+      assertMatchesSpec(taskAnswer, 'get', route);
+    });
+
+    test('GET /api/recommendation/next-action: EMPTY on a fresh account', async () => {
+      const fresh = createApp({ prisma: createFakePrisma() });
+      const reg = await request(fresh).post('/api/auth/register').send({ email: 'new@sfsh.dev', password: 'Password123!' });
+      const res = await get(fresh).set('Authorization', `Bearer ${reg.body.data.token}`);
+      assert.equal(res.body.data.kind, 'EMPTY');
+      assertMatchesSpec(res, 'get', route);
+    });
+  });
+
   test('unknown routes return a NOT_FOUND error envelope', async () => {
     const res = await request(app).get('/api/nope');
     assert.equal(res.status, 404);

@@ -117,6 +117,70 @@ CI runs `npm test`). Tasks-related suites live in `test/tasks/`:
 | `taskRepo.test.js` | Rule 06 scoping: cross-user access is `404`, course and topic ownership checks |
 | `tasks.routes.test.js` | the five endpoints end to end against the in-memory Prisma stand-in (`test/helpers.js`) |
 
+## Recommendation (WBS 3.1)
+
+### Score (WBS 3.1.1)
+
+`src/recommend/score.js` is the pure math engine behind task recommendations; `src/recommend/recommendRepo.js`
+(`scoreUserTasks(prisma, userId, { now })`) loads the caller's open tasks under Rule 06 scoping and ranks them with it.
+
+```
+days_left = ceil((due_at - now) / 24h)                 // src/tasks/urgency.js
+eff_days  = max(days_left, 0)
+
+score = 10 / (eff_days + 0.5)                          // base_urgency_score: 20 overdue or due now, 6.67 within 24h, 4 in 2 days
+      + (topic.status == 'DOING' ? 5 : 2)              // topic_doing_bonus: 0 when the course has no topic to link
+      + (is_overdue ? 3 : 0)                           // overdue_bonus: due_at < now and status != DONE
+```
+
+| Rule | Behaviour |
+|---|---|
+| `DONE` tasks | skipped entirely (`rankTasks` drops them, `scoreUserTasks` never loads them) |
+| `topic_id` is `null` | scored against the course's first topic that is not `DONE` in syllabus order (chapters and their subtopics, by `sort_order`; lowest id on a tie). The link is computed for the score only and is **not** written to `tasks.topic_id`; the result flags it with `topicAutoLinked: true` |
+| course without an open topic | topic term is `0` |
+
+Each ranked entry is `{ task, topic, topicAutoLinked, score, daysLeft, effDays, isOverdue, breakdown: { baseUrgencyScore, topicDoingBonus, overdueBonus } }`;
+`score` and `baseUrgencyScore` are rounded to 3 decimals.
+
+### Tie-break and empty state (WBS 3.1.2)
+
+Ranking is score descending, then the sooner `dueAt`, then the older `createdAt` (then the lower id, for rows created in the
+same millisecond). When the user has **no open task**, `src/recommend/fallback.js` suggests a topic instead:
+
+1. courses are ordered by their next class on the timetable (`expandSchedules` over the next 28 days, soonest first);
+   courses with no upcoming class come after those with one, so a student without an `.ics` import still gets a topic;
+2. the first course that has one gives its `DOING` topic, else its first `TODO` topic (syllabus order);
+3. no course with an open topic → empty state.
+
+### `GET /api/recommendation/next-action?tz=` (WBS 3.1.3)
+
+Answers `{ kind, task, topic, topicAutoLinked, course, score, scoreBreakdown, nextClass, openTaskCount, reason }`;
+the keys are always present and `null` when they do not apply, so the client only switches on `kind`:
+
+| `kind` | When | Filled |
+|---|---|---|
+| `TASK` | at least one open task | `task` (same JSON as `/api/tasks`), `topic` `{ id, title, status }` (own or auto-linked), `course`, `score`, `scoreBreakdown` `{ baseUrgencyScore, topicDoingBonus, overdueBonus }`, `openTaskCount` |
+| `TOPIC` | no open task, some open topic | `topic`, `course`, `nextClass` (a `ClassOccurrence` in `tz`, or `null` without a timetable) |
+| `EMPTY` | nothing to suggest | only `reason` |
+
+`reason` is a one-sentence explanation for the demo, e.g.
+`Top of 4 open task(s): overdue by 1 day(s) (+20), on "Chương 2: SQL Basics", in progress (+5), overdue bonus (+3) = 28.`
+The PRD names the fields `due_at` and `score_breakdown { base_urgency_score, topic_doing_bonus, overdue_bonus }`; the JSON uses
+the API's camelCase spelling. `tz` must be an IANA timezone (`400 VALIDATION_ERROR` otherwise) and only affects the local
+`nextClass.start` / `nextClass.end` strings.
+
+### Tests (WBS 3.1.4)
+
+`npm test` (Node test runner, see WBS 2.4a.4). Suites live in `test/recommend/`, all with a fixed clock:
+
+| File | Covers |
+|---|---|
+| `mandatory.test.js` | the five mandatory cases, run through the whole algorithm (`scoreUserTasks` → `nextAction`): **1** deadline in 2 days on a DOING topic (4 + 5 = 9), **2** overdue task (20 + 3, outranks everything), **3** `topic_id = null` (auto-link to the first open topic for +2 / +5, 0 without topics, link not persisted), **4** equal scores (sooner `dueAt`, then older `createdAt`), **5** no open task (DOING / first TODO topic of the course with the nearest class, else empty state) |
+| `score.test.js` | every term of the formula, syllabus-order auto-link, ranking and tie-break on pure data |
+| `recommendRepo.test.js` | Rule 06 scoping, DONE tasks skipped, link not written back |
+| `fallback.test.js` | next class per course, DOING-then-TODO choice, courses without a timetable, empty state |
+| `nextAction.routes.test.js` | `GET /api/recommendation/next-action` for all three kinds, `tz`, 400 / 401, Rule 06 |
+
 ## Syllabus PDF extraction (WBS 2.2.1)
 
 `POST /api/syllabus/extract` (multipart field `file`) reads the text layer of a syllabus PDF with `pdf-parse`

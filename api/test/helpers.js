@@ -22,6 +22,7 @@ function createFakePrisma() {
         if (value.userId !== undefined && !courseOwnedBy(row.courseId, value.userId)) return false;
       } else if (value !== null && typeof value === 'object') {
         if (value.not !== undefined && row[key] === value.not) return false;
+        if (value.in !== undefined && !value.in.includes(row[key])) return false;
       } else if (row[key] !== value) {
         return false;
       }

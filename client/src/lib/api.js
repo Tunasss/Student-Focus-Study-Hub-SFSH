@@ -169,3 +169,52 @@ export const tasksApi = {
   },
 };
 
+export function getBrowserTimeZone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
+}
+
+export const sessionsApi = {
+  logSession: async (payload) => {
+    const data = await apiFetch('/api/sessions', {
+      method: 'POST',
+      body: payload,
+    });
+    return data?.session ?? data;
+  },
+  listSessions: async ({ from, to, courseId, status, limit } = {}) => {
+    const params = new URLSearchParams();
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    if (courseId) params.set('course_id', String(courseId));
+    if (status) params.set('status', status);
+    if (limit) params.set('limit', String(limit));
+    const query = params.toString();
+    const data = await apiFetch(`/api/sessions${query ? `?${query}` : ''}`);
+    return data?.sessions ?? [];
+  },
+};
+
+export const analyticsApi = {
+  getOverview: ({ range = '7d', tz = getBrowserTimeZone() } = {}) => {
+    const params = new URLSearchParams({ range, tz });
+    return apiFetch(`/api/analytics/overview?${params.toString()}`);
+  },
+  getDailyActivity: ({ range = '7d', tz = getBrowserTimeZone() } = {}) => {
+    const safeRange = range === '30d' ? '30d' : '7d';
+    const params = new URLSearchParams({ range: safeRange, tz });
+    return apiFetch(`/api/analytics/daily-activity?${params.toString()}`);
+  },
+};
+
+export const searchApi = {
+  suggest: async ({ q, limit = 8 } = {}) => {
+    const params = new URLSearchParams({ q: String(q || '').trim(), limit: String(limit) });
+    const data = await apiFetch(`/api/search/suggest?${params.toString()}`);
+    return data?.suggestions ?? [];
+  },
+};
+

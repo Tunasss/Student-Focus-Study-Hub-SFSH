@@ -7,6 +7,7 @@ import { AuthPage } from './pages/AuthPage';
 import { DeadlinesPage } from './pages/DeadlinesPage';
 import { DeepFocusPage } from './pages/DeepFocusPage';
 import { HomePage } from './pages/HomePage';
+import { OverviewPage } from './pages/OverviewPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { SyllabusPage } from './pages/SyllabusPage';
 import { TimetablePage } from './pages/TimetablePage';
@@ -43,42 +44,15 @@ export function App() {
         <Route path="/register" element={<AuthPage mode="register" />} />
       </Route>
 
-      {/* Root "/" shows HomePage for guests, or AppShell + Overview Bento Grid for logged-in users */}
+      {/* Root "/" shows HomePage for guests, or AppShell + Overview Analytics Dashboard for logged-in users */}
       <Route path="/" element={<RootEntryRoute />}>
-        <Route
-          index
-          element={
-            <PlaceholderPage
-              pageKey="overview"
-              title="Overview"
-              description="Next study recommendations and schedule focus analytics at a glance."
-            />
-          }
-        />
+        <Route index element={<OverviewPage />} />
       </Route>
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
-          <Route
-            path="program"
-            element={
-              <PlaceholderPage
-                pageKey="overview"
-                title="Overview"
-                description="Next study recommendations and focus analytics."
-              />
-            }
-          />
-          <Route
-            path="overview"
-            element={
-              <PlaceholderPage
-                pageKey="overview"
-                title="Overview"
-                description="Next study recommendations and focus analytics."
-              />
-            }
-          />
+          <Route path="program" element={<OverviewPage />} />
+          <Route path="overview" element={<OverviewPage />} />
           <Route path="timetable" element={<TimetablePage />} />
           <Route path="syllabus" element={<SyllabusPage />} />
           <Route path="deadlines" element={<DeadlinesPage />} />

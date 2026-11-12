@@ -7,6 +7,7 @@ import { DeepFocusPage } from './DeepFocusPage';
 import {
   POMODORO_STORAGE_KEY,
 } from '../utils/pomodoro';
+import { sessionsApi } from '../lib/api';
 
 // Mock GSAP to prevent JSDOM autoAlpha: 0 freezing
 vi.mock('gsap', () => ({
@@ -294,5 +295,48 @@ describe('DeepFocusPage Integration Tests', () => {
     expectedTestIds.forEach((id) => {
       expect(screen.getByTestId(id)).toBeInTheDocument();
     });
+  });
+
+  test('logs ABANDONED session when resetting after at least 1 minute of focus', async () => {
+    const listSpy = vi.spyOn(sessionsApi, 'listSessions').mockResolvedValue([]);
+    const logSpy = vi.spyOn(sessionsApi, 'logSession').mockResolvedValue({ id: 77, status: 'ABANDONED' });
+
+    const startedAt = Date.now() - 120000; // 2 minutes elapsed
+    localStorage.setItem(
+      POMODORO_STORAGE_KEY,
+      JSON.stringify({
+        phase: 'focus',
+        status: 'paused',
+        durationSeconds: 1500,
+        remainingSeconds: 1380,
+        pausedRemaining: 1380,
+        startedAt,
+        lastTickAt: Date.now(),
+        accumulatedSeconds: 120,
+        cycleCount: 1,
+        activeCourseId: 4,
+        activeTopicId: 9,
+      })
+    );
+
+    await renderDeepFocus();
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('reset-timer-btn'));
+    });
+
+    await waitFor(() => {
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          minutes: 2,
+          status: 'ABANDONED',
+          courseId: 4,
+          topicId: 9,
+        })
+      );
+    });
+
+    listSpy.mockRestore();
+    logSpy.mockRestore();
   });
 });

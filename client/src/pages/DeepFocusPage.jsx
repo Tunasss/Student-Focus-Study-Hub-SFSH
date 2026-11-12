@@ -25,6 +25,24 @@ import {
   tickPomodoroSession,
 } from '../utils/pomodoro';
 import { audioMixer } from '../utils/audioMixer';
+import { sessionsApi } from '../lib/api';
+import { formatFocusDuration, toIsoDateTimeWithOffset } from '../utils/analytics';
+
+function countTodayFocusStats(sessions = []) {
+  const now = new Date();
+  const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+  let minutes = 0;
+  let count = 0;
+  for (const s of sessions) {
+    if (s?.status !== 'COMPLETED' || !s?.startedAt) continue;
+    const d = new Date(s.startedAt);
+    if (`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}` === todayKey) {
+      minutes += Number(s.minutes) || 0;
+      count += 1;
+    }
+  }
+  return { minutes, count };
+}
 
 const FOCUS_COPY = {
   en: {
@@ -50,6 +68,8 @@ const FOCUS_COPY = {
     cycleLabel: 'Cycle',
     viewOverview: 'View Overview Dashboard →',
     viewTimetable: 'View Timetable Schedule →',
+    todayLogged: (dur, count) => `Logged today: ${dur} (${count})`,
+    sessionSaved: (mins) => `Focus sprint logged (+${mins}m)`,
     sprints: [
       { id: 1, title: 'Sprint 01 · Cognitive Flow', duration: '25 min focus' },
       { id: 2, title: 'Sprint 02 · Deep Problem Solving', duration: '25 min focus' },
@@ -80,6 +100,8 @@ const FOCUS_COPY = {
     cycleLabel: 'Phiên',
     viewOverview: 'Xem Bảng Tổng Quan →',
     viewTimetable: 'Xem Thời Khóa Biểu →',
+    todayLogged: (dur, count) => `Hôm nay: ${dur} (${count} phiên)`,
+    sessionSaved: (mins) => `Đã lưu phiên tập trung (+${mins} phút)`,
     sprints: [
       { id: 1, title: 'Phiên 01 · Khởi động luồng tập trung', duration: '25 phút học sâu' },
       { id: 2, title: 'Phiên 02 · Giải quyết bài toán khó', duration: '25 phút học sâu' },
@@ -125,6 +147,13 @@ export function DeepFocusPage() {
   const [genreSwitchNotification, setGenreSwitchNotification] = useState(null);
   const [isVolumeHovered, setIsVolumeHovered] = useState(false);
   const volumeCloseTimerRef = useRef(null);
+  const [todayFocusStats, setTodayFocusStats] = useState({ minutes: 0, count: 0 });
+  const [sessionLogNotice, setSessionLogNotice] = useState('');
+  const lastLoggedSessionRef = useRef(
+    session.phase === 'focus' && session.status === 'completed' && session.startedAt
+      ? `${session.startedAt}-COMPLETED`
+      : null
+  );
 
   function handleVolumeMouseEnter() {
     if (volumeCloseTimerRef.current) {
@@ -261,6 +290,81 @@ export function DeepFocusPage() {
     return () => ctx.revert();
   }, []);
 
+  // Load today's logged focus stats from API (WBS 3.4)
+  useEffect(() => {
+    let cancelled = false;
+    sessionsApi
+      .listSessions({ status: 'COMPLETED', limit: 50 })
+      .then((list) => {
+        if (!cancelled && Array.isArray(list)) {
+          setTodayFocusStats(countTodayFocusStats(list));
+        }
+      })
+      .catch(() => {
+        // Ignore gracefully when offline or mocked
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Automatically log completed focus sprints to POST /api/sessions (WBS 3.4)
+  useEffect(() => {
+    if (session.phase !== 'focus' || session.status !== 'completed' || !session.startedAt) {
+      return;
+    }
+    const key = `${session.startedAt}-COMPLETED`;
+    if (lastLoggedSessionRef.current === key) return;
+    lastLoggedSessionRef.current = key;
+
+    const minutes = Math.min(240, Math.max(1, Math.round((session.durationSeconds || 1500) / 60)));
+    sessionsApi
+      .logSession({
+        startedAt: toIsoDateTimeWithOffset(session.startedAt),
+        minutes,
+        status: 'COMPLETED',
+        courseId: session.activeCourseId || null,
+        topicId: session.activeTopicId || null,
+      })
+      .then(() => {
+        setTodayFocusStats((prev) => ({
+          minutes: prev.minutes + minutes,
+          count: prev.count + 1,
+        }));
+        setSessionLogNotice(t.sessionSaved(minutes));
+      })
+      .catch(() => {
+        // Timer UI remains responsive even if API logging fails
+      });
+  }, [session.phase, session.status, session.startedAt, session.durationSeconds, session.activeCourseId, session.activeTopicId, t]);
+
+  function logAbandonedFocusIfElapsed(current) {
+    if (
+      current.phase !== 'focus' ||
+      (current.status !== 'running' && current.status !== 'paused') ||
+      !current.startedAt
+    ) {
+      return;
+    }
+    const elapsedSeconds = Math.max(0, (current.durationSeconds || 0) - (current.remainingSeconds || 0));
+    const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+    if (elapsedMinutes < 1) return;
+
+    const key = `${current.startedAt}-ABANDONED`;
+    if (lastLoggedSessionRef.current === key) return;
+    lastLoggedSessionRef.current = key;
+
+    sessionsApi
+      .logSession({
+        startedAt: toIsoDateTimeWithOffset(current.startedAt),
+        minutes: Math.min(240, elapsedMinutes),
+        status: 'ABANDONED',
+        courseId: current.activeCourseId || null,
+        topicId: current.activeTopicId || null,
+      })
+      .catch(() => {});
+  }
+
   function handlePlayPause() {
     if (session.status === 'running') {
       setSession((s) => {
@@ -294,6 +398,7 @@ export function DeepFocusPage() {
   }
 
   function handleReset() {
+    logAbandonedFocusIfElapsed(session);
     setSession((s) => {
       const next = resetPomodoroSession(s, settings);
       persistSession(next);
@@ -302,6 +407,7 @@ export function DeepFocusPage() {
   }
 
   function handleSkip() {
+    logAbandonedFocusIfElapsed(session);
     setSession((s) => {
       const next = skipToNextPhase(s, settings);
       persistSession(next);
@@ -450,13 +556,27 @@ export function DeepFocusPage() {
           <h1 className="sr-only">{phaseTitle}</h1>
 
           {/* Phase Badge: Shifted UP to sit directly below FOCUS STUDIO header */}
-          <div className="mt-1 mb-2 inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-primary/15 border border-primary/30 text-primary text-[11px] font-mono font-extrabold tracking-wider uppercase backdrop-blur-md shrink-0">
-            <span
-              className={`h-2 w-2 rounded-full ${
-                session.status === 'running' ? 'bg-primary animate-ping' : 'bg-primary'
-              }`}
-            />
-            <span>{phaseBadge}</span>
+          <div className="mt-1 mb-2 flex flex-wrap items-center justify-center gap-2 shrink-0">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-primary/15 border border-primary/30 text-primary text-[11px] font-mono font-extrabold tracking-wider uppercase backdrop-blur-md">
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  session.status === 'running' ? 'bg-primary animate-ping' : 'bg-primary'
+                }`}
+              />
+              <span>{phaseBadge}</span>
+            </div>
+            {(todayFocusStats.count > 0 || sessionLogNotice) && (
+              <span
+                data-testid="today-focus-pill"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-border/80 bg-surface/80 text-[11px] font-mono font-semibold text-muted"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                <span>
+                  {sessionLogNotice ||
+                    t.todayLogged(formatFocusDuration(todayFocusStats.minutes, lang), todayFocusStats.count)}
+                </span>
+              </span>
+            )}
           </div>
 
           {/* Radiant Lotus Core Emblem Centered in Viewport */}

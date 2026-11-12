@@ -1,8 +1,8 @@
 # Luma — Student Focus & Study Hub 🌿
 ### *Academic Productivity & Schedule Engine*
 
-[![Client Tests](https://img.shields.io/badge/Client_Tests-Passing-success?style=for-the-badge&logo=vitest&logoColor=white)](client)
-[![API Tests](https://img.shields.io/badge/API_Tests-75%2F75_Passing-success?style=for-the-badge&logo=node.js&logoColor=white)](api)
+[![Client Tests](https://img.shields.io/badge/Client_Tests-146%2F146_Passing-success?style=for-the-badge&logo=vitest&logoColor=white)](client)
+[![API Tests](https://img.shields.io/badge/API_Tests-415%2F415_Passing-success?style=for-the-badge&logo=node.js&logoColor=white)](api)
 [![Design System](https://img.shields.io/badge/Design_System-Urbanist_%26_Green_%23DBEF90-10b981?style=for-the-badge)](#)
 [![OpenAPI](https://img.shields.io/badge/OpenAPI_3.0-Swagger_UI-85ea2d?style=for-the-badge&logo=swagger&logoColor=black)](http://localhost:4000/api-docs)
 
@@ -27,10 +27,12 @@
 - **🎯 Predictive Milestone & Deadline Radar:**
   - Priority queue flagging academic tasks as `OVERDUE`, `URGENT`, `SOON`, or `LATER` from the days left until their deadline.
   - Deterministic scoring algorithm factoring due dates, topic completion status, and active syllabus checkpoints.
-- **🎧 Deep Focus Studio (Pomodoro):**
-  - Configurable focus and break timers with session recovery across browser reloads.
-  - 432Hz binaural resonance and ambient acoustic audio equalizer.
-- **📊 Study Analytics:**
+- **🎧 Deep Focus Studio (Pomodoro & Sound Deck):**
+  - Configurable focus and break timers (including custom minute durations) with session recovery across browser reloads.
+  - **Proactive Milestone Completion:** Mark an active task or curriculum chapter as `DONE` directly on the card at any moment—automatically advancing the next milestone and resetting Study Sprints & timer back to Sprint 01 with a 528Hz harmonic chime.
+  - **Mutually Exclusive Target Selection:** Cleanly switches focus between individual course assignments and curriculum chapters with zero UI collision.
+  - Multi-layer ambient audio mixer (Rain, Forest, Waves, Campfire, Café) with Lofi music radio streams.
+- **📊 Study Analytics & Dashboard:**
   - Focus minutes per day and per course, completed and overdue tasks, and a daily study streak.
   - Per-course progress from syllabus topics and tasks, plus search-as-you-type suggestions.
 - **⚡ Bilingual Localization (EN / VI):**
@@ -45,156 +47,155 @@
 
 | Domain | Technologies |
 |---|---|
-| **Client** | React 19, Vite, React Router 7, Zustand, Tailwind CSS v4, GSAP 3 |
-| **API Backend** | Node.js (LTS), Express 5, REST Architecture |
+| **Client** | React 19, Vite, React Router 7, Tailwind CSS v4, GSAP 3 |
+| **API Backend** | Node.js (v20+ LTS), Express 5, REST Architecture |
 | **Database & ORM** | MySQL 8 (utf8mb4), Prisma ORM |
 | **Authentication & Security** | JWT (24h token expiry), bcryptjs password hashing, Helmet, CORS |
 | **Calendar & File Parser** | `node-ical` with recurrence expansion (`RRULE`, `EXDATE`, `INTERVAL`) |
+| **AI Extraction Pipeline** | Google Gemini 2.5 Flash via `@google/genai` (structured JSON schema extraction) |
 | **API Contract & Docs** | OpenAPI 3.0 specification served via interactive Swagger UI |
-| **Deployment** | Docker (multi-stage images), Docker Compose, nginx (SPA + `/api` reverse proxy); Render / Railway / Vercel also supported |
+| **Deployment** | Docker (multi-stage build), Docker Compose, nginx (reverse proxy); Vercel / Render / Railway |
 | **Testing Suite** | Vitest & React Testing Library (Client); Node test runner & Supertest (API) |
 
 ---
 
 ## 🚀 Getting Started & Setup Guide
 
-### Quick start with Docker
+You can run Luma either via **Docker Compose (Recommended - Fullstack in 1 Command)** or via **Manual Local Development** (Node.js + Vite).
 
-If you have Docker, the whole stack (MySQL + API + client) runs with one command:
+---
+
+### Option 1: Quick Start with Docker (Recommended)
+
+Run the full stack (MySQL 8 + Express API + Client Nginx) with a single command:
 
 ```bash
-cp .env.docker.example .env        # set JWT_SECRET; LLM_MOCK=true if you have no Gemini key
-docker compose up -d --build       # http://localhost:8080
-docker compose --profile seed run --rm seed   # demo account (see Demo Credentials)
+# 1. Clone the repository
+git clone https://github.com/Tunasss/Student-Focus-Study-Hub-SFSH.git
+cd Student-Focus-Study-Hub-SFSH
+
+# 2. Setup environment configuration
+cp .env.docker.example .env
+
+# 3. Build and launch all containers
+docker compose up -d --build
+
+# 4. Seed demo courses, timetable, deadlines & syllabus
+docker compose --profile seed run --rm seed
 ```
 
-See [DEPLOY.md](DEPLOY.md) for production notes. The manual setup below is for local development.
+#### Access Points:
+- **Web Application:** [http://localhost:8080](http://localhost:8080)
+- **API Swagger Documentation:** [http://localhost:8080/api-docs](http://localhost:8080/api-docs) (or [http://localhost:4000/api-docs](http://localhost:4000/api-docs))
+- **Database (MySQL 8):** `localhost:3306` (`user: sfsh`, `password: sfsh_password`, `database: sfsh`)
 
-### Prerequisites
-Make sure you have the following installed on your machine:
-- **Node.js** (v20 LTS or higher) and **npm**
-- **MySQL 8** (running locally or via Docker)
+---
+
+### Option 2: Manual Local Development
+
+#### Prerequisites
+- **Node.js** (v20 LTS or higher) & **npm**
+- **MySQL 8** (running locally on port 3306 or via `docker compose up -d mysql`)
 - **Git**
 
 ---
 
-### Step 1: Clone the Repository
+#### Step 1: Backend API Setup (`api/`)
+
 ```bash
-git clone https://github.com/Tunasss/Student-Focus-Study-Hub-SFSH.git
-cd Student-Focus-Study-Hub-SFSH
+cd api
+npm install
+
+# Configure environment
+cp .env.example .env
 ```
 
----
+Ensure your `api/.env` contains your MySQL connection and JWT secret:
+```env
+DATABASE_URL="mysql://sfsh:sfsh_password@localhost:3306/sfsh?charset=utf8mb4"
+JWT_SECRET="your-secure-jwt-secret-key"
+PORT=4000
+CORS_ORIGINS="http://localhost:5173,http://localhost:8080"
+SEED_USER_EMAIL="student@sfsh.dev"
+SEED_USER_PASSWORD="Password123!"
+```
 
-### Step 2: Backend API Setup (`api/`)
+Push schema migrations and seed demo data:
+```bash
+npm run db:deploy
+npm run db:seed
+```
 
-1. **Navigate to the API folder and install dependencies:**
-   ```bash
-   cd api
-   npm install
-   ```
-
-2. **Configure Environment Variables:**
-   Copy the example environment file:
-   ```bash
-   cp .env.example .env
-   ```
-   Ensure your `.env` contains:
-   ```env
-   DATABASE_URL="mysql://sfsh:sfsh_password@localhost:3306/sfsh?charset=utf8mb4"
-   JWT_SECRET="your-secure-jwt-secret-key"
-   PORT=4000
-   CORS_ORIGINS="http://localhost:5173"
-   SEED_USER_EMAIL="student@sfsh.dev"
-   SEED_USER_PASSWORD="Password123!"
-   ```
-
-3. **Start MySQL (Docker Optional):**
-   If using Docker, start the MySQL container:
-   ```bash
-   npm run db:up
-   ```
-
-4. **Deploy Database Schema and Seed Demo Data:**
-   ```bash
-   npm run db:deploy
-   npm run db:seed
-   ```
-
-5. **Start the API Server:**
-   ```bash
-   npm run dev
-   ```
-   The API will be available at: `http://localhost:4000`  
-   Interactive API docs (Swagger UI): `http://localhost:4000/api-docs`
+Start the API development server:
+```bash
+npm run dev
+```
+- API Endpoint: `http://localhost:4000`
+- Swagger UI Docs: `http://localhost:4000/api-docs`
 
 ---
 
-### Step 3: Frontend Client Setup (`client/`)
+#### Step 2: Frontend Client Setup (`client/`)
 
-1. **Navigate to the Client folder and install dependencies:**
-   ```bash
-   cd ../client
-   npm install
-   ```
+Open a new terminal window:
+```bash
+cd client
+npm install
 
-2. **Configure Client Environment:**
-   ```bash
-   cp .env.example .env
-   ```
-   Default `VITE_API_URL` is `http://localhost:4000`.
+# Configure environment
+cp .env.example .env
+```
 
-3. **Start the Frontend Development Server:**
-   ```bash
-   npm run dev
-   ```
-   The application will be accessible at: `http://localhost:5173`
+Default `VITE_API_URL` in `client/.env`:
+```env
+VITE_API_URL="http://localhost:4000"
+```
+
+Start the Vite development server:
+```bash
+npm run dev
+```
+- Client App: `http://localhost:5173`
 
 ---
 
 ## 🔑 Demo Credentials
 
-After running `npm run db:seed`, you can immediately sign in with the pre-seeded account:
+After running the seed script, sign in immediately with the pre-configured demo student:
 - **Email:** `student@sfsh.dev`
 - **Password:** `Password123!`
 
-*(You can also use `admin@example.com` / `Password123!` or create a new account via the `/register` page.)*
+*(You can also register a fresh account anytime via `/register`.)*
 
 ---
 
 ## 🧪 Verification & Test Suites
 
-Both the API and Client include comprehensive automated test suites:
+Both modules include comprehensive, automated test suites that run in CI on every push and pull request:
 
-### Running API Tests
+### Running Client Tests (146 tests across 25 suites)
+```bash
+cd client
+npm run lint
+npm test
+```
+
+### Running API Tests (415 tests across 98 suites)
 ```bash
 cd api
 npm run lint
 npm test
 ```
-*Result: 75/75 tests passing (Authentication, Calendar Ingestion, Recurrence Expansion, Scope Security, OpenAPI validation).*
 
-### Running Client Tests
+### Building for Production
 ```bash
-cd client
-npm run lint
-npm test
-```
-*Result: Full test suite passing across all modules (Theme toggling, Timetable rendering, Course deduplication, Syllabus AI Extractor, Navigation).*
-
-### Production Build
-```bash
+# Build Client (Vite)
 cd client
 npm run build
-```
 
-### Docker images
-```bash
-docker compose build              # builds sfsh-api and sfsh-client
-docker compose up -d --wait       # starts MySQL, API and client, waits until all are healthy
-curl http://localhost:8080/api/health
+# Build Docker containers
+docker compose build
 ```
-CI runs the same build plus a smoke test of login, `/api/recommendation/next-action`, `/api/analytics/*` and `/api/search/suggest` on every PR (job *Docker*).
 
 ---
 
@@ -210,14 +211,14 @@ Key endpoint groups include:
 - `POST /api/schedule/import`: Multipart `.ics` calendar import with conflict resolution.
 - `GET /api/schedule`: Weekly schedule retrieval with timezone conversion (`Asia/Ho_Chi_Minh`).
 - `GET /api/courses`: User courses and schedule slots listing.
-- `POST /api/syllabus/extract`: Syllabus PDF upload (up to 20 files, each ≤ 5 MB and ≤ 200 pages), text-layer extraction with a `PDF_NO_TEXT_LAYER` fallback for scanned files, then Gemini structured output (JSON schema + zod) returning the course code and ordered topics. One retry on schema errors, `LLM_UNAVAILABLE` on quota/connection problems, and `LLM_MOCK=true` for offline UI work.
+- `POST /api/syllabus/extract`: Syllabus PDF upload (up to 20 files, each ≤ 5 MB and ≤ 200 pages), text-layer extraction with a `PDF_NO_TEXT_LAYER` fallback for scanned files, then Gemini structured output (JSON schema + zod) returning the course code and ordered topics.
 - `GET/POST /api/courses/:id/topics`, `POST /api/courses/:id/topics/bulk`, `PATCH/DELETE /api/topics/:id`: Syllabus topic persistence. The reviewed Gemini preview is saved in bulk (`order` → `sort_order`), and each topic's learning status (`TODO`/`DOING`/`DONE`), title and description can be edited.
 - `GET/POST /api/tasks`, `PUT/PATCH/DELETE /api/tasks/:id`: Task (deadline) CRUD, scoped to the JWT user, validated with zod. Each task carries `daysLeft` and an `urgencyBadge` (`OVERDUE` / `URGENT` / `SOON` / `LATER`).
-- `GET /api/recommendation/next-action`: Explainable "what next" recommendation. Open tasks are scored with `10 / (max(daysLeft, 0) + 0.5) + (topic DOING ? 5 : 2) + (overdue ? 3 : 0)` (ties: sooner `dueAt`, then older `createdAt`) and the best one is returned with its `scoreBreakdown`; with no open task it suggests the `DOING` (or first `TODO`) topic of the course whose next class is soonest, or an empty state.
+- `GET /api/recommendation/next-action`: Explainable "what next" recommendation scoring open tasks and upcoming classes.
 - `GET/POST /api/sessions`: Focus (Pomodoro) session logging: start time, minutes, `COMPLETED`/`ABANDONED`, optionally linked to a course, topic or task.
-- `GET /api/analytics/overview?range=7d|30d|all`: Dashboard summary: focus minutes, tasks completed, overdue tasks, current study streak, and a per-course breakdown with `progressPct = floor(done / total × 100)` over topics and tasks.
-- `GET /api/analytics/daily-activity?range=7d|30d`: Zero-filled daily series (`focusMinutes`, `tasksCompleted`) for charts. Timestamps are stored and returned in UTC; the client sends its browser timezone as `tz` (default `UTC`) so days and streaks follow the user's local calendar.
-- `GET /api/search/suggest?q=`: Search-as-you-type suggestions across the user's courses, tasks and topics (case- and diacritic-insensitive, best matches first).
+- `GET /api/analytics/overview?range=7d|30d|all`: Dashboard summary: focus minutes, tasks completed, overdue tasks, current study streak, and per-course breakdown.
+- `GET /api/analytics/daily-activity?range=7d|30d`: Zero-filled daily series (`focusMinutes`, `tasksCompleted`) for activity charts.
+- `GET /api/search/suggest?q=`: Search-as-you-type suggestions across courses, tasks and topics.
 
 ---
 
@@ -231,4 +232,4 @@ Key endpoint groups include:
 ---
 
 ## 📄 License
-This project is developed for academic purposes at the University as part of the Web Application Development course. All rights reserved © 2026.
+This project is developed for academic purposes as part of the Web Application Development course. All rights reserved © 2026.

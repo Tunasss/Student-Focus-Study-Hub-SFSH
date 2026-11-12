@@ -186,7 +186,10 @@ Key endpoint groups include:
 - `POST /api/schedule/import`: Multipart `.ics` calendar import with conflict resolution.
 - `GET /api/schedule`: Weekly schedule retrieval with timezone conversion (`Asia/Ho_Chi_Minh`).
 - `GET /api/courses`: User courses and schedule slots listing.
+- `POST /api/syllabus/extract`: Syllabus PDF upload (≤ 5 MB, ≤ 30 pages), text-layer extraction with a `PDF_NO_TEXT_LAYER` fallback for scanned files, then Gemini structured output (JSON schema + zod) returning the course code and ordered topics. One retry on schema errors, `LLM_UNAVAILABLE` on quota/connection problems, and `LLM_MOCK=true` for offline UI work.
+- `GET/POST /api/courses/:id/topics`, `POST /api/courses/:id/topics/bulk`, `PATCH/DELETE /api/topics/:id`: Syllabus topic persistence. The reviewed Gemini preview is saved in bulk (`order` → `sort_order`), and each topic's learning status (`TODO`/`DOING`/`DONE`), title and description can be edited.
 - `GET/POST /api/tasks`, `PUT/PATCH/DELETE /api/tasks/:id`: Task (deadline) CRUD, scoped to the JWT user, validated with zod. Each task carries `daysLeft` and an `urgencyBadge` (`OVERDUE` / `URGENT` / `SOON` / `LATER`).
+- `GET /api/recommendation/next-action`: Explainable "what next" recommendation. Open tasks are scored with `10 / (max(daysLeft, 0) + 0.5) + (topic DOING ? 5 : 2) + (overdue ? 3 : 0)` (ties: sooner `dueAt`, then older `createdAt`) and the best one is returned with its `scoreBreakdown`; with no open task it suggests the `DOING` (or first `TODO`) topic of the course whose next class is soonest, or an empty state.
 
 ---
 

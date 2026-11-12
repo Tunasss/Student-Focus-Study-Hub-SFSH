@@ -56,11 +56,11 @@ Send success bodies with `res.json(ok(payload))`, and throw `ApiError` for error
 | `users` | id, email (unique), password_hash, created_at |
 | `courses` | id, user_id, code (nullable), name |
 | `schedules` | id, course_id, day_of_week (1=Mon…7=Sun), start_time, end_time, location, tz, recurrence_until |
-| `topics` | id, course_id, sort_order, title, description, status (TODO/DOING/DONE) |
+| `topics` | id, course_id, parent_id (nullable, chapter → subtopic), sort_order, title, description, source_file (nullable), status (TODO/DOING/DONE) |
 | `tasks` | id, user_id, course_id, topic_id (nullable), title, due_at, status (TODO/DOING/DONE/OVERDUE), created_at, completed_at (nullable, WBS 3.4) |
 | `sessions` | id, user_id, course_id?, topic_id?, task_id?, started_at, minutes, status (COMPLETED/ABANDONED) |
 
-Indexes: `user_id` on courses/tasks/sessions, `(user_id, due_at)` and `due_at` on tasks, `topic_id` on tasks/sessions, `(user_id, started_at)` on sessions, `(user_id, completed_at)` on tasks, unique `(course_id, sort_order)` on topics.
+Indexes: `user_id` on courses/tasks/sessions, `(user_id, due_at)` and `due_at` on tasks, `topic_id` on tasks/sessions, `(user_id, started_at)` on sessions, `(user_id, completed_at)` on tasks, unique `(course_id, parent_id, sort_order)` and `parent_id` on topics.
 `sort_order` is used instead of the MySQL reserved word `ORDER`.
 
 ## Rule 06 — always scope by user_id

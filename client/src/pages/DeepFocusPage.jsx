@@ -10,6 +10,7 @@ import { AudioMixerModal } from '../components/focus/AudioMixerModal';
 import { GenreSwitchToast } from '../components/focus/GenreSwitchToast';
 import { TimerSettingsModal } from '../components/focus/TimerSettingsModal';
 import { FocusSubjectPicker } from '../components/focus/FocusSubjectPicker';
+import { TopicCompletionModal } from '../components/focus/TopicCompletionModal';
 import {
   DEFAULT_TIMER_SETTINGS,
   POMODORO_SETTINGS_KEY,
@@ -25,7 +26,7 @@ import {
   tickPomodoroSession,
 } from '../utils/pomodoro';
 import { audioMixer } from '../utils/audioMixer';
-import { sessionsApi } from '../lib/api';
+import { sessionsApi, syllabusApi } from '../lib/api';
 import { formatFocusDuration, toIsoDateTimeWithOffset } from '../utils/analytics';
 
 function countTodayFocusStats(sessions = []) {
@@ -70,6 +71,7 @@ const FOCUS_COPY = {
     viewTimetable: 'View Timetable Schedule →',
     todayLogged: (dur, count) => `Logged today: ${dur} (${count})`,
     sessionSaved: (mins) => `Focus sprint logged (+${mins}m)`,
+    topicMarkedDone: (name) => `Marked "${name}" as DONE! 🎉`,
     sprints: [
       { id: 1, title: 'Sprint 01 · Cognitive Flow', duration: '25 min focus' },
       { id: 2, title: 'Sprint 02 · Deep Problem Solving', duration: '25 min focus' },
@@ -102,6 +104,7 @@ const FOCUS_COPY = {
     viewTimetable: 'Xem Thời Khóa Biểu →',
     todayLogged: (dur, count) => `Hôm nay: ${dur} (${count} phiên)`,
     sessionSaved: (mins) => `Đã lưu phiên tập trung (+${mins} phút)`,
+    topicMarkedDone: (name) => `Đã đánh dấu "${name}" hoàn thành! 🎉`,
     sprints: [
       { id: 1, title: 'Phiên 01 · Khởi động luồng tập trung', duration: '25 phút học sâu' },
       { id: 2, title: 'Phiên 02 · Giải quyết bài toán khó', duration: '25 phút học sâu' },
@@ -139,6 +142,7 @@ export function DeepFocusPage() {
   const [isRadioOpen, setIsRadioOpen] = useState(false);
   const [isAmbientOpen, setIsAmbientOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [topicPrompt, setTopicPrompt] = useState(null); // { topicId, topicTitle, courseCode }
   const [isFullscreen, setIsFullscreen] = useState(
     () => typeof document !== 'undefined' && !!document.fullscreenElement
   );
@@ -181,9 +185,9 @@ export function DeepFocusPage() {
   function toggleFullscreen() {
     if (typeof document === 'undefined') return;
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen?.().catch(() => {});
+      document.documentElement.requestFullscreen?.().catch(() => { });
     } else {
-      document.exitFullscreen?.().catch(() => {});
+      document.exitFullscreen?.().catch(() => { });
     }
   }
 
@@ -332,6 +336,24 @@ export function DeepFocusPage() {
           count: prev.count + 1,
         }));
         setSessionLogNotice(t.sessionSaved(minutes));
+
+        // WBS 3.4 / Section 6.5: Prompt user if activeTopicId is set
+        if (session.activeTopicId) {
+          syllabusApi
+            .getCourseTopics(session.activeCourseId)
+            .then((topics) => {
+              const active = Array.isArray(topics)
+                ? topics.find((tp) => tp.id === session.activeTopicId)
+                : null;
+              if (active && active.status !== 'DONE') {
+                setTopicPrompt({
+                  topicId: active.id,
+                  topicTitle: active.title,
+                });
+              }
+            })
+            .catch(() => {});
+        }
       })
       .catch(() => {
         // Timer UI remains responsive even if API logging fails
@@ -362,7 +384,7 @@ export function DeepFocusPage() {
         courseId: current.activeCourseId || null,
         topicId: current.activeTopicId || null,
       })
-      .catch(() => {});
+      .catch(() => { });
   }
 
   function handlePlayPause() {
@@ -431,12 +453,23 @@ export function DeepFocusPage() {
     }
   }
 
+  async function handleConfirmTopicDone() {
+    if (!topicPrompt?.topicId) return;
+    try {
+      await syllabusApi.updateTopicStatus(topicPrompt.topicId, 'DONE');
+      setSessionLogNotice(t.topicMarkedDone(topicPrompt.topicTitle));
+      setTopicPrompt(null);
+    } catch {
+      setTopicPrompt(null);
+    }
+  }
+
   const progressPercent =
     session.durationSeconds > 0
       ? Math.min(
-          100,
-          Math.max(0, ((session.durationSeconds - session.remainingSeconds) / session.durationSeconds) * 100)
-        )
+        100,
+        Math.max(0, ((session.durationSeconds - session.remainingSeconds) / session.durationSeconds) * 100)
+      )
       : 0;
 
   // Normalized cycle indicator within 4-interval loop (1..4)
@@ -482,11 +515,10 @@ export function DeepFocusPage() {
             onClick={toggleFullscreen}
             title={isFullscreen ? (lang === 'vi' ? 'Thoát toàn màn hình' : 'Exit Fullscreen') : (lang === 'vi' ? 'Toàn màn hình' : 'Fullscreen')}
             aria-label={isFullscreen ? (lang === 'vi' ? 'Thoát toàn màn hình' : 'Exit Fullscreen') : (lang === 'vi' ? 'Toàn màn hình' : 'Fullscreen')}
-            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors shadow-xs cursor-pointer backdrop-blur-md ${
-              isFullscreen
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors shadow-xs cursor-pointer backdrop-blur-md ${isFullscreen
                 ? 'border-primary/60 bg-primary/20 text-primary'
                 : 'border-border bg-surface/80 text-muted hover:text-text hover:bg-surface-2'
-            }`}
+              }`}
           >
             <span className="text-sm leading-none">{isFullscreen ? '⤢' : '⛶'}</span>
             <span className="hidden sm:inline">
@@ -559,9 +591,8 @@ export function DeepFocusPage() {
           <div className="mt-1 mb-2 flex flex-wrap items-center justify-center gap-2 shrink-0">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-primary/15 border border-primary/30 text-primary text-[11px] font-mono font-extrabold tracking-wider uppercase backdrop-blur-md">
               <span
-                className={`h-2 w-2 rounded-full ${
-                  session.status === 'running' ? 'bg-primary animate-ping' : 'bg-primary'
-                }`}
+                className={`h-2 w-2 rounded-full ${session.status === 'running' ? 'bg-primary animate-ping' : 'bg-primary'
+                  }`}
               />
               <span>{phaseBadge}</span>
             </div>
@@ -626,11 +657,10 @@ export function DeepFocusPage() {
                 onClick={() => setIsAmbientOpen(true)}
                 title={t.soundscapesBtn}
                 aria-label={t.soundscapesBtn}
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black ${
-                  activeSoundCount > 0
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black ${activeSoundCount > 0
                     ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
                     : 'bg-surface border-border text-muted hover:text-text hover:bg-surface-2 hover:border-primary/50 dark:bg-[#141d06]/90 dark:border-border dark:text-zinc-300 dark:hover:text-white'
-                }`}
+                  }`}
               >
                 <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18m0-18C8.5 7.5 4 9 4 14a8 8 0 0016 0c0-5-4.5-6.5-8-11z" />
@@ -645,11 +675,10 @@ export function DeepFocusPage() {
                 onClick={() => setIsRadioOpen(true)}
                 title={t.radioBtn}
                 aria-label={t.radioBtn}
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black ${
-                  isMusicPlaying
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black ${isMusicPlaying
                     ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
                     : 'bg-surface border-border text-muted hover:text-text hover:bg-surface-2 hover:border-primary/50 dark:bg-[#141d06]/90 dark:border-border dark:text-zinc-300 dark:hover:text-white'
-                }`}
+                  }`}
               >
                 <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 9h16a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2v-7a2 2 0 012-2zm4-4l4 4m6 5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -755,13 +784,12 @@ export function DeepFocusPage() {
                   }}
                   title={mixerState.isMuted ? 'Unmute' : 'Master Volume (Hover to adjust)'}
                   aria-label={mixerState.isMuted ? 'Unmute' : 'Master Volume'}
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black ${
-                    mixerState.isMuted
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black ${mixerState.isMuted
                       ? 'border-red-500/50 bg-red-500/10 text-red-600 dark:text-red-400'
                       : isVolumeHovered
                         ? 'border-primary bg-primary/20 text-primary shadow-primary/25 scale-105'
                         : 'bg-surface border-border text-muted hover:text-text hover:bg-surface-2 hover:border-primary/50 dark:bg-[#141d06]/90 dark:border-border dark:text-zinc-300 dark:hover:text-white'
-                  }`}
+                    }`}
                 >
                   {mixerState.isMuted ? (
                     <svg className="h-4.5 w-4.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -826,21 +854,19 @@ export function DeepFocusPage() {
               return (
                 <div
                   key={sprint.id}
-                  className={`right-session-card rounded-2xl p-3.5 flex items-center justify-between gap-3 border transition-all duration-200 backdrop-blur-md ${
-                    isCurrent
+                  className={`right-session-card rounded-2xl p-3.5 flex items-center justify-between gap-3 border transition-all duration-200 backdrop-blur-md ${isCurrent
                       ? 'border-primary/60 bg-gradient-to-r from-accent-deep/90 to-[#1b2500] text-white shadow-lg'
                       : 'glass-card text-muted hover:text-text hover:border-primary/40'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
-                        isCurrent
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${isCurrent
                           ? 'border-primary bg-primary/20 text-primary'
                           : isCompleted
                             ? 'border-primary/40 bg-primary/10 text-primary'
                             : 'border-border bg-surface-2 text-muted'
-                      }`}
+                        }`}
                     >
                       {isCompleted ? (
                         <span className="text-xs font-bold text-primary">✓</span>
@@ -850,9 +876,8 @@ export function DeepFocusPage() {
                     </div>
                     <div>
                       <p
-                        className={`text-xs font-bold leading-tight ${
-                          isCurrent ? 'text-white' : 'text-text'
-                        }`}
+                        className={`text-xs font-bold leading-tight ${isCurrent ? 'text-white' : 'text-text'
+                          }`}
                       >
                         {sprint.title}
                       </p>
@@ -863,9 +888,8 @@ export function DeepFocusPage() {
                   </div>
 
                   <span
-                    className={`text-[10px] font-mono font-bold ${
-                      isCurrent ? 'text-primary' : 'text-muted'
-                    }`}
+                    className={`text-[10px] font-mono font-bold ${isCurrent ? 'text-primary' : 'text-muted'
+                      }`}
                   >
                     {isCurrent ? 'ACTIVE' : isCompleted ? 'DONE' : `0${sprint.id}`}
                   </span>
@@ -890,6 +914,13 @@ export function DeepFocusPage() {
         settings={settings}
         onSave={handleSaveSettings}
         onClose={() => setIsSettingsOpen(false)}
+      />
+      <TopicCompletionModal
+        isOpen={!!topicPrompt}
+        topicTitle={topicPrompt?.topicTitle}
+        courseCode={topicPrompt?.courseCode}
+        onConfirmDone={handleConfirmTopicDone}
+        onKeepDoing={() => setTopicPrompt(null)}
       />
 
       {/* Auto-Genre Advance Toast Notification */}

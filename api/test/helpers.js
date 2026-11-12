@@ -6,7 +6,8 @@ function createFakePrisma() {
   const schedules = [];
   const topics = [];
   const tasks = [];
-  const ids = { user: 1, course: 1, schedule: 1, topic: 1, task: 1 };
+  const sessions = [];
+  const ids = { user: 1, course: 1, schedule: 1, topic: 1, task: 1, session: 1 };
 
   const courseOwnedBy = (courseId, userId) => courses.some((c) => c.id === courseId && c.userId === userId);
 
@@ -14,20 +15,40 @@ function createFakePrisma() {
   const recordNotFound = () => Object.assign(new Error('Record to update/delete does not exist.'), { code: 'P2025' });
   const uniqueViolation = () => Object.assign(new Error('Unique constraint failed'), { code: 'P2002' });
 
-  // Matches a row against a flat where clause of equality filters, plus the
-  // nested `course: { userId }` scope used by byCourseOwner().
+  const comparable = (v) => (v instanceof Date ? v.getTime() : v);
+  // MySQL utf8mb4_unicode_ci compares case- and accent-insensitively.
+  const fold = (v) => String(v ?? '').normalize('NFD').replace(/\p{M}/gu, '').replace(/đ/gi, 'd').toLowerCase();
+
+  // Matches a row against a where clause of equality filters, range / in / not /
+  // contains operators, OR, plus the nested `course: { userId }` scope used by byCourseOwner().
   function matchesWhere(row, where = {}) {
     for (const [key, value] of Object.entries(where)) {
-      if (key === 'course') {
+      if (key === 'OR') {
+        if (!value.some((w) => matchesWhere(row, w))) return false;
+      } else if (key === 'course') {
         if (value.userId !== undefined && !courseOwnedBy(row.courseId, value.userId)) return false;
+      } else if (value instanceof Date) {
+        if (comparable(row[key]) !== value.getTime()) return false;
       } else if (value !== null && typeof value === 'object') {
+        const v = comparable(row[key]);
         if (value.not !== undefined && row[key] === value.not) return false;
         if (value.in !== undefined && !value.in.includes(row[key])) return false;
+        if (value.contains !== undefined && (row[key] == null || !fold(row[key]).includes(fold(value.contains)))) return false;
+        for (const [op, test] of [['gte', (a, b) => a >= b], ['gt', (a, b) => a > b], ['lte', (a, b) => a <= b], ['lt', (a, b) => a < b]]) {
+          if (value[op] !== undefined && (row[key] == null || !test(v, comparable(value[op])))) return false;
+        }
       } else if (row[key] !== value) {
         return false;
       }
     }
     return true;
+  }
+
+  // findMany options shared by every model: where, orderBy, take, select.
+  function query(rows, { where, orderBy, take, select } = {}) {
+    let out = sortBy(rows.filter((r) => matchesWhere(r, where)), orderBy ?? []);
+    if (take !== undefined) out = out.slice(0, take);
+    return select ? out.map((r) => pick(r, select)) : out;
   }
 
   function pick(row, select) {
@@ -66,6 +87,7 @@ function createFakePrisma() {
     schedules,
     topics,
     tasks,
+    sessions,
     async $transaction(fn) {
       return fn(prisma);
     },
@@ -93,10 +115,10 @@ function createFakePrisma() {
         Object.assign(course, data);
         return course;
       },
-      async findMany({ where, include }) {
-        return courses
-          .filter((c) => c.userId === where.userId)
-          .map((c) => (include?.schedules ? { ...c, schedules: schedules.filter((s) => s.courseId === c.id) } : c));
+      async findMany({ where, include, orderBy, take, select }) {
+        return query(courses, { where, orderBy, take, select }).map((c) =>
+          include?.schedules ? { ...c, schedules: schedules.filter((s) => s.courseId === c.id) } : c,
+        );
       },
     },
     schedule: {
@@ -120,8 +142,8 @@ function createFakePrisma() {
       },
     },
     topic: {
-      async findMany({ where, orderBy }) {
-        return sortBy(topics.filter((t) => matchesWhere(t, where)), orderBy ?? []);
+      async findMany({ where, orderBy, take, select }) {
+        return query(topics, { where, orderBy, take, select });
       },
       async findFirst({ where, select, orderBy }) {
         const rows = sortBy(topics.filter((t) => matchesWhere(t, where)), orderBy ?? []);
@@ -165,14 +187,15 @@ function createFakePrisma() {
       },
     },
     task: {
-      async findMany({ where, include, orderBy }) {
-        return sortBy(tasks.filter((t) => matchesWhere(t, where)), orderBy).map((t) => withTaskInclude(t, include));
+      async findMany({ where, include, orderBy, take, select }) {
+        if (select) return query(tasks, { where, orderBy, take, select });
+        return query(tasks, { where, orderBy, take }).map((t) => withTaskInclude(t, include));
       },
       async findFirst({ where, include }) {
         return withTaskInclude(tasks.find((t) => matchesWhere(t, where)) ?? null, include);
       },
       async create({ data, include }) {
-        const task = { id: ids.task++, topicId: null, status: 'TODO', createdAt: new Date(), ...data };
+        const task = { id: ids.task++, topicId: null, status: 'TODO', createdAt: new Date(), completedAt: null, ...data };
         tasks.push(task);
         return withTaskInclude(task, include);
       },
@@ -186,6 +209,16 @@ function createFakePrisma() {
         const index = tasks.findIndex((t) => matchesWhere(t, where));
         if (index === -1) throw recordNotFound();
         return tasks.splice(index, 1)[0];
+      },
+    },
+    studySession: {
+      async findMany({ where, orderBy, take, select }) {
+        return query(sessions, { where, orderBy, take, select });
+      },
+      async create({ data }) {
+        const session = { id: ids.session++, courseId: null, topicId: null, taskId: null, ...data };
+        sessions.push(session);
+        return session;
       },
     },
   };

@@ -119,14 +119,17 @@ model Topic {
 }
 
 model Task {
-  id        Int        @id @default(autoincrement())
-  userId    Int        @map("user_id")
-  courseId  Int        @map("course_id")
-  topicId   Int?       @map("topic_id")
-  title     String     @db.VarChar(255)
-  dueAt     DateTime   @map("due_at")
-  status    TaskStatus @default(TODO)
-  createdAt DateTime   @default(now()) @map("created_at")
+  id          Int        @id @default(autoincrement())
+  userId      Int        @map("user_id")
+  courseId    Int        @map("course_id")
+  topicId     Int?       @map("topic_id")
+  title       String     @db.VarChar(255)
+  dueAt       DateTime   @map("due_at")
+  status      TaskStatus @default(TODO)
+  createdAt   DateTime   @default(now()) @map("created_at")
+  // WBS 3.4: set when the task moves to DONE, cleared when it leaves DONE.
+  // Null for tasks finished before this column existed.
+  completedAt DateTime?  @map("completed_at")
 
   user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   course   Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -134,6 +137,7 @@ model Task {
   sessions StudySession[]
 
   @@index([userId, dueAt])
+  @@index([userId, completedAt])
   @@index([dueAt])
   @@index([topicId])
   @@index([courseId])

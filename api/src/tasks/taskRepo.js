@@ -19,6 +19,13 @@ const TASK_INCLUDE = {
   topic: { select: { id: true, title: true } },
 };
 
+// WBS 3.4: completed_at follows the status. Entering DONE stamps it, leaving DONE clears it,
+// staying DONE keeps the original time.
+function completedAtFor(previousStatus, nextStatus, now = new Date()) {
+  if (nextStatus !== 'DONE') return null;
+  return previousStatus === 'DONE' ? undefined : now;
+}
+
 const notFound = (what) => new ApiError(404, 'NOT_FOUND', `${what} not found`);
 
 // Prisma raises P2025 when an update/delete matches no row (here: wrong user or wrong id).
@@ -62,6 +69,7 @@ async function createTask(prisma, userId, input) {
   await assertCourseOwned(prisma, userId, input.courseId);
   await assertTopicInCourse(prisma, userId, input.courseId, input.topicId);
 
+  const status = input.status ?? 'TODO';
   return prisma.task.create({
     data: {
       userId,
@@ -69,7 +77,8 @@ async function createTask(prisma, userId, input) {
       topicId: input.topicId ?? null,
       title: input.title,
       dueAt: input.dueAt,
-      status: input.status ?? 'TODO',
+      status,
+      completedAt: completedAtFor(null, status),
     },
     include: TASK_INCLUDE,
   });
@@ -93,7 +102,11 @@ async function updateTask(prisma, userId, id, patch) {
   const data = {};
   if (patch.title !== undefined) data.title = patch.title;
   if (patch.dueAt !== undefined) data.dueAt = patch.dueAt;
-  if (patch.status !== undefined) data.status = patch.status;
+  if (patch.status !== undefined) {
+    data.status = patch.status;
+    const completedAt = completedAtFor(current.status, patch.status);
+    if (completedAt !== undefined) data.completedAt = completedAt;
+  }
   if (patch.courseId !== undefined) data.courseId = courseId;
   if (patch.topicId !== undefined) data.topicId = topicId;
 
@@ -114,4 +127,4 @@ async function deleteTask(prisma, userId, id) {
   }
 }
 
-module.exports = { listTasks, getTask, createTask, updateTask, deleteTask, TASK_INCLUDE };
+module.exports = { listTasks, getTask, createTask, updateTask, deleteTask, completedAtFor, TASK_INCLUDE };

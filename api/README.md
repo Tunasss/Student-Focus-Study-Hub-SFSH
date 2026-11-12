@@ -57,10 +57,10 @@ Send success bodies with `res.json(ok(payload))`, and throw `ApiError` for error
 | `courses` | id, user_id, code (nullable), name |
 | `schedules` | id, course_id, day_of_week (1=Mon…7=Sun), start_time, end_time, location, tz, recurrence_until |
 | `topics` | id, course_id, sort_order, title, description, status (TODO/DOING/DONE) |
-| `tasks` | id, user_id, course_id, topic_id (nullable), title, due_at, status (TODO/DOING/DONE/OVERDUE), created_at |
+| `tasks` | id, user_id, course_id, topic_id (nullable), title, due_at, status (TODO/DOING/DONE/OVERDUE), created_at, completed_at (nullable, WBS 3.4) |
 | `sessions` | id, user_id, course_id?, topic_id?, task_id?, started_at, minutes, status (COMPLETED/ABANDONED) |
 
-Indexes: `user_id` on courses/tasks/sessions, `(user_id, due_at)` and `due_at` on tasks, `topic_id` on tasks/sessions, `(user_id, started_at)` on sessions, unique `(course_id, sort_order)` on topics.
+Indexes: `user_id` on courses/tasks/sessions, `(user_id, due_at)` and `due_at` on tasks, `topic_id` on tasks/sessions, `(user_id, started_at)` on sessions, `(user_id, completed_at)` on tasks, unique `(course_id, sort_order)` on topics.
 `sort_order` is used instead of the MySQL reserved word `ORDER`.
 
 ## Rule 06 — always scope by user_id
@@ -195,6 +195,67 @@ the API's camelCase spelling. `tz` must be an IANA timezone (`400 VALIDATION_ERR
 | `recommendRepo.test.js` | Rule 06 scoping, DONE tasks skipped, link not written back |
 | `fallback.test.js` | next class per course, DOING-then-TODO choice, courses without a timetable, empty state |
 | `nextAction.routes.test.js` | `GET /api/recommendation/next-action` for all three kinds, `tz`, 400 / 401, Rule 06 |
+
+## Study analytics, session logging and search suggestions (WBS 3.4)
+
+### Data (migration `20261112000000_task_completed_at`)
+
+`tasks.completed_at` records when a task was finished. The server sets it when a task moves to `DONE` (create or
+update), keeps it while the task stays `DONE` and clears it when the task is reopened; clients cannot send it.
+Tasks finished before this migration keep `completed_at = NULL`, so they only count in `range=all`.
+The JSON `Task` has a matching `completedAt`.
+
+### Session logging
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/api/sessions` | `{ startedAt, minutes (1–240), status = COMPLETED \| ABANDONED, courseId?, topicId?, taskId? }` → 201 `{ session }` |
+| GET | `/api/sessions?from=&to=&course_id=&status=&limit=50` | newest first, `limit` ≤ 200 |
+
+A task fills in its course and topic, a topic fills in its course. Another user's course / topic / task is
+`404 NOT_FOUND`; links that disagree are `400 VALIDATION_ERROR`; `startedAt` may be at most 5 minutes in the future.
+Code: `src/sessions/`, `src/routes/sessions.js`.
+
+### Metrics engine (WBS 3.4.1) and endpoints (WBS 3.4.2)
+
+`src/analytics/metrics.js` holds the pure math, `src/analytics/analyticsRepo.js` loads the rows (all through
+`byUser()` / `byCourseOwner()`, Rule 06), `src/routes/analytics.js` validates the query with zod.
+
+- **Focus time**: sum of `COMPLETED` sessions in the range; sessions without a course count in the total only.
+- **Progress**: `progressPct = floor(completedItems * 100 / totalItems)` over a course's topics + tasks
+  (`DONE` = completed), `0` when the course has none. Integer maths, so 57 / 100 is 57, not 56.
+- **Streak**: consecutive local days with a `COMPLETED` session back from today. Still alive if the last
+  study day was yesterday; a missed day resets it (0, or 1 if the student studied today).
+- **Days** are calendar days in `tz` (IANA, default `UTC`): `7d` = today and the 6 days before. All timestamps are
+  stored and returned in UTC; the client displays them in local time and should send its browser zone as `tz` so
+  the daily buckets, "today" and the streak follow the user's local days.
+
+| Endpoint | `data` |
+|---|---|
+| `GET /api/analytics/overview?range=7d\|30d\|all&tz=` | `{ range, tz, from, to, totalFocusMinutes, completedTasksCount, overdueTasksCount, currentStreakDays, courseBreakdown: [{ courseId, courseCode, courseName, focusMinutes, completedItems, totalItems, progressPct }] }` |
+| `GET /api/analytics/daily-activity?range=7d\|30d&tz=` | `{ range, tz, days: [{ date, focusMinutes, tasksCompleted }] }`, zero-filled, oldest first |
+
+`overdueTasksCount` is "right now" (open tasks that are `OVERDUE` or past `dueAt`), whatever the range;
+`progressPct` is all-time. A user without data gets zeros and an empty `courseBreakdown`, never 404. Field names
+are camelCase like the rest of the API (PRD: `total_focus_minutes`, `course_breakdown[].progress_pct`, …).
+
+### Search suggestions
+
+`GET /api/search/suggest?q=dat&limit=8` (limit ≤ 20) → `{ query, suggestions: [{ type: COURSE|TASK|TOPIC, id,
+label, courseId, courseCode, courseName, status, dueAt }] }`. MySQL filters with `contains` (the `utf8mb4_unicode_ci`
+collation ignores case and accents); results are ranked exact → prefix → word prefix → substring, then shorter labels,
+then courses, tasks, topics. Code: `src/search/suggest.js`.
+
+### Tests (WBS 3.4.3)
+
+| File | Covers |
+|---|---|
+| `test/analytics/mandatory.test.js` | the four PRD cases over HTTP: empty-state user, multi-course aggregation (exact `progressPct`, ranges, abandoned / free-focus sessions), streak continuity & reset, tenant isolation |
+| `test/analytics/metrics.test.js` | progress formula (every ratio up to 200 items), streak edge cases (month / leap year), timezone day boundaries, zero-filled series |
+| `test/analytics/analytics.routes.test.js` | defaults, 400 `VALIDATION_ERROR` for bad `range` / `tz`, completed and overdue task counts, daily series |
+| `test/sessions/sessions.routes.test.js` | logging, link resolution, 404 for other users' rows, validation, listing filters |
+| `test/search/suggest.test.js` | ranking, diacritics, course codes, Rule 06, validation |
+| `test/tasks/completedAt.test.js` | `completed_at` follows the status |
 
 ## Syllabus PDF extraction (WBS 2.2.1)
 

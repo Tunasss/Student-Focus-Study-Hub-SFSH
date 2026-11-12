@@ -16,6 +16,7 @@ function serializeTask(task, now = new Date()) {
     course: task.course ? { id: task.course.id, code: task.course.code, name: task.course.name } : null,
     topic: task.topic ? { id: task.topic.id, title: task.topic.title } : null,
     createdAt: task.createdAt,
+    completedAt: task.completedAt ?? null,
   };
 }
 

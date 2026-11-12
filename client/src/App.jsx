@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/authContext';
 import { GuestRoute, ProtectedRoute } from './auth/ProtectedRoute';
@@ -35,6 +36,16 @@ function RootEntryRoute() {
 }
 
 export function App() {
+  useEffect(() => {
+    // Keep backend alive every 8 minutes to prevent Render free-tier cold sleep
+    const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+    if (!apiBase) return undefined;
+    const timer = setInterval(() => {
+      fetch(`${apiBase}/api/health`).catch(() => {});
+    }, 8 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <Routes>
       <Route path="/home" element={<HomePage />} />

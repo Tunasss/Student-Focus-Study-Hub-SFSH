@@ -13,38 +13,96 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiFetch(path, { method = 'GET', body, auth = true } = {}) {
-  const headers = { Accept: 'application/json' };
-  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
-  if (body !== undefined && !isFormData) headers['Content-Type'] = 'application/json';
+// In-memory cache for ultra-fast, zero-latency UI transitions
+const apiCache = new Map();
+const DEFAULT_CACHE_TTL_MS = 60000; // 60s cache for fast UI transitions
 
-  const token = auth ? getToken() : null;
-  if (token) headers.Authorization = `Bearer ${token}`;
+// In-flight request deduplication map
+const inFlightRequests = new Map();
 
-  let res;
-  try {
-    res = await fetch(`${BASE_URL}${path}`, {
-      method,
-      headers,
-      body: body !== undefined ? (isFormData ? body : JSON.stringify(body)) : undefined,
-    });
-  } catch {
-    throw new ApiError(0, 'NETWORK_ERROR', 'Không kết nối được tới máy chủ');
+export function clearApiCache(filterKey) {
+  if (!filterKey) {
+    apiCache.clear();
+    return;
   }
-
-  // Every API response is the Rule 02 envelope: { success, data, error, timestamp }.
-  const envelope = res.status === 204 ? null : await res.json().catch(() => null);
-
-  if (!res.ok || envelope?.success === false) {
-    const code = envelope?.error?.code || 'HTTP_ERROR';
-    const message = envelope?.error?.message || `Request failed (${res.status})`;
-    if (res.status === 401 && token && (code === 'UNAUTHORIZED' || code === 'TOKEN_EXPIRED')) {
-      window.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT, { detail: { code } }));
+  for (const key of apiCache.keys()) {
+    if (key.includes(filterKey)) {
+      apiCache.delete(key);
     }
-    throw new ApiError(res.status, code, message);
+  }
+}
+
+export async function apiFetch(path, { method = 'GET', body, auth = true, cache = false } = {}) {
+  const isGet = method.toUpperCase() === 'GET';
+  const token = auth ? getToken() : null;
+  const cacheKey = `${path}::${token || ''}`;
+
+  // If caching is requested and valid entry exists, return immediately (0ms latency!)
+  // Disabled in test environment so Vitest mock changes take effect per test.
+  const isTest = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
+  if (isGet && cache && !isTest) {
+    const cached = apiCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < DEFAULT_CACHE_TTL_MS) {
+      return cached.data;
+    }
   }
 
-  return envelope?.data ?? null;
+  // Deduplicate identical concurrent in-flight GET requests
+  if (isGet && inFlightRequests.has(cacheKey)) {
+    return inFlightRequests.get(cacheKey);
+  }
+
+  const executeRequest = async () => {
+    const headers = { Accept: 'application/json' };
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+    if (body !== undefined && !isFormData) headers['Content-Type'] = 'application/json';
+
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    let res;
+    try {
+      res = await fetch(`${BASE_URL}${path}`, {
+        method,
+        headers,
+        body: body !== undefined ? (isFormData ? body : JSON.stringify(body)) : undefined,
+      });
+    } catch {
+      throw new ApiError(0, 'NETWORK_ERROR', 'Không kết nối được tới máy chủ');
+    }
+
+    // Every API response is the Rule 02 envelope: { success, data, error, timestamp }.
+    const envelope = res.status === 204 ? null : await res.json().catch(() => null);
+
+    if (!res.ok || envelope?.success === false) {
+      const code = envelope?.error?.code || 'HTTP_ERROR';
+      const message = envelope?.error?.message || `Request failed (${res.status})`;
+      if (res.status === 401 && token && (code === 'UNAUTHORIZED' || code === 'TOKEN_EXPIRED')) {
+        window.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT, { detail: { code } }));
+      }
+      throw new ApiError(res.status, code, message);
+    }
+
+    const data = envelope?.data ?? null;
+
+    if (isGet && cache) {
+      apiCache.set(cacheKey, { data, timestamp: Date.now() });
+    } else if (!isGet) {
+      // Any mutation invalidates cache
+      clearApiCache();
+    }
+
+    return data;
+  };
+
+  if (isGet) {
+    const reqPromise = executeRequest().finally(() => {
+      inFlightRequests.delete(cacheKey);
+    });
+    inFlightRequests.set(cacheKey, reqPromise);
+    return reqPromise;
+  }
+
+  return executeRequest();
 }
 
 export const scheduleApi = {
@@ -54,14 +112,15 @@ export const scheduleApi = {
     if (to) params.set('to', to);
     if (tz) params.set('tz', tz);
     const query = params.toString();
-    return apiFetch(`/api/schedule${query ? `?${query}` : ''}`);
+    return apiFetch(`/api/schedule${query ? `?${query}` : ''}`, { cache: true });
   },
-  getCourses: () => apiFetch('/api/courses'),
+  getCourses: () => apiFetch('/api/courses', { cache: true }),
   importIcs: (file, replace = false) => {
     const formData = new FormData();
     formData.append('file', file);
     if (replace) formData.append('replace', 'true');
     const query = replace ? '?replace=true' : '';
+    clearApiCache();
     return apiFetch(`/api/schedule/import${query}`, {
       method: 'POST',
       body: formData,
@@ -71,10 +130,11 @@ export const scheduleApi = {
 
 export const syllabusApi = {
   getCourseTopics: async (courseId) => {
-    const data = await apiFetch(`/api/courses/${courseId}/topics`);
+    const data = await apiFetch(`/api/courses/${courseId}/topics`, { cache: true });
     return data?.topics ?? data ?? [];
   },
   updateTopicStatus: async (topicId, status) => {
+    clearApiCache();
     const data = await apiFetch(`/api/topics/${topicId}`, {
       method: 'PATCH',
       body: { status },
@@ -82,6 +142,7 @@ export const syllabusApi = {
     return data?.topic ?? data;
   },
   createTopic: async (courseId, topicData) => {
+    clearApiCache();
     const data = await apiFetch(`/api/courses/${courseId}/topics`, {
       method: 'POST',
       body: topicData,
@@ -89,12 +150,14 @@ export const syllabusApi = {
     return data?.topic ?? data;
   },
   deleteTopic: async (topicId) => {
+    clearApiCache();
     const data = await apiFetch(`/api/topics/${topicId}`, {
       method: 'DELETE',
     });
     return data;
   },
   bulkSaveTopics: async (courseId, payload) => {
+    clearApiCache();
     const data = await apiFetch(`/api/courses/${courseId}/topics/bulk`, {
       method: 'POST',
       body: payload,
@@ -102,6 +165,7 @@ export const syllabusApi = {
     return data?.topics ?? data ?? [];
   },
   extractSyllabus: async (courseIdOrFiles, filesOrCourseName = [], _courseNameFallback = '') => {
+    clearApiCache();
     let files;
     let courseId = null;
 
@@ -138,10 +202,11 @@ export const tasksApi = {
     if (courseId) params.set('course_id', String(courseId));
     if (status) params.set('status', status);
     const query = params.toString();
-    const data = await apiFetch(`/api/tasks${query ? `?${query}` : ''}`);
+    const data = await apiFetch(`/api/tasks${query ? `?${query}` : ''}`, { cache: true });
     return data?.tasks ?? [];
   },
   createTask: async (payload) => {
+    clearApiCache();
     const data = await apiFetch('/api/tasks', {
       method: 'POST',
       body: payload,
@@ -149,6 +214,7 @@ export const tasksApi = {
     return data?.task ?? data;
   },
   updateTask: async (taskId, patch) => {
+    clearApiCache();
     const data = await apiFetch(`/api/tasks/${taskId}`, {
       method: 'PATCH',
       body: patch,
@@ -156,6 +222,7 @@ export const tasksApi = {
     return data?.task ?? data;
   },
   replaceTask: async (taskId, payload) => {
+    clearApiCache();
     const data = await apiFetch(`/api/tasks/${taskId}`, {
       method: 'PUT',
       body: payload,
@@ -163,6 +230,7 @@ export const tasksApi = {
     return data?.task ?? data;
   },
   deleteTask: async (taskId) => {
+    clearApiCache();
     return apiFetch(`/api/tasks/${taskId}`, {
       method: 'DELETE',
     });

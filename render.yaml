@@ -6,6 +6,7 @@ services:
     runtime: node
     rootDir: api
     plan: free
+    region: singapore
     buildCommand: npm ci && npx prisma generate && npx prisma db push --skip-generate
     startCommand: npm start
     healthCheckPath: /api/health

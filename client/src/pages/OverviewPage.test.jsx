@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { LanguageProvider } from '../i18n/languageContext';
-import { analyticsApi, sessionsApi } from '../lib/api';
+import { analyticsApi, recommendationApi, sessionsApi } from '../lib/api';
 import { OverviewPage } from './OverviewPage';
 
 vi.mock('../lib/api', async (importOriginal) => {
@@ -15,6 +15,9 @@ vi.mock('../lib/api', async (importOriginal) => {
     },
     sessionsApi: {
       listSessions: vi.fn(),
+    },
+    recommendationApi: {
+      getNextAction: vi.fn(),
     },
   };
 });
@@ -78,6 +81,23 @@ describe('OverviewPage (WBS 3.4)', () => {
     analyticsApi.getOverview.mockResolvedValue(mockOverview);
     analyticsApi.getDailyActivity.mockResolvedValue(mockDaily);
     sessionsApi.listSessions.mockResolvedValue(mockSessions);
+    recommendationApi.getNextAction.mockResolvedValue({
+      kind: 'TASK',
+      task: {
+        id: 1,
+        courseId: 10,
+        topicId: 103,
+        title: 'CS101 Lab 3: Functions exercises',
+        daysLeft: 1,
+        urgencyBadge: 'URGENT',
+      },
+      topic: { id: 103, title: 'Chapter 3: Functions', status: 'DOING' },
+      course: { id: 10, code: 'CS101', name: 'Intro to CS' },
+      score: 11.667,
+      scoreBreakdown: { baseUrgencyScore: 6.667, topicDoingBonus: 5, overdueBonus: 0 },
+      openTaskCount: 2,
+      reason: 'Top of 2 open task(s)',
+    });
   });
 
   test('renders live KPI metrics, daily activity chart, sessions log, and course breakdown', async () => {

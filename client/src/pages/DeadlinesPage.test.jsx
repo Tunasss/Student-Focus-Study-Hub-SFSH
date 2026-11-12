@@ -18,6 +18,10 @@ vi.mock('../lib/api', () => ({
     updateTask: vi.fn(),
     deleteTask: vi.fn(),
   },
+  recommendationApi: {
+    getNextAction: vi.fn().mockResolvedValue(null),
+  },
+  getBrowserTimeZone: () => 'Asia/Ho_Chi_Minh',
 }));
 
 const mockCourses = [

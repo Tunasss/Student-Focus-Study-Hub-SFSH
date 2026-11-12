@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { TaskCard } from '../components/deadlines/TaskCard';
 import { TaskFormModal } from '../components/deadlines/TaskFormModal';
+import { RecommendationBanner } from '../components/RecommendationBanner';
 import { ToastNotification } from '../components/syllabus/ToastNotification';
 import { useLanguage } from '../i18n/languageContext';
 import { scheduleApi, tasksApi } from '../lib/api';
@@ -372,6 +373,11 @@ export function DeadlinesPage() {
           <span>{t.newTaskBtn}</span>
         </button>
       </header>
+
+      {/* Next Study Action Recommendation Banner (WBS 3.3) */}
+      <div className="deadline-stagger">
+        <RecommendationBanner refreshKey={`${tasks.length}-${counts.done}-${counts.overdue}`} />
+      </div>
 
       {/* Urgency Radar Cards */}
       <section className="deadline-stagger grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

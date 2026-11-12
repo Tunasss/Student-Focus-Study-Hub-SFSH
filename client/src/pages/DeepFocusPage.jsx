@@ -556,7 +556,7 @@ export function DeepFocusPage() {
       {/* Main Grid: Left Academic Widgets | Center Lotus Stage | Right Study Sprints */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch flex-1 min-h-0 py-2 z-10">
         {/* Left Academic Widgets: Subject Picker + Live Real-World Clock (Per Hình 2) */}
-        <div className="lg:col-span-3 flex flex-col justify-center gap-4 order-3 lg:order-1">
+        <div className="lg:col-span-3 flex flex-col justify-center gap-4 order-3 lg:order-1 relative z-30">
           <FocusSubjectPicker
             activeCourseId={session.activeCourseId}
             activeTopicId={session.activeTopicId}
@@ -611,10 +611,10 @@ export function DeepFocusPage() {
           </div>
 
           {/* Radiant Lotus Core Emblem Centered in Viewport */}
-          <div className="flex-1 flex items-center justify-center w-full min-h-0 my-auto py-2 overflow-visible">
-            <div className="relative flex h-60 sm:h-72 md:h-80 w-60 sm:w-72 md:w-80 items-center justify-center overflow-visible">
+          <div className="flex-1 flex items-center justify-center w-full min-h-0 my-auto py-1 overflow-visible">
+            <div className="relative flex h-48 sm:h-60 md:h-72 w-48 sm:w-60 md:w-72 items-center justify-center overflow-visible">
               <RadiantLotusLogo
-                className="w-56 sm:w-68 md:w-72 h-56 sm:h-68 md:h-72 overflow-visible"
+                className="w-44 sm:w-56 md:w-68 h-44 sm:h-56 md:h-68 overflow-visible"
                 glow={true}
                 isPlaying={isLotusBreathing}
                 isCenter={true}

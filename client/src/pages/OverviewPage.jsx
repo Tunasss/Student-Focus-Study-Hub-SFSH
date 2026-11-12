@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { useLanguage } from '../i18n/languageContext';
+import { RecommendationBanner } from '../components/RecommendationBanner';
 import { analyticsApi, getBrowserTimeZone, sessionsApi } from '../lib/api';
 import { formatCourseInfo } from '../utils/courseFormat';
 import {
@@ -290,6 +291,11 @@ export function OverviewPage() {
           {errorMsg}
         </div>
       )}
+
+      {/* Next Study Action Recommendation Banner (WBS 3.3) */}
+      <div className="overview-stagger">
+        <RecommendationBanner />
+      </div>
 
       {/* Top 4 KPI Cards */}
       <section className="overview-stagger grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

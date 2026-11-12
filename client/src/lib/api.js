@@ -218,3 +218,11 @@ export const searchApi = {
   },
 };
 
+export const recommendationApi = {
+  getNextAction: ({ tz = getBrowserTimeZone() } = {}) => {
+    const params = new URLSearchParams({ tz });
+    return apiFetch(`/api/recommendation/next-action?${params.toString()}`);
+  },
+};
+
+

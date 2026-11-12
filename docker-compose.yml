@@ -1,0 +1,87 @@
+# Full SFSH stack: MySQL 8 + API + client (nginx).
+#
+#   cp .env.docker.example .env      # then fill in JWT_SECRET (and GEMINI_API_KEY)
+#   docker compose up -d --build     # app on http://localhost:8080
+#   docker compose --profile seed run --rm seed   # optional: demo account
+#
+# The browser only talks to the client container; nginx proxies /api and /api-docs
+# to the API, so no CORS setup is needed for this stack.
+# (For local DB-only development keep using api/docker-compose.yml.)
+
+name: sfsh
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-sfsh}
+      MYSQL_USER: ${MYSQL_USER:-sfsh}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-sfsh_password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    # Not published to the host by default; uncomment to reach it from local tools.
+    # ports:
+    #   - "3306:3306"
+
+  api:
+    build: ./api
+    image: sfsh-api:latest
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment: &api-env
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: mysql://${MYSQL_USER:-sfsh}:${MYSQL_PASSWORD:-sfsh_password}@mysql:3306/${MYSQL_DATABASE:-sfsh}?charset=utf8mb4
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      LLM_MOCK: ${LLM_MOCK:-false}
+      RUN_MIGRATIONS: "true"
+    # Uncomment to call the API directly (Swagger is also reachable via the client at /api-docs).
+    # ports:
+    #   - "4000:4000"
+
+  client:
+    build:
+      context: ./client
+      args:
+        VITE_API_URL: /
+    image: sfsh-client:latest
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      API_UPSTREAM: http://api:4000
+    ports:
+      - "${APP_PORT:-8080}:80"
+
+  # One-off demo data: docker compose --profile seed run --rm seed
+  seed:
+    image: sfsh-api:latest
+    profiles: ["seed"]
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      <<: *api-env
+      SEED_USER_EMAIL: ${SEED_USER_EMAIL:-student@sfsh.dev}
+      SEED_USER_PASSWORD: ${SEED_USER_PASSWORD:-Password123!}
+    command: ["node", "prisma/seed.js"]
+
+volumes:
+  mysql_data:

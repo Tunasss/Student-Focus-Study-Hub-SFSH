@@ -18,6 +18,21 @@ During development, after changing `prisma/schema.prisma`, run `npm run db:migra
 
 Demo account: `student@sfsh.dev` / `Password123!` (override with `SEED_USER_EMAIL` / `SEED_USER_PASSWORD`).
 
+`docker-compose.yml` in this folder starts **only MySQL** for local development. To run the whole stack
+(MySQL + API + client) use the root `docker-compose.yml`; see [../DEPLOY.md](../DEPLOY.md).
+
+## Docker image
+
+`Dockerfile` builds a production image (Node 22 slim, Prisma client generated at build time, runs as `node`):
+
+```bash
+docker build -t sfsh-api .
+docker run -p 4000:4000 -e DATABASE_URL="mysql://..." -e JWT_SECRET="..." sfsh-api
+```
+
+On start it runs `prisma migrate deploy`, then `node src/server.js`; set `RUN_MIGRATIONS=false` to skip migrations.
+`HEALTHCHECK` polls `GET /api/health`. Seed demo data with `docker run --rm -e DATABASE_URL=... sfsh-api node prisma/seed.js`.
+
 ## API docs (WBS 1.4)
 
 The OpenAPI 3.1 spec is `openapi.yaml`, and it documents every endpoint. With the API running:

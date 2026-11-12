@@ -1,0 +1,14 @@
+node_modules
+npm-debug.log*
+.env
+.env.*
+!.env.example
+test
+docker
+docker-compose.yml
+railway.json
+eslint.config.js
+README.md
+Dockerfile
+.dockerignore
+.git

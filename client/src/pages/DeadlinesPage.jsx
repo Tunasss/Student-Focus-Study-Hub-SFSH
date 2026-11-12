@@ -347,17 +347,17 @@ export function DeadlinesPage() {
   ];
 
   return (
-    <div ref={containerRef} className="space-y-6 pb-12">
+    <div ref={containerRef} className="px-4 sm:px-8 py-8 space-y-8 max-w-7xl mx-auto font-sans">
       {/* Header */}
-      <header className="deadline-stagger flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div className="space-y-1.5">
-          <p className="font-mono text-[11px] font-semibold tracking-[0.2em] uppercase text-primary">
+      <header className="deadline-stagger flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-wider text-primary">
             {t.eyebrow}
-          </p>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-text">
+          </span>
+          <h1 className="text-3xl sm:text-[40px] font-extrabold tracking-tight text-text mt-1">
             {t.pageTitle}
           </h1>
-          <p className="text-sm text-muted max-w-2xl">{t.pageSubtitle}</p>
+          <p className="text-xs sm:text-sm text-muted mt-1 max-w-2xl">{t.pageSubtitle}</p>
         </div>
 
         <button
@@ -367,7 +367,7 @@ export function DeadlinesPage() {
             setEditingTask(null);
             setIsFormOpen(true);
           }}
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-bold text-primary-fg shadow-md hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-bold text-primary-fg shadow-xs hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed self-start sm:self-auto shrink-0"
         >
           <span>{t.newTaskBtn}</span>
         </button>

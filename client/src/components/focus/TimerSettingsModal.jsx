@@ -35,6 +35,7 @@ export function TimerSettingsModal({ isOpen, settings, onSave, onClose }) {
       notifEnabled: 'Notifications Active ✓',
       notifDenied: 'Blocked in browser settings',
       minutes: 'min',
+      custom: 'Custom',
       cancel: 'Cancel',
       save: 'Save Preferences',
     },
@@ -53,6 +54,7 @@ export function TimerSettingsModal({ isOpen, settings, onSave, onClose }) {
       notifEnabled: 'Đã kích hoạt thông báo ✓',
       notifDenied: 'Bị chặn bởi cài đặt trình duyệt',
       minutes: 'phút',
+      custom: 'Tùy chỉnh',
       cancel: 'Hủy bỏ',
       save: 'Lưu cài đặt',
     },
@@ -70,12 +72,18 @@ export function TimerSettingsModal({ isOpen, settings, onSave, onClose }) {
   }
 
   function handleSave() {
+    const sanitized = {
+      ...localSettings,
+      focusMinutes: Math.max(1, Math.min(180, Number(localSettings.focusMinutes) || 25)),
+      shortBreakMinutes: Math.max(1, Math.min(60, Number(localSettings.shortBreakMinutes) || 5)),
+      longBreakMinutes: Math.max(1, Math.min(90, Number(localSettings.longBreakMinutes) || 15)),
+    };
     try {
-      localStorage.setItem(POMODORO_SETTINGS_KEY, JSON.stringify(localSettings));
+      localStorage.setItem(POMODORO_SETTINGS_KEY, JSON.stringify(sanitized));
     } catch {
       // ignore
     }
-    onSave?.(localSettings);
+    onSave?.(sanitized);
     onClose?.();
   }
 
@@ -114,12 +122,38 @@ export function TimerSettingsModal({ isOpen, settings, onSave, onClose }) {
         </div>
 
         <div className="p-6 space-y-5 max-h-96 overflow-y-auto">
-          {/* Focus Duration Selection */}
+          {/* Focus Duration Selection with Presets + Custom Input */}
           <div className="space-y-2">
-            <label className="text-xs font-bold text-text flex items-center justify-between">
-              <span>{t.focusDuration}</span>
-              <span className="text-primary font-mono">{localSettings.focusMinutes} {t.minutes}</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="custom-focus-minutes" className="text-xs font-bold text-text">
+                {t.focusDuration}
+              </label>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-muted">{t.custom}:</span>
+                <input
+                  id="custom-focus-minutes"
+                  type="number"
+                  min="1"
+                  max="180"
+                  aria-label={t.focusDuration}
+                  value={localSettings.focusMinutes === '' ? '' : localSettings.focusMinutes}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw === '') {
+                      setLocalSettings((prev) => ({ ...prev, focusMinutes: '' }));
+                    } else {
+                      const val = parseInt(raw, 10);
+                      setLocalSettings((prev) => ({
+                        ...prev,
+                        focusMinutes: Number.isNaN(val) ? '' : Math.max(1, Math.min(180, val)),
+                      }));
+                    }
+                  }}
+                  className="w-16 px-2 py-0.5 text-center font-mono text-xs font-bold rounded-lg border border-primary/50 bg-surface text-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
+                />
+                <span className="text-xs font-mono text-primary font-bold">{t.minutes}</span>
+              </div>
+            </div>
             <div className="grid grid-cols-4 gap-2">
               {[15, 25, 45, 60].map((mins) => (
                 <button
@@ -127,7 +161,7 @@ export function TimerSettingsModal({ isOpen, settings, onSave, onClose }) {
                   type="button"
                   onClick={() => setLocalSettings((prev) => ({ ...prev, focusMinutes: mins }))}
                   className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                    localSettings.focusMinutes === mins
+                    Number(localSettings.focusMinutes) === mins
                       ? 'border-primary bg-primary/20 text-primary shadow-xs'
                       : 'border-border bg-surface text-muted hover:text-text'
                   }`}
@@ -138,12 +172,38 @@ export function TimerSettingsModal({ isOpen, settings, onSave, onClose }) {
             </div>
           </div>
 
-          {/* Short Break Selection */}
+          {/* Short Break Selection with Presets + Custom Input */}
           <div className="space-y-2">
-            <label className="text-xs font-bold text-text flex items-center justify-between">
-              <span>{t.shortBreak}</span>
-              <span className="text-primary font-mono">{localSettings.shortBreakMinutes} {t.minutes}</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="custom-short-break-minutes" className="text-xs font-bold text-text">
+                {t.shortBreak}
+              </label>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-muted">{t.custom}:</span>
+                <input
+                  id="custom-short-break-minutes"
+                  type="number"
+                  min="1"
+                  max="60"
+                  aria-label={t.shortBreak}
+                  value={localSettings.shortBreakMinutes === '' ? '' : localSettings.shortBreakMinutes}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw === '') {
+                      setLocalSettings((prev) => ({ ...prev, shortBreakMinutes: '' }));
+                    } else {
+                      const val = parseInt(raw, 10);
+                      setLocalSettings((prev) => ({
+                        ...prev,
+                        shortBreakMinutes: Number.isNaN(val) ? '' : Math.max(1, Math.min(60, val)),
+                      }));
+                    }
+                  }}
+                  className="w-16 px-2 py-0.5 text-center font-mono text-xs font-bold rounded-lg border border-primary/50 bg-surface text-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
+                />
+                <span className="text-xs font-mono text-primary font-bold">{t.minutes}</span>
+              </div>
+            </div>
             <div className="grid grid-cols-3 gap-2">
               {[3, 5, 10].map((mins) => (
                 <button
@@ -151,7 +211,7 @@ export function TimerSettingsModal({ isOpen, settings, onSave, onClose }) {
                   type="button"
                   onClick={() => setLocalSettings((prev) => ({ ...prev, shortBreakMinutes: mins }))}
                   className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                    localSettings.shortBreakMinutes === mins
+                    Number(localSettings.shortBreakMinutes) === mins
                       ? 'border-primary bg-primary/20 text-primary shadow-xs'
                       : 'border-border bg-surface text-muted hover:text-text'
                   }`}
@@ -162,12 +222,38 @@ export function TimerSettingsModal({ isOpen, settings, onSave, onClose }) {
             </div>
           </div>
 
-          {/* Long Break Selection */}
+          {/* Long Break Selection with Presets + Custom Input */}
           <div className="space-y-2">
-            <label className="text-xs font-bold text-text flex items-center justify-between">
-              <span>{t.longBreak}</span>
-              <span className="text-primary font-mono">{localSettings.longBreakMinutes} {t.minutes}</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="custom-long-break-minutes" className="text-xs font-bold text-text">
+                {t.longBreak}
+              </label>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-muted">{t.custom}:</span>
+                <input
+                  id="custom-long-break-minutes"
+                  type="number"
+                  min="1"
+                  max="90"
+                  aria-label={t.longBreak}
+                  value={localSettings.longBreakMinutes === '' ? '' : localSettings.longBreakMinutes}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw === '') {
+                      setLocalSettings((prev) => ({ ...prev, longBreakMinutes: '' }));
+                    } else {
+                      const val = parseInt(raw, 10);
+                      setLocalSettings((prev) => ({
+                        ...prev,
+                        longBreakMinutes: Number.isNaN(val) ? '' : Math.max(1, Math.min(90, val)),
+                      }));
+                    }
+                  }}
+                  className="w-16 px-2 py-0.5 text-center font-mono text-xs font-bold rounded-lg border border-primary/50 bg-surface text-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
+                />
+                <span className="text-xs font-mono text-primary font-bold">{t.minutes}</span>
+              </div>
+            </div>
             <div className="grid grid-cols-4 gap-2">
               {[10, 15, 20, 30].map((mins) => (
                 <button
@@ -175,7 +261,7 @@ export function TimerSettingsModal({ isOpen, settings, onSave, onClose }) {
                   type="button"
                   onClick={() => setLocalSettings((prev) => ({ ...prev, longBreakMinutes: mins }))}
                   className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                    localSettings.longBreakMinutes === mins
+                    Number(localSettings.longBreakMinutes) === mins
                       ? 'border-primary bg-primary/20 text-primary shadow-xs'
                       : 'border-border bg-surface text-muted hover:text-text'
                   }`}

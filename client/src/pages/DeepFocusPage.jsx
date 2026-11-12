@@ -560,9 +560,10 @@ export function DeepFocusPage() {
           <FocusSubjectPicker
             activeCourseId={session.activeCourseId}
             activeTopicId={session.activeTopicId}
+            activeTaskId={session.activeTaskId}
             onSelectCourse={(cid) =>
               setSession((s) => {
-                const next = { ...s, activeCourseId: cid };
+                const next = { ...s, activeCourseId: cid, activeTaskId: null };
                 persistSession(next);
                 return next;
               })
@@ -570,6 +571,13 @@ export function DeepFocusPage() {
             onSelectTopic={(tid) =>
               setSession((s) => {
                 const next = { ...s, activeTopicId: tid };
+                persistSession(next);
+                return next;
+              })
+            }
+            onSelectTask={(taskId) =>
+              setSession((s) => {
+                const next = { ...s, activeTaskId: taskId };
                 persistSession(next);
                 return next;
               })

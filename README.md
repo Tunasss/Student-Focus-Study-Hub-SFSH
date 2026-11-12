@@ -54,6 +54,18 @@
 
 ## 🚀 Getting Started & Setup Guide
 
+### Quick start with Docker
+
+If you have Docker, the whole stack (MySQL + API + client) runs with one command:
+
+```bash
+cp .env.docker.example .env        # set JWT_SECRET; LLM_MOCK=true if you have no Gemini key
+docker compose up -d --build       # http://localhost:8080
+docker compose --profile seed run --rm seed   # demo account (see Demo Credentials)
+```
+
+See [DEPLOY.md](DEPLOY.md) for production notes. The manual setup below is for local development.
+
 ### Prerequisites
 Make sure you have the following installed on your machine:
 - **Node.js** (v20 LTS or higher) and **npm**

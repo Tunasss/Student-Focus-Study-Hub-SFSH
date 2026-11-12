@@ -1,5 +1,43 @@
-# Deploying the empty shell
+# Deploying SFSH
 
+## 0. Docker (any VPS / Docker host): whole stack in one command
+
+The root `docker-compose.yml` runs MySQL 8, the API (`api/Dockerfile`) and the client
+(`client/Dockerfile`, nginx). The browser only talks to nginx, which serves the SPA and
+proxies `/api` and `/api-docs` to the API, so CORS needs no setup.
+
+```bash
+cp .env.docker.example .env        # set JWT_SECRET (required), GEMINI_API_KEY or LLM_MOCK=true
+docker compose up -d --build       # migrations run automatically when the API starts
+docker compose --profile seed run --rm seed   # optional demo account student@sfsh.dev
+```
+
+Open `http://<host>:8080` (change with `APP_PORT`). Swagger UI is at `/api-docs`.
+Put a TLS reverse proxy (Caddy, Traefik, a cloud load balancer) in front of port 8080 for HTTPS.
+
+| Command | Purpose |
+|---|---|
+| `docker compose ps` | status + health of each container |
+| `docker compose logs -f api` | API logs |
+| `docker compose up -d --build` | redeploy after `git pull` |
+| `docker compose down` | stop (data kept in the `mysql_data` volume) |
+| `docker compose down -v` | stop and **delete** the database |
+
+The images also work on their own:
+
+- **API**: `docker build -t sfsh-api ./api`; needs `DATABASE_URL` and `JWT_SECRET`. It runs
+  `prisma migrate deploy` on start; set `RUN_MIGRATIONS=false` if your platform runs migrations separately.
+  Render can use it via *Runtime: Docker* with root directory `api`.
+- **Client**: `docker build -t sfsh-client --build-arg VITE_API_URL=https://<api-host> ./client` to call
+  a separately hosted API (then add the client URL to the API's `CORS_ORIGINS`). With the default
+  `VITE_API_URL=/` it proxies to `API_UPSTREAM` (default `http://api:4000`), which must resolve when nginx starts.
+
+CI (`.github/workflows/ci.yml`, job *Docker*) builds both images, starts the stack and smoke-tests
+login and `/api/recommendation/next-action` through nginx on every PR.
+
+---
+
+The sections below describe the managed-platform route (no Docker).
 Order: **database → API → frontend → update API CORS**.
 
 ## 1. MySQL 8 (online)

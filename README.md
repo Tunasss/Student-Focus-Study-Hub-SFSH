@@ -193,6 +193,13 @@ curl http://localhost:8080/api/health
 ```
 CI runs the same build plus a login and `/api/recommendation/next-action` smoke test on every PR (job *Docker*).
 
+### Running CI locally
+Install [act](https://github.com/nektos/act) (`winget install nektos.act` or `brew install act`) with Docker running, then from the repo root:
+```bash
+act pull_request -j api       # or -j client, -j docker; no -j runs every job
+```
+See [CONTRIBUTING.md](CONTRIBUTING.md#running-ci-locally-with-act) for every job and troubleshooting.
+
 ---
 
 ## 📖 API Documentation (Swagger UI)

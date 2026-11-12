@@ -33,7 +33,8 @@ The images also work on their own:
   `VITE_API_URL=/` it proxies to `API_UPSTREAM` (default `http://api:4000`), which must resolve when nginx starts.
 
 CI (`.github/workflows/ci.yml`, job *Docker*) builds both images, starts the stack and smoke-tests
-login and `/api/recommendation/next-action` through nginx on every PR.
+login, `/api/recommendation/next-action`, the analytics endpoints and search suggestions through nginx
+on every PR (against the seeded demo account, so the migrations run on a real MySQL 8).
 
 ---
 

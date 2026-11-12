@@ -86,6 +86,12 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"email":"student@sfsh.dev","password":"Password123!"}' | jq -r .data.token)
           curl -fsS http://localhost:8080/api/recommendation/next-action -H "Authorization: Bearer $TOKEN"
+          curl -fsS "http://localhost:8080/api/analytics/overview?range=7d" -H "Authorization: Bearer $TOKEN" \
+            | jq -e '.data.totalFocusMinutes > 0 and .data.completedTasksCount > 0'
+          curl -fsS "http://localhost:8080/api/analytics/daily-activity?range=30d" -H "Authorization: Bearer $TOKEN" \
+            | jq -e '.data.days | length == 30'
+          curl -fsS "http://localhost:8080/api/search/suggest?q=cs101" -H "Authorization: Bearer $TOKEN" \
+            | jq -e '.data.suggestions | length > 0'
       - name: Logs on failure
         if: failure()
         run: docker compose logs

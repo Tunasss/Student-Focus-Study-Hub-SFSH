@@ -327,6 +327,65 @@ describe('responses match openapi.yaml (Rule 02 envelope)', () => {
     });
   });
 
+  describe('sessions, analytics, search (WBS 3.4)', () => {
+    let courseId;
+
+    before(async () => {
+      const courses = await auth(request(app).get('/api/courses'));
+      courseId = courses.body.data.courses[0].id;
+    });
+
+    test('POST /api/sessions', async () => {
+      const route = '/api/sessions';
+      const post = (body) => auth(request(app).post(route)).send(body);
+      const startedAt = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+      const created = await post({ startedAt, minutes: 25, courseId });
+      assert.equal(created.status, 201);
+      assertMatchesSpec(created, 'post', route);
+      assertMatchesSpec(await post({ startedAt, minutes: 0 }), 'post', route); // 400
+      assertMatchesSpec(await post({ startedAt, minutes: 25, courseId: 9999 }), 'post', route); // 404
+      assertMatchesSpec(await request(app).post(route).send({ startedAt, minutes: 25 }), 'post', route); // 401
+    });
+
+    test('GET /api/sessions', async () => {
+      const route = '/api/sessions';
+      const list = await auth(request(app).get(`${route}?course_id=${courseId}`));
+      assert.ok(list.body.data.sessions.length > 0);
+      assertMatchesSpec(list, 'get', route);
+      assertMatchesSpec(await auth(request(app).get(`${route}?limit=0`)), 'get', route); // 400
+      assertMatchesSpec(await request(app).get(route), 'get', route); // 401
+    });
+
+    test('GET /api/analytics/overview', async () => {
+      const route = '/api/analytics/overview';
+      const res = await auth(request(app).get(`${route}?range=all`));
+      assert.ok(res.body.data.courseBreakdown.length > 0);
+      assert.ok(res.body.data.totalFocusMinutes > 0);
+      assertMatchesSpec(res, 'get', route);
+      assertMatchesSpec(await auth(request(app).get(route)), 'get', route); // 7d
+      assertMatchesSpec(await auth(request(app).get(`${route}?range=1y`)), 'get', route); // 400
+      assertMatchesSpec(await request(app).get(route), 'get', route); // 401
+    });
+
+    test('GET /api/analytics/daily-activity', async () => {
+      const route = '/api/analytics/daily-activity';
+      const res = await auth(request(app).get(`${route}?range=30d`));
+      assert.equal(res.body.data.days.length, 30);
+      assertMatchesSpec(res, 'get', route);
+      assertMatchesSpec(await auth(request(app).get(`${route}?range=all`)), 'get', route); // 400
+      assertMatchesSpec(await request(app).get(route), 'get', route); // 401
+    });
+
+    test('GET /api/search/suggest', async () => {
+      const route = '/api/search/suggest';
+      const res = await auth(request(app).get(`${route}?q=a`));
+      assert.ok(res.body.data.suggestions.length > 0);
+      assertMatchesSpec(res, 'get', route);
+      assertMatchesSpec(await auth(request(app).get(route)), 'get', route); // 400 (no q)
+      assertMatchesSpec(await request(app).get(`${route}?q=a`), 'get', route); // 401
+    });
+  });
+
   test('unknown routes return a NOT_FOUND error envelope', async () => {
     const res = await request(app).get('/api/nope');
     assert.equal(res.status, 404);

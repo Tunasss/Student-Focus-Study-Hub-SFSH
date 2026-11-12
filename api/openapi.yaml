@@ -4,7 +4,14 @@ info:
   version: 0.1.0
   description: |
     REST API for SFSH: authentication, ICS timetable import, courses, the weekly class schedule, tasks (deadlines),
-    syllabus PDF text extraction and the explainable "next action" recommendation.
+    syllabus PDF text extraction, the explainable "next action" recommendation, focus session logging,
+    study analytics for the dashboard and search-as-you-type suggestions.
+
+    ## Dates and times
+    All timestamps are stored and returned in UTC (ISO-8601 with `Z`); the client displays them in the user's
+    local timezone. Request bodies may use any offset (`2026-11-12T20:00:00+07:00`); the server converts it to UTC.
+    Endpoints that group by calendar day (analytics) take an IANA `tz` query parameter, which only decides where
+    a day starts and ends.
 
     ## Response envelope (Rule 02)
     Every response, success or error, uses the same envelope:
@@ -37,7 +44,7 @@ info:
     | `UNAUTHORIZED` | 401 | Missing, malformed or invalid bearer token |
     | `TOKEN_EXPIRED` | 401 | The bearer token has expired; log in again |
     | `INVALID_CREDENTIALS` | 401 | Wrong email or password |
-    | `NOT_FOUND` | 404 | No such route, or the task / course / topic does not exist for this user |
+    | `NOT_FOUND` | 404 | No such route, or the task / course / topic linked to the request does not exist for this user |
     | `EMAIL_TAKEN` | 409 | An account with this email already exists |
     | `SORT_ORDER_TAKEN` | 409 | The course already has a topic at that `sortOrder` |
     | `INTERNAL_ERROR` | 500 | Unexpected server error |
@@ -66,6 +73,17 @@ tags:
       "What should I do next?" (WBS 3.1). Every open task gets a priority score
       `10 / (max(daysLeft, 0) + 0.5) + (topic DOING ? 5 : 2, 0 without topic) + (overdue ? 3 : 0)`;
       the answer carries the breakdown so the UI can explain it.
+  - name: Sessions
+    description: |
+      Focus (Pomodoro) sessions (WBS 3.4). The focus timer logs each finished or abandoned block; only
+      `COMPLETED` sessions count towards focus minutes and streaks.
+  - name: Analytics
+    description: |
+      Dashboard metrics (WBS 3.4): focus time, completed / overdue tasks, study streak, per-course progress and a
+      daily time series. Everything is computed for the authenticated user only. Data is stored in UTC; days are
+      calendar days in `tz` (default UTC).
+  - name: Search
+    description: Search-as-you-type suggestions over the user's courses, tasks and topics (WBS 3.4).
 
 paths:
   /api/health:
@@ -803,6 +821,7 @@ paths:
                         course: { id: 3, code: CS101, name: Introduction to Programming }
                         topic: { id: 2, title: 'Chương 2: SQL Basics' }
                         createdAt: '2026-11-01T08:00:00.000Z'
+                        completedAt: null
                       topic: { id: 2, title: 'Chương 2: SQL Basics', status: DOING }
                       topicAutoLinked: false
                       course: { id: 3, code: CS101, name: Introduction to Programming }
@@ -839,6 +858,238 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /api/sessions:
+    get:
+      tags: [Sessions]
+      summary: List focus sessions
+      description: |
+        The user's sessions, newest `startedAt` first. `from` (inclusive) and `to` (exclusive) filter on `startedAt`.
+        `courseId` is accepted as an alias of `course_id`.
+      operationId: listSessions
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+          example: '2026-11-06T00:00:00+07:00'
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: course_id
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/SessionStatus'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        '200':
+          description: The sessions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionListResponse'
+        '400':
+          description: '`VALIDATION_ERROR`: bad date-time, `status`, `course_id` or `limit`, or `from` is not before `to`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Sessions]
+      summary: Log a focus session
+      description: |
+        Records one focus block for the authenticated user. Links are optional (free focus has none) and are
+        completed from the most specific one: a task gives its course and topic, a topic gives its course.
+
+        - A course, topic or task of another user is `404 NOT_FOUND`.
+        - Links that disagree (a task or topic of a different course than `courseId`) are `400 VALIDATION_ERROR`.
+        - `startedAt` may be at most 5 minutes in the future (clock drift); `minutes` is 1 to 240.
+      operationId: createSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionInput'
+      responses:
+        '201':
+          description: The stored session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '400':
+          description: '`VALIDATION_ERROR` (missing or malformed field, unknown key, inconsistent links) or `INVALID_JSON`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: '`NOT_FOUND`: the course, topic or task does not exist for this user.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /api/analytics/overview:
+    get:
+      tags: [Analytics]
+      summary: Dashboard overview
+      description: |
+        Summary metrics for the dashboard widgets. A user without data gets zeros and an empty
+        `courseBreakdown` (never 404).
+
+        - `totalFocusMinutes`: sum of `COMPLETED` sessions in the range (sessions without a course included).
+        - `completedTasksCount`: tasks `DONE` whose `completedAt` is in the range. With `range=all`, every `DONE`
+          task, including ones finished before `completedAt` existed.
+        - `overdueTasksCount`: open tasks (not `DONE`) that are `OVERDUE` or past `dueAt` **now**, whatever the range.
+        - `currentStreakDays`: consecutive local days with a `COMPLETED` session, counted back from today. Still
+          alive if the last study day is yesterday; 0 when there was no session today or yesterday.
+        - `courseBreakdown`: every course of the user. `focusMinutes` is in the range; `progressPct` is all-time,
+          `floor(completedItems / totalItems * 100)` over the course's topics and tasks (`DONE` = completed),
+          0 when the course has none. Sorted by `focusMinutes` desc, then name.
+
+        PRD names: `total_focus_minutes`, `completed_tasks_count`, `overdue_tasks_count`, `current_streak_days`,
+        `course_breakdown[].course_id / course_name / focus_minutes / progress_pct`.
+      operationId: getAnalyticsOverview
+      parameters:
+        - name: range
+          in: query
+          description: Last 7 or 30 local days including today, or all time.
+          schema:
+            type: string
+            enum: ['7d', '30d', all]
+            default: 7d
+        - $ref: '#/components/parameters/AnalyticsTz'
+      responses:
+        '200':
+          description: The overview.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsOverviewResponse'
+              example:
+                success: true
+                data:
+                  range: 7d
+                  tz: Asia/Ho_Chi_Minh
+                  from: '2026-11-06'
+                  to: '2026-11-12'
+                  totalFocusMinutes: 420
+                  completedTasksCount: 12
+                  overdueTasksCount: 1
+                  currentStreakDays: 4
+                  courseBreakdown:
+                    - courseId: 3
+                      courseCode: CS201
+                      courseName: Data Structures & Algorithms
+                      focusMinutes: 240
+                      completedItems: 13
+                      totalItems: 20
+                      progressPct: 65
+                error: null
+                timestamp: '2026-11-12T09:00:00.000Z'
+        '400':
+          description: '`VALIDATION_ERROR`: `range` is not 7d, 30d or all, or `tz` is not an IANA timezone.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/analytics/daily-activity:
+    get:
+      tags: [Analytics]
+      summary: Daily activity series
+      description: |
+        One row per local day for the last 7 or 30 days (oldest first, today last), for bar / line charts.
+        Days without activity are present with zeros. `focusMinutes` sums `COMPLETED` sessions started that day;
+        `tasksCompleted` counts tasks whose `completedAt` falls on that day.
+      operationId: getDailyActivity
+      parameters:
+        - name: range
+          in: query
+          schema:
+            type: string
+            enum: ['7d', '30d']
+            default: 7d
+        - $ref: '#/components/parameters/AnalyticsTz'
+      responses:
+        '200':
+          description: The series.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyActivityResponse'
+        '400':
+          description: '`VALIDATION_ERROR`: `range` is not 7d or 30d, or `tz` is not an IANA timezone.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/search/suggest:
+    get:
+      tags: [Search]
+      summary: Search suggestions
+      description: |
+        Completion suggestions while the user types. Matches course names and codes, task titles and topic titles,
+        ignoring case and Vietnamese diacritics. Order: exact match, starts with the query, a word starts with the
+        query, contains it; then shorter labels, then courses before tasks before topics.
+        Only the user's own rows are searched.
+      operationId: searchSuggest
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          example: data
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 8
+      responses:
+        '200':
+          description: The suggestions (possibly empty).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuggestResponse'
+        '400':
+          description: '`VALIDATION_ERROR`: `q` missing, blank or longer than 100 characters, or bad `limit`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -864,6 +1115,17 @@ components:
       schema:
         type: integer
         minimum: 1
+    AnalyticsTz:
+      name: tz
+      in: query
+      description: |
+        IANA timezone that defines the calendar days (today, streaks, the daily series). Timestamps are always
+        stored and returned in UTC; send the browser's zone (`Intl.DateTimeFormat().resolvedOptions().timeZone`) so
+        the days match what the user sees. Without it, days are UTC days.
+      schema:
+        type: string
+        default: UTC
+      example: Asia/Ho_Chi_Minh
 
   requestBodies:
     TaskInput:
@@ -1279,7 +1541,7 @@ components:
     Task:
       type: object
       additionalProperties: false
-      required: [id, title, dueAt, status, daysLeft, urgencyBadge, courseId, topicId, course, topic, createdAt]
+      required: [id, title, dueAt, status, daysLeft, urgencyBadge, courseId, topicId, course, topic, createdAt, completedAt]
       properties:
         id:
           type: integer
@@ -1329,6 +1591,12 @@ components:
         createdAt:
           type: string
           format: date-time
+        completedAt:
+          type: [string, 'null']
+          format: date-time
+          description: |
+            When the task last moved to `DONE` (WBS 3.4). Set automatically by the server and
+            cleared when the task leaves `DONE`. `null` for open tasks and for tasks finished before 3.4.
 
     TaskInput:
       type: object
@@ -1800,6 +2068,238 @@ components:
         - properties:
             data:
               $ref: '#/components/schemas/NextAction'
+
+    SessionStatus:
+      type: string
+      enum: [COMPLETED, ABANDONED]
+
+    Session:
+      type: object
+      additionalProperties: false
+      required: [id, startedAt, minutes, status, courseId, topicId, taskId]
+      properties:
+        id:
+          type: integer
+        startedAt:
+          type: string
+          format: date-time
+          example: '2026-11-12T13:00:00.000Z'
+        minutes:
+          type: integer
+          example: 25
+        status:
+          $ref: '#/components/schemas/SessionStatus'
+        courseId:
+          type: [integer, 'null']
+        topicId:
+          type: [integer, 'null']
+        taskId:
+          type: [integer, 'null']
+
+    SessionInput:
+      type: object
+      description: Body of `POST /api/sessions`. Unknown keys are rejected.
+      additionalProperties: false
+      required: [startedAt, minutes]
+      properties:
+        startedAt:
+          type: string
+          format: date-time
+          description: ISO-8601 with an offset or `Z`.
+          example: '2026-11-12T20:00:00+07:00'
+        minutes:
+          type: integer
+          minimum: 1
+          maximum: 240
+          example: 25
+        status:
+          allOf:
+            - $ref: '#/components/schemas/SessionStatus'
+          default: COMPLETED
+        courseId:
+          type: [integer, 'null']
+          minimum: 1
+        topicId:
+          type: [integer, 'null']
+          minimum: 1
+        taskId:
+          type: [integer, 'null']
+          minimum: 1
+
+    SessionResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - properties:
+            data:
+              type: object
+              additionalProperties: false
+              required: [session]
+              properties:
+                session:
+                  $ref: '#/components/schemas/Session'
+
+    SessionListResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - properties:
+            data:
+              type: object
+              additionalProperties: false
+              required: [sessions]
+              properties:
+                sessions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Session'
+
+    CourseBreakdownItem:
+      type: object
+      additionalProperties: false
+      required: [courseId, courseCode, courseName, focusMinutes, completedItems, totalItems, progressPct]
+      properties:
+        courseId:
+          type: integer
+        courseCode:
+          type: [string, 'null']
+        courseName:
+          type: string
+        focusMinutes:
+          type: integer
+          minimum: 0
+        completedItems:
+          type: integer
+          minimum: 0
+          description: Topics and tasks of the course with status `DONE`.
+        totalItems:
+          type: integer
+          minimum: 0
+          description: All topics and tasks of the course.
+        progressPct:
+          type: integer
+          minimum: 0
+          maximum: 100
+
+    AnalyticsOverview:
+      type: object
+      additionalProperties: false
+      required:
+        [range, tz, from, to, totalFocusMinutes, completedTasksCount, overdueTasksCount, currentStreakDays, courseBreakdown]
+      properties:
+        range:
+          type: string
+          enum: ['7d', '30d', all]
+        tz:
+          type: string
+        from:
+          type: [string, 'null']
+          format: date
+          description: First local day of the range; `null` for `all`.
+        to:
+          type: string
+          format: date
+          description: Today in `tz`.
+        totalFocusMinutes:
+          type: integer
+          minimum: 0
+        completedTasksCount:
+          type: integer
+          minimum: 0
+        overdueTasksCount:
+          type: integer
+          minimum: 0
+        currentStreakDays:
+          type: integer
+          minimum: 0
+        courseBreakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseBreakdownItem'
+
+    AnalyticsOverviewResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - properties:
+            data:
+              $ref: '#/components/schemas/AnalyticsOverview'
+
+    DailyActivityResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - properties:
+            data:
+              type: object
+              additionalProperties: false
+              required: [range, tz, days]
+              properties:
+                range:
+                  type: string
+                  enum: ['7d', '30d']
+                tz:
+                  type: string
+                days:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [date, focusMinutes, tasksCompleted]
+                    properties:
+                      date:
+                        type: string
+                        format: date
+                        example: '2026-11-12'
+                      focusMinutes:
+                        type: integer
+                        minimum: 0
+                        example: 90
+                      tasksCompleted:
+                        type: integer
+                        minimum: 0
+                        example: 3
+
+    Suggestion:
+      type: object
+      additionalProperties: false
+      required: [type, id, label, courseId, courseCode, courseName, status, dueAt]
+      properties:
+        type:
+          type: string
+          enum: [COURSE, TASK, TOPIC]
+        id:
+          type: integer
+          description: Id of the course, task or topic (per `type`).
+        label:
+          type: string
+          description: Course name, task title or topic title.
+          example: Databases
+        courseId:
+          type: integer
+        courseCode:
+          type: [string, 'null']
+        courseName:
+          type: [string, 'null']
+        status:
+          type: [string, 'null']
+          description: Task or topic status; `null` for a course.
+        dueAt:
+          type: [string, 'null']
+          format: date-time
+          description: Task deadline; `null` for courses and topics.
+
+    SuggestResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - properties:
+            data:
+              type: object
+              additionalProperties: false
+              required: [query, suggestions]
+              properties:
+                query:
+                  type: string
+                suggestions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Suggestion'
 
 security:
   - bearerAuth: []

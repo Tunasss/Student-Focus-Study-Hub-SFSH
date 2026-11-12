@@ -6,6 +6,7 @@
 //   - 1 course with a 5-chapter syllabus
 //   - 2 upcoming deadlines (one within 24h, one within 5 days)
 //   - 1 OVERDUE task
+//   - 2 DONE tasks with completed_at (analytics, WBS 3.4)
 //   - 10 Pomodoro sessions spread over the last 7 days
 //
 // Idempotent: re-running removes the demo user (cascade) and recreates it.
@@ -88,6 +89,32 @@ async function main() {
       },
     }),
   ]);
+
+  // 2 finished tasks with a completion time, for the WBS 3.4 analytics (completed tasks per day).
+  await prisma.task.createMany({
+    data: [
+      {
+        userId: user.id,
+        courseId: cs101.id,
+        topicId: ch1.id,
+        title: 'CS101 Lab 1: Hello, variables',
+        dueAt: new Date(now.getTime() - 5 * DAY),
+        status: 'DONE',
+        createdAt: new Date(now.getTime() - 12 * DAY),
+        completedAt: new Date(now.getTime() - 6 * DAY),
+      },
+      {
+        userId: user.id,
+        courseId: cs101.id,
+        topicId: ch2.id,
+        title: 'CS101 Lab 2: Loops',
+        dueAt: new Date(now.getTime() - 1 * DAY),
+        status: 'DONE',
+        createdAt: new Date(now.getTime() - 8 * DAY),
+        completedAt: new Date(now.getTime() - 2 * DAY),
+      },
+    ],
+  });
 
   // 10 Pomodoro sessions across the last 7 days: [daysAgo, hour, minutes, course, topic, task, status]
   const SESSIONS = [

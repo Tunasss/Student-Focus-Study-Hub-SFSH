@@ -30,6 +30,9 @@
 - **🎧 Deep Focus Studio (Pomodoro):**
   - Configurable focus and break timers with session recovery across browser reloads.
   - 432Hz binaural resonance and ambient acoustic audio equalizer.
+- **📊 Study Analytics:**
+  - Focus minutes per day and per course, completed and overdue tasks, and a daily study streak.
+  - Per-course progress from syllabus topics and tasks, plus search-as-you-type suggestions.
 - **⚡ Bilingual Localization (EN / VI):**
   - 1-click language toggling between English (default) and Vietnamese across all navigation, modals, and widgets.
 - **🌓 Adaptive Theme & GPU Optimization:**
@@ -191,7 +194,7 @@ docker compose build              # builds sfsh-api and sfsh-client
 docker compose up -d --wait       # starts MySQL, API and client, waits until all are healthy
 curl http://localhost:8080/api/health
 ```
-CI runs the same build plus a login and `/api/recommendation/next-action` smoke test on every PR (job *Docker*).
+CI runs the same build plus a smoke test of login, `/api/recommendation/next-action`, `/api/analytics/*` and `/api/search/suggest` on every PR (job *Docker*).
 
 ---
 
@@ -211,6 +214,10 @@ Key endpoint groups include:
 - `GET/POST /api/courses/:id/topics`, `POST /api/courses/:id/topics/bulk`, `PATCH/DELETE /api/topics/:id`: Syllabus topic persistence. The reviewed Gemini preview is saved in bulk (`order` → `sort_order`), and each topic's learning status (`TODO`/`DOING`/`DONE`), title and description can be edited.
 - `GET/POST /api/tasks`, `PUT/PATCH/DELETE /api/tasks/:id`: Task (deadline) CRUD, scoped to the JWT user, validated with zod. Each task carries `daysLeft` and an `urgencyBadge` (`OVERDUE` / `URGENT` / `SOON` / `LATER`).
 - `GET /api/recommendation/next-action`: Explainable "what next" recommendation. Open tasks are scored with `10 / (max(daysLeft, 0) + 0.5) + (topic DOING ? 5 : 2) + (overdue ? 3 : 0)` (ties: sooner `dueAt`, then older `createdAt`) and the best one is returned with its `scoreBreakdown`; with no open task it suggests the `DOING` (or first `TODO`) topic of the course whose next class is soonest, or an empty state.
+- `GET/POST /api/sessions`: Focus (Pomodoro) session logging: start time, minutes, `COMPLETED`/`ABANDONED`, optionally linked to a course, topic or task.
+- `GET /api/analytics/overview?range=7d|30d|all`: Dashboard summary: focus minutes, tasks completed, overdue tasks, current study streak, and a per-course breakdown with `progressPct = floor(done / total × 100)` over topics and tasks.
+- `GET /api/analytics/daily-activity?range=7d|30d`: Zero-filled daily series (`focusMinutes`, `tasksCompleted`) for charts. Timestamps are stored and returned in UTC; the client sends its browser timezone as `tz` (default `UTC`) so days and streaks follow the user's local calendar.
+- `GET /api/search/suggest?q=`: Search-as-you-type suggestions across the user's courses, tasks and topics (case- and diacritic-insensitive, best matches first).
 
 ---
 

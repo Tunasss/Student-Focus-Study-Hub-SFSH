@@ -30,9 +30,9 @@ services:
       timeout: 5s
       retries: 30
       start_period: 20s
-    # Not published to the host by default; uncomment to reach it from local tools.
-    # ports:
-    #   - "3306:3306"
+    # Published to the host so local tools (Prisma, TablePlus, DBeaver) can reach it.
+    ports:
+      - "3306:3306"
 
   api:
     build: ./api
@@ -51,9 +51,8 @@ services:
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
       LLM_MOCK: ${LLM_MOCK:-false}
       RUN_MIGRATIONS: "true"
-    # Uncomment to call the API directly (Swagger is also reachable via the client at /api-docs).
-    # ports:
-    #   - "4000:4000"
+    ports:
+      - "4000:4000"
 
   client:
     build:

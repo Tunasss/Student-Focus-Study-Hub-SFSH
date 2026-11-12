@@ -11,12 +11,14 @@ export function FocusSubjectPicker({
   onSelectCourse,
   onSelectTopic,
   onSelectTask,
+  onCompleteAction,
 }) {
   const { lang } = useLanguage();
   const [courses, setCourses] = useState([]);
   const [topics, setTopics] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [completingAction, setCompletingAction] = useState(false);
   const containerRef = useRef(null);
 
   const t = {
@@ -33,6 +35,13 @@ export function FocusSubjectPicker({
       noDeadlinesAvailable: 'No upcoming deadlines for this course.',
       pendingLabel: 'pending',
       doneChip: 'DONE',
+      statusTodo: 'To Do',
+      statusDoing: 'In Progress',
+      statusDone: 'Completed',
+      markDoneBtn: 'Mark Done ✓',
+      markTaskDone: 'Mark this task as DONE & advance',
+      markTopicDone: 'Mark this chapter as DONE & advance',
+      allCompleted: 'Objectives up to date',
     },
     vi: {
       targetSubject: 'MỤC TIÊU HỌC TẬP',
@@ -47,6 +56,13 @@ export function FocusSubjectPicker({
       noDeadlinesAvailable: 'Không có bài tập nào sắp đến hạn.',
       pendingLabel: 'chưa nộp',
       doneChip: 'HOÀN THÀNH',
+      statusTodo: 'Cần làm',
+      statusDoing: 'Đang làm',
+      statusDone: 'Hoàn thành',
+      markDoneBtn: 'Hoàn thành ✓',
+      markTaskDone: 'Đánh dấu bài tập này là HOÀN THÀNH và chuyển tiếp',
+      markTopicDone: 'Đánh dấu chương này là HOÀN THÀNH và chuyển tiếp',
+      allCompleted: 'Đã hoàn thành mọi mục tiêu',
     },
   }[lang] || {};
 
@@ -86,7 +102,7 @@ export function FocusSubjectPicker({
         if (!cancelled) {
           const list = Array.isArray(fetched) ? fetched : fetched?.topics || [];
           setTopics(list);
-          if (list.length > 0 && !activeTopicId) {
+          if (list.length > 0 && !activeTopicId && !activeTaskId) {
             onSelectTopic?.(list[0].id);
           }
         }
@@ -98,13 +114,13 @@ export function FocusSubjectPicker({
     return () => {
       cancelled = true;
     };
-  }, [activeCourseId, activeTopicId, onSelectTopic]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCourseId]);
 
   // Fetch tasks / deadlines for active course
   useEffect(() => {
     let cancelled = false;
     if (!activeCourseId) {
-      setTasks([]);
       return undefined;
     }
     async function loadTasks() {
@@ -143,15 +159,48 @@ export function FocusSubjectPicker({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  const currentCourse = courses.find((c) => c.id === activeCourseId) || courses[0];
+  const currentCourse = courses.find((c) => String(c.id) === String(activeCourseId)) || courses[0];
   const currentTopics = activeCourseId ? topics : [];
-  const currentTopic = currentTopics.find((tp) => tp.id === activeTopicId) || currentTopics[0];
   const courseInfo = currentCourse ? formatCourseInfo(currentCourse) : null;
 
-  // Selected task or nearest active pending task
-  const currentTask = activeTaskId
-    ? tasks.find((t) => t.id === activeTaskId)
-    : tasks.find((t) => t.status !== 'DONE') || null;
+  // Determine active target: EITHER a Task OR a Chapter (mutually exclusive)
+  let targetType = null;
+  let currentTask = null;
+  let currentTopic = null;
+
+  if (activeTaskId) {
+    currentTask = tasks.find((t) => String(t.id) === String(activeTaskId)) || null;
+    if (currentTask) {
+      targetType = 'task';
+    }
+  }
+
+  if (!targetType && activeTopicId) {
+    currentTopic = currentTopics.find((tp) => String(tp.id) === String(activeTopicId)) || null;
+    if (currentTopic) {
+      targetType = 'topic';
+    }
+  }
+
+  // Fallback if neither explicitly chosen: default to first active topic if syllabus exists,
+  // otherwise default to first pending task.
+  if (!targetType) {
+    const firstActiveTopic = currentTopics.find((tp) => tp.status === 'DOING')
+      || currentTopics.find((tp) => tp.status !== 'DONE')
+      || currentTopics[0]
+      || null;
+
+    if (firstActiveTopic) {
+      targetType = 'topic';
+      currentTopic = firstActiveTopic;
+    } else {
+      const firstActiveTask = tasks.find((t) => t.status !== 'DONE') || null;
+      if (firstActiveTask) {
+        targetType = 'task';
+        currentTask = firstActiveTask;
+      }
+    }
+  }
 
   const currentUrgency = currentTask
     ? getUrgencyConfig(currentTask.urgencyBadge, currentTask.status, lang)
@@ -159,6 +208,60 @@ export function FocusSubjectPicker({
   const currentDaysLeftLabel = currentTask
     ? formatDaysLeftLabel(currentTask.daysLeft, currentTask.urgencyBadge, currentTask.status, lang)
     : null;
+
+  async function handleCompleteTask(taskToComplete) {
+    if (!taskToComplete || completingAction) return;
+    setCompletingAction(true);
+    try {
+      await tasksApi.updateTask(taskToComplete.id, { status: 'DONE' });
+      const updatedList = tasks.map((tk) =>
+        tk.id === taskToComplete.id ? { ...tk, status: 'DONE' } : tk
+      );
+      setTasks(updatedList);
+      const nextTask = updatedList.find((tk) => tk.id !== taskToComplete.id && tk.status !== 'DONE') || null;
+      if (nextTask) {
+        onSelectTask?.(nextTask.id);
+        onSelectTopic?.(null);
+      } else {
+        onSelectTask?.(null);
+        const pendingTopic = topics.find((tp) => tp.status !== 'DONE');
+        if (pendingTopic) {
+          onSelectTopic?.(pendingTopic.id);
+        } else {
+          onSelectTopic?.(null);
+        }
+      }
+      onCompleteAction?.({ type: 'task', item: taskToComplete, nextItem: nextTask });
+    } catch {
+      // ignore
+    } finally {
+      setCompletingAction(false);
+    }
+  }
+
+  async function handleCompleteTopic(topicToComplete) {
+    if (!topicToComplete || completingAction) return;
+    setCompletingAction(true);
+    try {
+      await syllabusApi.updateTopicStatus(topicToComplete.id, 'DONE');
+      const updatedList = topics.map((tp) =>
+        tp.id === topicToComplete.id ? { ...tp, status: 'DONE' } : tp
+      );
+      setTopics(updatedList);
+      const nextTopic = updatedList.find((tp) => tp.id !== topicToComplete.id && tp.status !== 'DONE') || null;
+      if (nextTopic) {
+        onSelectTopic?.(nextTopic.id);
+        onSelectTask?.(null);
+      } else {
+        onSelectTopic?.(null);
+      }
+      onCompleteAction?.({ type: 'topic', item: topicToComplete, nextItem: nextTopic });
+    } catch {
+      // ignore
+    } finally {
+      setCompletingAction(false);
+    }
+  }
 
   return (
     <div className="relative z-40" ref={containerRef}>
@@ -199,16 +302,13 @@ export function FocusSubjectPicker({
               {courseInfo ? courseInfo.name : t.noCourse}
             </h3>
           </div>
-          <p className="text-xs text-muted truncate group-hover:text-text transition-colors">
-            {currentTopic ? currentTopic.title : t.noTopic}
-          </p>
 
-          {/* Nearest Active Deadline Widget */}
-          {currentTask && (
-            <div className="pt-2 mt-1 border-t border-border/40 flex items-center justify-between gap-1.5 text-xs">
+          {/* Single Focus Target: EITHER a Task OR a Chapter (Mutually Exclusive) */}
+          {targetType === 'task' && currentTask ? (
+            <div className="pt-1 flex items-center justify-between gap-1.5 text-xs">
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="text-xs shrink-0">⏳</span>
-                <span className="text-[11px] font-medium text-text truncate">
+                <span className="text-xs font-semibold text-text truncate group-hover:text-primary transition-colors">
                   {currentTask.title}
                 </span>
               </div>
@@ -218,8 +318,70 @@ export function FocusSubjectPicker({
                 {currentDaysLeftLabel}
               </span>
             </div>
+          ) : targetType === 'topic' && currentTopic ? (
+            <p className="text-xs font-medium text-muted truncate group-hover:text-text transition-colors">
+              {currentTopic.title}
+            </p>
+          ) : (
+            <p className="text-xs text-muted truncate group-hover:text-text transition-colors">
+              {t.noTopic}
+            </p>
           )}
         </div>
+
+        {/* Proactive Action & Status Strip */}
+        {targetType === 'task' && currentTask && currentTask.status !== 'DONE' ? (
+          <div className="pt-2.5 mt-2 border-t border-border/60 flex items-center justify-between gap-2 z-10">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+              <span className="text-[11px] font-mono font-bold text-muted truncate">
+                {currentTask.status === 'DOING' ? t.statusDoing : t.statusTodo}
+              </span>
+            </div>
+            <button
+              type="button"
+              disabled={completingAction}
+              data-testid="mark-task-done-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCompleteTask(currentTask);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-primary text-black font-extrabold text-[11px] hover:bg-primary/90 transition-all shadow-xs cursor-pointer active:scale-95 disabled:opacity-50 shrink-0"
+              title={t.markTaskDone}
+            >
+              <span>✓</span>
+              <span>{completingAction ? '...' : t.markDoneBtn}</span>
+            </button>
+          </div>
+        ) : targetType === 'topic' && currentTopic && currentTopic.status !== 'DONE' ? (
+          <div className="pt-2.5 mt-2 border-t border-border/60 flex items-center justify-between gap-2 z-10">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="h-2 w-2 rounded-full bg-primary animate-pulse shrink-0" />
+              <span className="text-[11px] font-mono font-bold text-muted truncate">
+                {currentTopic.status === 'DOING' ? t.statusDoing : t.statusTodo}
+              </span>
+            </div>
+            <button
+              type="button"
+              disabled={completingAction}
+              data-testid="mark-topic-done-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCompleteTopic(currentTopic);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-primary text-black font-extrabold text-[11px] hover:bg-primary/90 transition-all shadow-xs cursor-pointer active:scale-95 disabled:opacity-50 shrink-0"
+              title={t.markTopicDone}
+            >
+              <span>✓</span>
+              <span>{completingAction ? '...' : t.markDoneBtn}</span>
+            </button>
+          </div>
+        ) : (
+          <div className="pt-2 mt-2 border-t border-border/40 flex items-center justify-between text-[11px] text-emerald-400 font-mono font-bold">
+            <span>🎉 {t.allCompleted}</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30">DONE</span>
+          </div>
+        )}
       </div>
 
       {/* Popover Dropdown positioned outside the card so it is never clipped */}
@@ -236,15 +398,13 @@ export function FocusSubjectPicker({
             <div className="space-y-1">
               {courses.map((course) => {
                 const info = formatCourseInfo(course);
-                const isSelected = course.id === activeCourseId;
+                const isSelected = String(course.id) === String(activeCourseId);
                 return (
                   <button
                     key={course.id}
                     type="button"
                     onClick={() => {
                       onSelectCourse?.(course.id);
-                      onSelectTopic?.(null);
-                      onSelectTask?.(null);
                     }}
                     className={`w-full text-left rounded-xl px-3 py-2 flex items-center justify-between text-xs transition-colors cursor-pointer ${
                       isSelected
@@ -273,7 +433,7 @@ export function FocusSubjectPicker({
               </div>
               <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
                 {tasks.map((task) => {
-                  const isSelected = task.id === currentTask?.id;
+                  const isSelected = targetType === 'task' && String(task.id) === String(currentTask?.id);
                   const urg = getUrgencyConfig(task.urgencyBadge, task.status, lang);
                   const label = formatDaysLeftLabel(task.daysLeft, task.urgencyBadge, task.status, lang);
                   return (
@@ -282,9 +442,6 @@ export function FocusSubjectPicker({
                       type="button"
                       onClick={() => {
                         onSelectTask?.(task.id);
-                        if (task.topicId) {
-                          onSelectTopic?.(task.topicId);
-                        }
                         setIsOpen(false);
                       }}
                       className={`w-full text-left rounded-xl px-3 py-1.5 flex items-center justify-between text-xs transition-colors cursor-pointer gap-2 ${
@@ -315,7 +472,7 @@ export function FocusSubjectPicker({
               </p>
               <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
                 {currentTopics.map((tp) => {
-                  const isSelected = tp.id === activeTopicId;
+                  const isSelected = targetType === 'topic' && String(tp.id) === String(currentTopic?.id);
                   const isChild = tp.parentId != null;
                   return (
                     <button

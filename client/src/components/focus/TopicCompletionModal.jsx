@@ -5,33 +5,39 @@ export function TopicCompletionModal({
   isOpen,
   topicTitle,
   courseCode,
+  itemType = 'topic',
   onConfirmDone,
   onKeepDoing,
 }) {
   const { lang } = useLanguage();
   const isVi = lang === 'vi';
+  const isTask = itemType === 'task';
   const [submitting, setSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
   const t = isVi
     ? {
-        title: 'Hoàn thành phiên tập trung! 🎉',
-        subtitle: 'Bạn đã đạt mốc thời gian học sâu cho chủ đề này.',
-        prompt: (name) => `Bạn có muốn đánh dấu chủ đề "${name}" là HOÀN THÀNH (DONE) không?`,
+        title: isTask ? 'Hoàn thành bài tập! 🎉' : 'Hoàn thành phiên tập trung! 🎉',
+        subtitle: isTask ? 'Bạn đã hoàn thành thời gian tập trung cho bài tập này.' : 'Bạn đã đạt mốc thời gian học sâu cho chủ đề này.',
+        prompt: (name) => isTask
+          ? `Bạn đã hoàn thành bài tập "${name}" chưa? Đánh dấu là HOÀN THÀNH (DONE)?`
+          : `Bạn có muốn đánh dấu chủ đề "${name}" là HOÀN THÀNH (DONE) không?`,
         confirmBtn: 'Đánh dấu DONE ✓',
         confirming: 'Đang lưu…',
-        keepDoingBtn: 'Tiếp tục học (Giữ DOING)',
-        tag: 'GỢI Ý ĐỀ CƯƠNG · WBS 3.4',
+        keepDoingBtn: isTask ? 'Chưa xong (Tiếp tục làm)' : 'Tiếp tục học (Giữ DOING)',
+        tag: isTask ? 'BÀI TẬP & HẠN CHÓT' : 'GỢI Ý ĐỀ CƯƠNG · WBS 3.4',
       }
     : {
-        title: 'Focus Sprint Completed! 🎉',
-        subtitle: "You've logged deep focus time for this study topic.",
-        prompt: (name) => `Would you like to mark "${name}" as DONE in your curriculum?`,
+        title: isTask ? 'Task Completed! 🎉' : 'Focus Sprint Completed! 🎉',
+        subtitle: isTask ? 'You have logged deep focus time for this assignment.' : "You've logged deep focus time for this study topic.",
+        prompt: (name) => isTask
+          ? `Did you finish task "${name}"? Mark it as COMPLETED (DONE)?`
+          : `Would you like to mark "${name}" as DONE in your curriculum?`,
         confirmBtn: 'Mark as DONE ✓',
         confirming: 'Saving…',
-        keepDoingBtn: 'Keep as In Progress',
-        tag: 'SYLLABUS SUGGESTION · WBS 3.4',
+        keepDoingBtn: isTask ? 'Not yet (Keep Doing)' : 'Keep as In Progress',
+        tag: isTask ? 'TASK & DEADLINE' : 'SYLLABUS SUGGESTION · WBS 3.4',
       };
 
   async function handleConfirm() {

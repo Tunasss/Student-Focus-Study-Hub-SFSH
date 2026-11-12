@@ -39,7 +39,7 @@ export async function apiFetch(path, { method = 'GET', body, auth = true, cache 
 
   // If caching is requested and valid entry exists, return immediately (0ms latency!)
   // Disabled in test environment so Vitest mock changes take effect per test.
-  const isTest = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
+  const isTest = typeof globalThis !== 'undefined' && globalThis.process?.env?.NODE_ENV === 'test';
   if (isGet && cache && !isTest) {
     const cached = apiCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < DEFAULT_CACHE_TTL_MS) {

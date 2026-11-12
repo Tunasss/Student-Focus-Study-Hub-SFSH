@@ -212,6 +212,33 @@ export function resetPomodoroSession(state, settings = DEFAULT_TIMER_SETTINGS) {
 }
 
 /**
+ * Completely resets both timer and 4-cycle sprint progression back to Cycle 1 / Sprint 01
+ */
+export function restartPomodoroCycle(state, settings = DEFAULT_TIMER_SETTINGS) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(POMODORO_STORAGE_KEY);
+    }
+  } catch {
+    // ignore
+  }
+
+  const duration = (settings.focusMinutes || 25) * 60;
+  return {
+    ...state,
+    phase: 'focus',
+    cycleCount: 1,
+    status: 'idle',
+    durationSeconds: duration,
+    remainingSeconds: duration,
+    startedAt: null,
+    lastTickAt: null,
+    accumulatedSeconds: 0,
+    pausedRemaining: null,
+  };
+}
+
+/**
  * Persists session state to localStorage
  */
 export function persistSession(state) {

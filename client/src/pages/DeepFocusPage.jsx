@@ -20,13 +20,14 @@ import {
   pausePomodoroSession,
   persistSession,
   resetPomodoroSession,
+  restartPomodoroCycle,
   resumePomodoroSession,
   skipToNextPhase,
   startPomodoroSession,
   tickPomodoroSession,
 } from '../utils/pomodoro';
 import { audioMixer } from '../utils/audioMixer';
-import { sessionsApi, syllabusApi } from '../lib/api';
+import { sessionsApi, syllabusApi, tasksApi } from '../lib/api';
 import { formatFocusDuration, toIsoDateTimeWithOffset } from '../utils/analytics';
 
 function countTodayFocusStats(sessions = []) {
@@ -72,6 +73,7 @@ const FOCUS_COPY = {
     todayLogged: (dur, count) => `Logged today: ${dur} (${count})`,
     sessionSaved: (mins) => `Focus sprint logged (+${mins}m)`,
     topicMarkedDone: (name) => `Marked "${name}" as DONE! 🎉`,
+    taskMarkedDone: (name) => `Marked task "${name}" as DONE! 🎉`,
     sprints: [
       { id: 1, title: 'Sprint 01 · Cognitive Flow', duration: '25 min focus' },
       { id: 2, title: 'Sprint 02 · Deep Problem Solving', duration: '25 min focus' },
@@ -105,6 +107,7 @@ const FOCUS_COPY = {
     todayLogged: (dur, count) => `Hôm nay: ${dur} (${count} phiên)`,
     sessionSaved: (mins) => `Đã lưu phiên tập trung (+${mins} phút)`,
     topicMarkedDone: (name) => `Đã đánh dấu "${name}" hoàn thành! 🎉`,
+    taskMarkedDone: (name) => `Đã hoàn thành bài tập "${name}"! 🎉`,
     sprints: [
       { id: 1, title: 'Phiên 01 · Khởi động luồng tập trung', duration: '25 phút học sâu' },
       { id: 2, title: 'Phiên 02 · Giải quyết bài toán khó', duration: '25 phút học sâu' },
@@ -337,8 +340,23 @@ export function DeepFocusPage() {
         }));
         setSessionLogNotice(t.sessionSaved(minutes));
 
-        // WBS 3.4 / Section 6.5: Prompt user if activeTopicId is set
-        if (session.activeTopicId) {
+        // WBS 3.4 / Section 6.5: Prompt user for completion
+        // Check active task first, then active topic, then nearest pending task of course
+        if (session.activeTaskId) {
+          tasksApi
+            .listTasks({ courseId: session.activeCourseId })
+            .then((list) => {
+              const activeT = Array.isArray(list) ? list.find((tk) => tk.id === session.activeTaskId) : null;
+              if (activeT && activeT.status !== 'DONE') {
+                setTopicPrompt({
+                  itemType: 'task',
+                  id: activeT.id,
+                  title: activeT.title,
+                });
+              }
+            })
+            .catch(() => {});
+        } else if (session.activeTopicId) {
           syllabusApi
             .getCourseTopics(session.activeCourseId)
             .then((topics) => {
@@ -347,8 +365,24 @@ export function DeepFocusPage() {
                 : null;
               if (active && active.status !== 'DONE') {
                 setTopicPrompt({
-                  topicId: active.id,
-                  topicTitle: active.title,
+                  itemType: 'topic',
+                  id: active.id,
+                  title: active.title,
+                });
+              }
+            })
+            .catch(() => {});
+        } else if (session.activeCourseId) {
+          // If in "Whole Course Review" (no topic), check if course has pending tasks
+          tasksApi
+            .listTasks({ courseId: session.activeCourseId })
+            .then((list) => {
+              const pendingTask = Array.isArray(list) ? list.find((tk) => tk.status !== 'DONE') : null;
+              if (pendingTask) {
+                setTopicPrompt({
+                  itemType: 'task',
+                  id: pendingTask.id,
+                  title: pendingTask.title,
                 });
               }
             })
@@ -358,7 +392,7 @@ export function DeepFocusPage() {
       .catch(() => {
         // Timer UI remains responsive even if API logging fails
       });
-  }, [session.phase, session.status, session.startedAt, session.durationSeconds, session.activeCourseId, session.activeTopicId, t]);
+  }, [session.phase, session.status, session.startedAt, session.durationSeconds, session.activeCourseId, session.activeTopicId, session.activeTaskId, t]);
 
   function logAbandonedFocusIfElapsed(current) {
     if (
@@ -454,14 +488,49 @@ export function DeepFocusPage() {
   }
 
   async function handleConfirmTopicDone() {
-    if (!topicPrompt?.topicId) return;
+    if (!topicPrompt) return;
     try {
-      await syllabusApi.updateTopicStatus(topicPrompt.topicId, 'DONE');
-      setSessionLogNotice(t.topicMarkedDone(topicPrompt.topicTitle));
+      if (topicPrompt.itemType === 'task') {
+        await tasksApi.updateTask(topicPrompt.id, { status: 'DONE' });
+        setSessionLogNotice(t.taskMarkedDone ? t.taskMarkedDone(topicPrompt.title) : `Marked "${topicPrompt.title}" as DONE! 🎉`);
+      } else {
+        await syllabusApi.updateTopicStatus(topicPrompt.id, 'DONE');
+        setSessionLogNotice(t.topicMarkedDone(topicPrompt.title));
+      }
+      audioMixer.playCompletionChime();
+      // Reset timer and reset sprint progression back to cycle 1
+      setSession((s) => {
+        const next = restartPomodoroCycle(s, settings);
+        persistSession(next);
+        return next;
+      });
       setTopicPrompt(null);
     } catch {
       setTopicPrompt(null);
     }
+  }
+
+  function handleProactiveComplete({ type, item, nextItem }) {
+    audioMixer.playCompletionChime();
+    setSessionLogNotice(
+      type === 'task'
+        ? (t.taskMarkedDone ? t.taskMarkedDone(item.title) : `Marked "${item.title}" as DONE! 🎉`)
+        : t.topicMarkedDone(item.title)
+    );
+    // When marked complete proactively:
+    // 1. Advance to next task or topic
+    // 2. Reset timer back to 0/standard duration
+    // 3. Reset sprint progression to Sprint 01
+    setSession((s) => {
+      const reset = restartPomodoroCycle(s, settings);
+      const next = {
+        ...reset,
+        activeTaskId: type === 'task' ? (nextItem?.id || null) : null,
+        activeTopicId: type === 'topic' ? (nextItem?.id || null) : null,
+      };
+      persistSession(next);
+      return next;
+    });
   }
 
   const progressPercent =
@@ -563,25 +632,26 @@ export function DeepFocusPage() {
             activeTaskId={session.activeTaskId}
             onSelectCourse={(cid) =>
               setSession((s) => {
-                const next = { ...s, activeCourseId: cid, activeTaskId: null };
+                const next = { ...s, activeCourseId: cid, activeTopicId: null, activeTaskId: null };
                 persistSession(next);
                 return next;
               })
             }
             onSelectTopic={(tid) =>
               setSession((s) => {
-                const next = { ...s, activeTopicId: tid };
+                const next = { ...s, activeTopicId: tid, activeTaskId: null };
                 persistSession(next);
                 return next;
               })
             }
             onSelectTask={(taskId) =>
               setSession((s) => {
-                const next = { ...s, activeTaskId: taskId };
+                const next = { ...s, activeTaskId: taskId, activeTopicId: null };
                 persistSession(next);
                 return next;
               })
             }
+            onCompleteAction={handleProactiveComplete}
           />
 
           {/* Real World Live Clock Widget (Replaces static Flow Rate card per Hình 2) */}
@@ -925,7 +995,8 @@ export function DeepFocusPage() {
       />
       <TopicCompletionModal
         isOpen={!!topicPrompt}
-        topicTitle={topicPrompt?.topicTitle}
+        itemType={topicPrompt?.itemType || 'topic'}
+        topicTitle={topicPrompt?.title || topicPrompt?.topicTitle}
         courseCode={topicPrompt?.courseCode}
         onConfirmDone={handleConfirmTopicDone}
         onKeepDoing={() => setTopicPrompt(null)}

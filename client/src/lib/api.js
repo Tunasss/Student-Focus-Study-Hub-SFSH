@@ -132,3 +132,40 @@ export const syllabusApi = {
   },
 };
 
+export const tasksApi = {
+  listTasks: async ({ courseId, status } = {}) => {
+    const params = new URLSearchParams();
+    if (courseId) params.set('course_id', String(courseId));
+    if (status) params.set('status', status);
+    const query = params.toString();
+    const data = await apiFetch(`/api/tasks${query ? `?${query}` : ''}`);
+    return data?.tasks ?? [];
+  },
+  createTask: async (payload) => {
+    const data = await apiFetch('/api/tasks', {
+      method: 'POST',
+      body: payload,
+    });
+    return data?.task ?? data;
+  },
+  updateTask: async (taskId, patch) => {
+    const data = await apiFetch(`/api/tasks/${taskId}`, {
+      method: 'PATCH',
+      body: patch,
+    });
+    return data?.task ?? data;
+  },
+  replaceTask: async (taskId, payload) => {
+    const data = await apiFetch(`/api/tasks/${taskId}`, {
+      method: 'PUT',
+      body: payload,
+    });
+    return data?.task ?? data;
+  },
+  deleteTask: async (taskId) => {
+    return apiFetch(`/api/tasks/${taskId}`, {
+      method: 'DELETE',
+    });
+  },
+};
+

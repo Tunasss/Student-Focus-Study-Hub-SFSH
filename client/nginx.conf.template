@@ -4,7 +4,7 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
-    # Syllabus upload accepts up to 20 PDFs x 10 MB.
+    # Syllabus upload accepts up to 20 PDFs x 5 MB (plus multipart overhead).
     client_max_body_size 200m;
 
     gzip on;

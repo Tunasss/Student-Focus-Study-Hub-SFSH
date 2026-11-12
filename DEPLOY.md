@@ -65,7 +65,7 @@ Option A — Blueprint: Render → New → Blueprint → pick this repo. `render
 - Root directory `api`, build `npm ci && npx prisma generate && npx prisma migrate deploy`, start `npm start`
 - Health check `/api/health`, `JWT_SECRET` auto-generated
 
-Then set in the dashboard: `DATABASE_URL`, `CORS_ORIGINS` (your Vercel URL).
+Then set in the dashboard: `DATABASE_URL`, `CORS_ORIGINS` (your Vercel URL), `GEMINI_API_KEY`.
 
 Option B — Railway: New → GitHub repo → set **Root Directory** = `api`. `api/railway.json` configures build, `prisma migrate deploy` (pre-deploy) and start. Add variables `DATABASE_URL` (reference the MySQL service), `JWT_SECRET`, `CORS_ORIGINS`, `NODE_ENV=production`.
 
@@ -91,4 +91,9 @@ Smoke test: open the Vercel URL → register → you land on the empty dashboard
 | `JWT_SECRET` | API | long random string |
 | `CORS_ORIGINS` | API | Vercel URL(s) |
 | `NODE_ENV` | API | `production` |
-| `VITE_API_URL` | Client | API base URL |
+| `GEMINI_API_KEY` | API | Google AI Studio key (syllabus analysis) |
+| `GEMINI_MODEL` | API | default `gemini-2.5-flash` |
+| `LLM_MOCK` | API | `true` = fixed sample instead of Gemini (demo without a key) |
+| `RUN_MIGRATIONS` | API (Docker image only) | `false` skips `prisma migrate deploy` on container start |
+| `VITE_API_URL` | Client | API base URL (Docker image: `/` = same-origin via nginx proxy) |
+| `API_UPSTREAM` | Client (Docker image only) | where nginx proxies `/api`, default `http://api:4000` |

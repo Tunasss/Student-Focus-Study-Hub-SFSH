@@ -48,6 +48,7 @@
 | **Authentication & Security** | JWT (24h token expiry), bcryptjs password hashing, Helmet, CORS |
 | **Calendar & File Parser** | `node-ical` with recurrence expansion (`RRULE`, `EXDATE`, `INTERVAL`) |
 | **API Contract & Docs** | OpenAPI 3.0 specification served via interactive Swagger UI |
+| **Deployment** | Docker (multi-stage images), Docker Compose, nginx (SPA + `/api` reverse proxy); Render / Railway / Vercel also supported |
 | **Testing Suite** | Vitest & React Testing Library (Client); Node test runner & Supertest (API) |
 
 ---
@@ -184,12 +185,20 @@ cd client
 npm run build
 ```
 
+### Docker images
+```bash
+docker compose build              # builds sfsh-api and sfsh-client
+docker compose up -d --wait       # starts MySQL, API and client, waits until all are healthy
+curl http://localhost:8080/api/health
+```
+CI runs the same build plus a login and `/api/recommendation/next-action` smoke test on every PR (job *Docker*).
+
 ---
 
 ## 📖 API Documentation (Swagger UI)
 
 The API specification is strictly defined following OpenAPI 3.0 standards:
-- **Interactive Swagger Documentation:** [http://localhost:4000/api-docs](http://localhost:4000/api-docs)
+- **Interactive Swagger Documentation:** [http://localhost:4000/api-docs](http://localhost:4000/api-docs) (or [http://localhost:8080/api-docs](http://localhost:8080/api-docs) when running with Docker Compose)
 - **Raw OpenAPI YAML Specification:** [api/openapi.yaml](api/openapi.yaml)
 
 Key endpoint groups include:
@@ -198,7 +207,7 @@ Key endpoint groups include:
 - `POST /api/schedule/import`: Multipart `.ics` calendar import with conflict resolution.
 - `GET /api/schedule`: Weekly schedule retrieval with timezone conversion (`Asia/Ho_Chi_Minh`).
 - `GET /api/courses`: User courses and schedule slots listing.
-- `POST /api/syllabus/extract`: Syllabus PDF upload (≤ 5 MB, ≤ 30 pages), text-layer extraction with a `PDF_NO_TEXT_LAYER` fallback for scanned files, then Gemini structured output (JSON schema + zod) returning the course code and ordered topics. One retry on schema errors, `LLM_UNAVAILABLE` on quota/connection problems, and `LLM_MOCK=true` for offline UI work.
+- `POST /api/syllabus/extract`: Syllabus PDF upload (up to 20 files, each ≤ 5 MB and ≤ 200 pages), text-layer extraction with a `PDF_NO_TEXT_LAYER` fallback for scanned files, then Gemini structured output (JSON schema + zod) returning the course code and ordered topics. One retry on schema errors, `LLM_UNAVAILABLE` on quota/connection problems, and `LLM_MOCK=true` for offline UI work.
 - `GET/POST /api/courses/:id/topics`, `POST /api/courses/:id/topics/bulk`, `PATCH/DELETE /api/topics/:id`: Syllabus topic persistence. The reviewed Gemini preview is saved in bulk (`order` → `sort_order`), and each topic's learning status (`TODO`/`DOING`/`DONE`), title and description can be edited.
 - `GET/POST /api/tasks`, `PUT/PATCH/DELETE /api/tasks/:id`: Task (deadline) CRUD, scoped to the JWT user, validated with zod. Each task carries `daysLeft` and an `urgencyBadge` (`OVERDUE` / `URGENT` / `SOON` / `LATER`).
 - `GET /api/recommendation/next-action`: Explainable "what next" recommendation. Open tasks are scored with `10 / (max(daysLeft, 0) + 0.5) + (topic DOING ? 5 : 2) + (overdue ? 3 : 0)` (ties: sooner `dueAt`, then older `createdAt`) and the best one is returned with its `scoreBreakdown`; with no open task it suggests the `DOING` (or first `TODO`) topic of the course whose next class is soonest, or an empty state.

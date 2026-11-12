@@ -7,8 +7,9 @@ import { ChapterCard } from '../components/syllabus/ChapterCard';
 import { AddTopicModal } from '../components/syllabus/AddTopicModal';
 import { SyllabusUploadModal } from '../components/syllabus/SyllabusUploadModal';
 import { ToastNotification } from '../components/syllabus/ToastNotification';
+import { TaskFormModal } from '../components/deadlines/TaskFormModal';
 import { useLanguage } from '../i18n/languageContext';
-import { scheduleApi, syllabusApi } from '../lib/api';
+import { scheduleApi, syllabusApi, tasksApi } from '../lib/api';
 import { deduplicateSyllabusCourses } from '../utils/courseFormat';
 import { buildTopicTree, updateTopicInList } from '../utils/topicTree';
 import { extractChapterNumber } from '../utils/chapterOrder';
@@ -34,6 +35,7 @@ export function SyllabusPage() {
   const [toast, setToast] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [taskTargetTopic, setTaskTargetTopic] = useState(null);
 
   const t = {
     en: {
@@ -48,6 +50,7 @@ export function SyllabusPage() {
       updateFailed: 'Failed to update topic status. Changes rolled back.',
       createSuccess: 'New topic chapter added successfully.',
       createFailed: 'Failed to create topic.',
+      taskCreatedSuccess: 'Deadline linked to topic created successfully.',
       deleteChapterSuccess: 'Chapter deleted successfully.',
       deleteChapterFailed: 'Failed to delete chapter.',
       deleteModalTitle: 'Delete Chapter?',
@@ -75,6 +78,7 @@ export function SyllabusPage() {
       updateFailed: 'Không thể cập nhật trạng thái chương. Đã hoàn tác lại thay đổi.',
       createSuccess: 'Đã thêm chương học mới thành công.',
       createFailed: 'Không thể tạo chương học mới.',
+      taskCreatedSuccess: 'Đã tạo deadline gắn với chủ đề thành công.',
       deleteChapterSuccess: 'Đã xóa chương học thành công.',
       deleteChapterFailed: 'Không thể xóa chương học.',
       deleteModalTitle: 'Xóa chương học?',
@@ -102,6 +106,7 @@ export function SyllabusPage() {
     updateFailed: 'Failed to update topic status. Changes rolled back.',
     createSuccess: 'New topic chapter added successfully.',
     createFailed: 'Failed to create topic.',
+    taskCreatedSuccess: 'Deadline linked to topic created successfully.',
     deleteChapterSuccess: 'Chapter deleted successfully.',
     deleteChapterFailed: 'Failed to delete chapter.',
     deleteModalTitle: 'Delete Chapter?',
@@ -578,6 +583,7 @@ export function SyllabusPage() {
                 index={index}
                 onStatusChange={handleStatusChange}
                 onDeleteChapter={(ch) => setChapterToDelete(ch)}
+                onCreateTask={(sub) => setTaskTargetTopic(sub)}
                 isUpdating={updatingTopicId === chapter.id}
               />
             ))}
@@ -592,6 +598,19 @@ export function SyllabusPage() {
         nextSortOrder={nextSortOrder}
         onClose={() => setIsAddModalOpen(false)}
         onCreated={handleCreateTopic}
+      />
+
+      {/* Quick Create Deadline linked to Syllabus Topic */}
+      <TaskFormModal
+        isOpen={Boolean(taskTargetTopic)}
+        courses={courses}
+        presetCourseId={activeCourseId}
+        presetTopicId={taskTargetTopic?.id || null}
+        onClose={() => setTaskTargetTopic(null)}
+        onSubmit={async (payload) => {
+          await tasksApi.createTask(payload);
+          setToast({ message: t.taskCreatedSuccess, type: 'success' });
+        }}
       />
 
       {/* AI Syllabus Extractor Modal (NotebookLM-style) */}

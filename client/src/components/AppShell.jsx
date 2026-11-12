@@ -5,6 +5,7 @@ import { useAuth } from '../auth/authContext';
 import { useLanguage } from '../i18n/languageContext';
 import { LanguageToggle } from '../i18n/LanguageToggle';
 import { ThemeToggle } from '../theme/ThemeToggle';
+import { GlobalSearch } from './GlobalSearch';
 
 // Minimalist Brand Lotus Flower SVG matching Image 1, 3, 4
 export function LotusIcon({ className = 'h-5 w-5' }) {
@@ -105,8 +106,10 @@ export function AppShell() {
           ))}
         </nav>
 
-        {/* Right: Notification, Language, Theme, User & Sign Out */}
+        {/* Right: Global Search, Notification, Language, Theme, User & Sign Out */}
         <div className="flex items-center gap-2">
+          <GlobalSearch />
+
           {/* Notification Button */}
           <button
             type="button"

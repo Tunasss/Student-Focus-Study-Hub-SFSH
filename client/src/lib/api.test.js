@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { apiFetch, scheduleApi, syllabusApi, UNAUTHORIZED_EVENT } from './api';
+import { apiFetch, analyticsApi, scheduleApi, searchApi, sessionsApi, syllabusApi, UNAUTHORIZED_EVENT } from './api';
 import { setToken } from './tokenStorage';
 import { fail, mockFetch, ok } from '../test/utils';
 
@@ -143,6 +143,60 @@ describe('syllabusApi', () => {
     await expect(syllabusApi.extractSyllabus(1, fakeFile, 'Hệ thống Cơ sở dữ liệu')).rejects.toThrow(
       'AI service is out of quota'
     );
+  });
+});
+
+describe('sessionsApi, analyticsApi & searchApi', () => {
+  test('logSession posts to /api/sessions and unwraps session', async () => {
+    const saved = { id: 10, minutes: 25, status: 'COMPLETED', courseId: 2 };
+    const fetchMock = mockFetch(() => [201, ok({ session: saved })]);
+
+    const payload = {
+      startedAt: '2026-11-12T08:00:00+07:00',
+      minutes: 25,
+      status: 'COMPLETED',
+      courseId: 2,
+    };
+    const result = await sessionsApi.logSession(payload);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toContain('/api/sessions');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual(payload);
+    expect(result).toEqual(saved);
+  });
+
+  test('listSessions builds filter query parameters', async () => {
+    const fetchMock = mockFetch(() => [200, ok({ sessions: [{ id: 1, minutes: 25 }] })]);
+
+    const result = await sessionsApi.listSessions({ courseId: 3, status: 'COMPLETED', limit: 10 });
+    expect(fetchMock.mock.calls[0][0]).toContain('/api/sessions?course_id=3&status=COMPLETED&limit=10');
+    expect(result).toEqual([{ id: 1, minutes: 25 }]);
+  });
+
+  test('analyticsApi sends range and tz query parameters', async () => {
+    const fetchMock = mockFetch((url) => {
+      if (url.includes('/overview')) return [200, ok({ totalFocusMinutes: 50 })];
+      return [200, ok({ days: [{ date: '2026-11-12', focusMinutes: 50, tasksCompleted: 1 }] })];
+    });
+
+    const overview = await analyticsApi.getOverview({ range: '30d', tz: 'Asia/Ho_Chi_Minh' });
+    const daily = await analyticsApi.getDailyActivity({ range: 'all', tz: 'Asia/Ho_Chi_Minh' });
+
+    expect(fetchMock.mock.calls[0][0]).toContain('/api/analytics/overview?range=30d&tz=Asia%2FHo_Chi_Minh');
+    expect(fetchMock.mock.calls[1][0]).toContain('/api/analytics/daily-activity?range=7d&tz=Asia%2FHo_Chi_Minh');
+    expect(overview).toEqual({ totalFocusMinutes: 50 });
+    expect(daily.days).toHaveLength(1);
+  });
+
+  test('searchApi.suggest queries /api/search/suggest', async () => {
+    const fetchMock = mockFetch(() => [
+      200,
+      ok({ query: 'web', suggestions: [{ type: 'COURSE', id: 1, label: 'Web Dev' }] }),
+    ]);
+
+    const result = await searchApi.suggest({ q: 'web', limit: 6 });
+    expect(fetchMock.mock.calls[0][0]).toContain('/api/search/suggest?q=web&limit=6');
+    expect(result).toEqual([{ type: 'COURSE', id: 1, label: 'Web Dev' }]);
   });
 });
 

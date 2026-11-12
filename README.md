@@ -3,8 +3,8 @@
 
 [![Client Tests](https://img.shields.io/badge/Client_Tests-146%2F146_Passing-success?style=for-the-badge&logo=vitest&logoColor=white)](client)
 [![API Tests](https://img.shields.io/badge/API_Tests-415%2F415_Passing-success?style=for-the-badge&logo=node.js&logoColor=white)](api)
-[![Design System](https://img.shields.io/badge/Design_System-Urbanist_%26_Green_%23DBEF90-10b981?style=for-the-badge)](#)
-[![OpenAPI](https://img.shields.io/badge/OpenAPI_3.0-Swagger_UI-85ea2d?style=for-the-badge&logo=swagger&logoColor=black)](http://localhost:4000/api-docs)
+[![Live App](https://img.shields.io/badge/Live_App-luma--sfsh.vercel.app-22c55e?style=for-the-badge&logo=vercel&logoColor=white)](https://luma-sfsh.vercel.app)
+[![OpenAPI](https://img.shields.io/badge/OpenAPI_3.0-Swagger_UI-85ea2d?style=for-the-badge&logo=swagger&logoColor=black)](https://sfsh-api.onrender.com/api-docs)
 
 <p align="center">
   <img src="docs/screenshots/sfsh-banner.jpg" alt="Luma - Student Focus & Study Hub Banner" width="100%" />
@@ -202,7 +202,7 @@ docker compose build
 ## 📖 API Documentation (Swagger UI)
 
 The API specification is strictly defined following OpenAPI 3.0 standards:
-- **Interactive Swagger Documentation:** [http://localhost:4000/api-docs](http://localhost:4000/api-docs) (or [http://localhost:8080/api-docs](http://localhost:8080/api-docs) when running with Docker Compose)
+- **Interactive Swagger Documentation:** [https://sfsh-api.onrender.com/api-docs](https://sfsh-api.onrender.com/api-docs) (or local: `http://localhost:8080/api-docs` / `http://localhost:4000/api-docs`)
 - **Raw OpenAPI YAML Specification:** [api/openapi.yaml](api/openapi.yaml)
 
 Key endpoint groups include:

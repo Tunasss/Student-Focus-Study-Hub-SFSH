@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { apiFetch, analyticsApi, scheduleApi, searchApi, sessionsApi, syllabusApi, UNAUTHORIZED_EVENT } from './api';
+import { apiFetch, analyticsApi, scheduleApi, searchApi, sessionsApi, syllabusApi, tasksApi, UNAUTHORIZED_EVENT } from './api';
 import { setToken } from './tokenStorage';
 import { fail, mockFetch, ok } from '../test/utils';
 
@@ -143,6 +143,53 @@ describe('syllabusApi', () => {
     await expect(syllabusApi.extractSyllabus(1, fakeFile, 'Hệ thống Cơ sở dữ liệu')).rejects.toThrow(
       'AI service is out of quota'
     );
+  });
+});
+
+describe('tasksApi', () => {
+  test('listTasks forwards optional course_id and status query params', async () => {
+    const mockTasks = [{ id: 1, title: 'Lab 4', urgencyBadge: 'URGENT', daysLeft: 1 }];
+    const fetchMock = mockFetch(() => [200, ok({ tasks: mockTasks })]);
+
+    const result = await tasksApi.listTasks({ courseId: 5, status: 'TODO' });
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toContain('/api/tasks?course_id=5&status=TODO');
+    expect(result).toEqual(mockTasks);
+  });
+
+  test('createTask posts payload and returns created task', async () => {
+    const payload = { title: 'Assignment 1', dueAt: '2026-11-20T23:59:00+07:00', courseId: 5, topicId: 2, status: 'TODO' };
+    const created = { id: 10, ...payload, daysLeft: 8, urgencyBadge: 'LATER' };
+    const fetchMock = mockFetch(() => [201, ok({ task: created })]);
+
+    const result = await tasksApi.createTask(payload);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toContain('/api/tasks');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual(payload);
+    expect(result).toEqual(created);
+  });
+
+  test('updateTask sends PATCH /api/tasks/:id', async () => {
+    const updated = { id: 10, status: 'DONE', urgencyBadge: null };
+    const fetchMock = mockFetch(() => [200, ok({ task: updated })]);
+
+    const result = await tasksApi.updateTask(10, { status: 'DONE' });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toContain('/api/tasks/10');
+    expect(init.method).toBe('PATCH');
+    expect(JSON.parse(init.body)).toEqual({ status: 'DONE' });
+    expect(result).toEqual(updated);
+  });
+
+  test('deleteTask sends DELETE /api/tasks/:id', async () => {
+    const fetchMock = mockFetch(() => [200, ok({ id: 10 })]);
+
+    const result = await tasksApi.deleteTask(10);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toContain('/api/tasks/10');
+    expect(init.method).toBe('DELETE');
+    expect(result).toEqual({ id: 10 });
   });
 });
 

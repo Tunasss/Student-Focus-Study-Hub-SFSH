@@ -4,6 +4,7 @@ import { GuestRoute, ProtectedRoute } from './auth/ProtectedRoute';
 import { AppShell } from './components/AppShell';
 import { useLanguage } from './i18n/languageContext';
 import { AuthPage } from './pages/AuthPage';
+import { DeadlinesPage } from './pages/DeadlinesPage';
 import { DeepFocusPage } from './pages/DeepFocusPage';
 import { HomePage } from './pages/HomePage';
 import { OverviewPage } from './pages/OverviewPage';
@@ -54,16 +55,7 @@ export function App() {
           <Route path="overview" element={<OverviewPage />} />
           <Route path="timetable" element={<TimetablePage />} />
           <Route path="syllabus" element={<SyllabusPage />} />
-          <Route
-            path="deadlines"
-            element={
-              <PlaceholderPage
-                pageKey="deadlines"
-                title="Deadlines"
-                description="Upcoming assignment & project submission milestones."
-              />
-            }
-          />
+          <Route path="deadlines" element={<DeadlinesPage />} />
           <Route
             path="notes"
             element={

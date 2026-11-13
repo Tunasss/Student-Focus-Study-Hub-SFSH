@@ -216,14 +216,18 @@ A task fills in its course and topic, a topic fills in its course. Another user'
 `404 NOT_FOUND`; links that disagree are `400 VALIDATION_ERROR`; `startedAt` may be at most 5 minutes in the future.
 Code: `src/sessions/`, `src/routes/sessions.js`.
 
-### Metrics engine (WBS 3.4.1) and endpoints (WBS 3.4.2)
+### Metrics engine (WBS 3.4.1, 4.1.1) and endpoints (WBS 3.4.2, 4.1.2)
 
-`src/analytics/metrics.js` holds the pure math, `src/analytics/analyticsRepo.js` loads the rows (all through
+`src/analytics/metrics.js` holds the pure math, `src/analytics/analyticsRepo.js` runs the queries (all through
 `byUser()` / `byCourseOwner()`, Rule 06), `src/routes/analytics.js` validates the query with zod.
+Per-course focus minutes and topic / task counts are aggregated by MySQL (`groupBy` on `course_id[, status]`),
+and the overview's task totals use `COUNT`. The daily series and the streak still load session / task timestamps,
+because a calendar day depends on the client's `tz` (SQL `DATE(started_at)` would bucket by UTC day).
 
 - **Focus time**: sum of `COMPLETED` sessions in the range; sessions without a course count in the total only.
 - **Progress**: `progressPct = floor(completedItems * 100 / totalItems)` over a course's topics + tasks
   (`DONE` = completed), `0` when the course has none. Integer maths, so 57 / 100 is 57, not 56.
+  `taskProgressPct = floor(completedTasks * 100 / totalTasks)` is the same over tasks only (WBS 4.1.1).
 - **Streak**: consecutive local days with a `COMPLETED` session back from today. Still alive if the last
   study day was yesterday; a missed day resets it (0, or 1 if the student studied today).
 - **Days** are calendar days in `tz` (IANA, default `UTC`): `7d` = today and the 6 days before. All timestamps are
@@ -232,8 +236,9 @@ Code: `src/sessions/`, `src/routes/sessions.js`.
 
 | Endpoint | `data` |
 |---|---|
-| `GET /api/analytics/overview?range=7d\|30d\|all&tz=` | `{ range, tz, from, to, totalFocusMinutes, completedTasksCount, overdueTasksCount, currentStreakDays, courseBreakdown: [{ courseId, courseCode, courseName, focusMinutes, completedItems, totalItems, progressPct }] }` |
-| `GET /api/analytics/daily-activity?range=7d\|30d&tz=` | `{ range, tz, days: [{ date, focusMinutes, tasksCompleted }] }`, zero-filled, oldest first |
+| `GET /api/analytics/overview?range=7d\|30d\|all&tz=` | `{ range, tz, from, to, totalFocusMinutes, completedTasksCount, overdueTasksCount, currentStreakDays, courseBreakdown: [{ courseId, courseCode, courseName, focusMinutes, completedItems, totalItems, progressPct, completedTasks, totalTasks, taskProgressPct }] }` |
+| `GET /api/analytics/chart-activity?days=7\|30&tz=` | `[{ date, focusMinutes, tasksCompleted }]` (the array is `data`), zero-filled, oldest first, today last |
+| `GET /api/analytics/daily-activity?range=7d\|30d&tz=` | `{ range, tz, days: [{ date, focusMinutes, tasksCompleted }] }`, the same series with its range |
 
 `overdueTasksCount` is "right now" (open tasks that are `OVERDUE` or past `dueAt`), whatever the range;
 `progressPct` is all-time. A user without data gets zeros and an empty `courseBreakdown`, never 404. Field names
@@ -246,12 +251,13 @@ label, courseId, courseCode, courseName, status, dueAt }] }`. MySQL filters with
 collation ignores case and accents); results are ranked exact → prefix → word prefix → substring, then shorter labels,
 then courses, tasks, topics. Code: `src/search/suggest.js`.
 
-### Tests (WBS 3.4.3)
+### Tests (WBS 3.4.3, 4.1.3)
 
 | File | Covers |
 |---|---|
+| `test/analytics/chart-activity.test.js` | zero-fill on a fixed clock (month boundary, 30 days without gaps, local vs UTC day), `days` / `tz` validation (400), empty state, tenant isolation, 401 |
 | `test/analytics/mandatory.test.js` | the four PRD cases over HTTP: empty-state user, multi-course aggregation (exact `progressPct`, ranges, abandoned / free-focus sessions), streak continuity & reset, tenant isolation |
-| `test/analytics/metrics.test.js` | progress formula (every ratio up to 200 items), streak edge cases (month / leap year), timezone day boundaries, zero-filled series |
+| `test/analytics/metrics.test.js` | progress formula (every ratio up to 200 items, 10,000 tasks over 40 courses), GROUP BY helpers, streak edge cases (month / leap year), timezone day boundaries, zero-filled series |
 | `test/analytics/analytics.routes.test.js` | defaults, 400 `VALIDATION_ERROR` for bad `range` / `tz`, completed and overdue task counts, daily series |
 | `test/sessions/sessions.routes.test.js` | logging, link resolution, 404 for other users' rows, validation, listing filters |
 | `test/search/suggest.test.js` | ranking, diacritics, course codes, Rule 06, validation |

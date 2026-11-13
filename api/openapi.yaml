@@ -964,7 +964,9 @@ paths:
           alive if the last study day is yesterday; 0 when there was no session today or yesterday.
         - `courseBreakdown`: every course of the user. `focusMinutes` is in the range; `progressPct` is all-time,
           `floor(completedItems / totalItems * 100)` over the course's topics and tasks (`DONE` = completed),
-          0 when the course has none. Sorted by `focusMinutes` desc, then name.
+          0 when the course has none. `taskProgressPct` is the same over tasks only
+          (`floor(completedTasks / totalTasks * 100)`, WBS 4.1.1). Sorted by `focusMinutes` desc, then name.
+          Per-course minutes and counts are computed by MySQL (`GROUP BY course_id`), scoped to the token's user.
 
         PRD names: `total_focus_minutes`, `completed_tasks_count`, `overdue_tasks_count`, `current_streak_days`,
         `course_breakdown[].course_id / course_name / focus_minutes / progress_pct`.
@@ -1004,10 +1006,59 @@ paths:
                       completedItems: 13
                       totalItems: 20
                       progressPct: 65
+                      completedTasks: 6
+                      totalTasks: 8
+                      taskProgressPct: 75
                 error: null
                 timestamp: '2026-11-12T09:00:00.000Z'
         '400':
           description: '`VALIDATION_ERROR`: `range` is not 7d, 30d or all, or `tz` is not an IANA timezone.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/analytics/chart-activity:
+    get:
+      tags: [Analytics]
+      summary: Activity chart dataset
+      description: |
+        Time series for the activity chart (Chart.js / Recharts): one row per local day for the last 7 or 30 days,
+        oldest first, today last. `data` is the array itself. Days without activity are present with zeros, so the
+        time axis never has gaps; a new account gets an all-zero series (never 404).
+        `focusMinutes` sums `COMPLETED` sessions started that day; `tasksCompleted` counts tasks whose `completedAt`
+        falls on that day. Same rows as `/api/analytics/daily-activity`.
+
+        PRD names: `date`, `focus_minutes`, `tasks_completed`.
+      operationId: getChartActivity
+      parameters:
+        - name: days
+          in: query
+          description: Number of local days, including today.
+          schema:
+            type: integer
+            enum: [7, 30]
+            default: 7
+        - $ref: '#/components/parameters/AnalyticsTz'
+      responses:
+        '200':
+          description: The series.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChartActivityResponse'
+              example:
+                success: true
+                data:
+                  - { date: '2026-11-07', focusMinutes: 60, tasksCompleted: 2 }
+                  - { date: '2026-11-08', focusMinutes: 90, tasksCompleted: 4 }
+                  - { date: '2026-11-09', focusMinutes: 0, tasksCompleted: 0 }
+                error: null
+                timestamp: '2026-11-13T09:00:00.000Z'
+        '400':
+          description: '`VALIDATION_ERROR`: `days` is not 7 or 30, or `tz` is not an IANA timezone.'
           content:
             application/json:
               schema:
@@ -2155,7 +2206,8 @@ components:
     CourseBreakdownItem:
       type: object
       additionalProperties: false
-      required: [courseId, courseCode, courseName, focusMinutes, completedItems, totalItems, progressPct]
+      required:
+        [courseId, courseCode, courseName, focusMinutes, completedItems, totalItems, progressPct, completedTasks, totalTasks, taskProgressPct]
       properties:
         courseId:
           type: integer
@@ -2178,6 +2230,20 @@ components:
           type: integer
           minimum: 0
           maximum: 100
+          description: '`floor(completedItems * 100 / totalItems)`, 0 when `totalItems` is 0.'
+        completedTasks:
+          type: integer
+          minimum: 0
+          description: Tasks of the course with status `DONE`.
+        totalTasks:
+          type: integer
+          minimum: 0
+          description: All tasks of the course.
+        taskProgressPct:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: '`floor(completedTasks * 100 / totalTasks)`, 0 when `totalTasks` is 0 (WBS 4.1.1).'
 
     AnalyticsOverview:
       type: object
@@ -2239,22 +2305,35 @@ components:
                 days:
                   type: array
                   items:
-                    type: object
-                    additionalProperties: false
-                    required: [date, focusMinutes, tasksCompleted]
-                    properties:
-                      date:
-                        type: string
-                        format: date
-                        example: '2026-11-12'
-                      focusMinutes:
-                        type: integer
-                        minimum: 0
-                        example: 90
-                      tasksCompleted:
-                        type: integer
-                        minimum: 0
-                        example: 3
+                    $ref: '#/components/schemas/ActivityDay'
+
+    ActivityDay:
+      type: object
+      additionalProperties: false
+      required: [date, focusMinutes, tasksCompleted]
+      properties:
+        date:
+          type: string
+          format: date
+          description: Local calendar day in `tz`.
+          example: '2026-11-12'
+        focusMinutes:
+          type: integer
+          minimum: 0
+          example: 90
+        tasksCompleted:
+          type: integer
+          minimum: 0
+          example: 3
+
+    ChartActivityResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ActivityDay'
 
     Suggestion:
       type: object

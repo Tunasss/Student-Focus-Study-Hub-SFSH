@@ -1,0 +1,6 @@
+{
+  "pull_request": {
+    "head": { "ref": "feat/3.4-session-logging" },
+    "base": { "ref": "main" }
+  }
+}

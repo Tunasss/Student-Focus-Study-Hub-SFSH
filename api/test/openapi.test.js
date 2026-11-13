@@ -327,7 +327,7 @@ describe('responses match openapi.yaml (Rule 02 envelope)', () => {
     });
   });
 
-  describe('sessions, analytics, search (WBS 3.4)', () => {
+  describe('sessions, analytics, search (WBS 3.4, 4.1)', () => {
     let courseId;
 
     before(async () => {
@@ -364,6 +364,17 @@ describe('responses match openapi.yaml (Rule 02 envelope)', () => {
       assertMatchesSpec(res, 'get', route);
       assertMatchesSpec(await auth(request(app).get(route)), 'get', route); // 7d
       assertMatchesSpec(await auth(request(app).get(`${route}?range=1y`)), 'get', route); // 400
+      assertMatchesSpec(await request(app).get(route), 'get', route); // 401
+    });
+
+    test('GET /api/analytics/chart-activity', async () => {
+      const route = '/api/analytics/chart-activity';
+      const res = await auth(request(app).get(`${route}?days=30`));
+      assert.equal(res.body.data.length, 30);
+      assert.ok(res.body.data.some((d) => d.focusMinutes > 0));
+      assertMatchesSpec(res, 'get', route);
+      assertMatchesSpec(await auth(request(app).get(route)), 'get', route); // 7
+      assertMatchesSpec(await auth(request(app).get(`${route}?days=14`)), 'get', route); // 400
       assertMatchesSpec(await request(app).get(route), 'get', route); // 401
     });
 

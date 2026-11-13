@@ -1,8 +1,12 @@
-// WBS 3.4.1 — pure analytics math: progress formula, streaks, zero-filled series, local days.
+// WBS 3.4.1 / 4.1.3 — pure analytics math: progress formula (incl. large data), GROUP BY helpers, streaks,
+// zero-filled series, local days.
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const {
   progressPct,
+  totalMinutes,
+  minutesByCourse,
+  statusCountsByCourse,
   courseBreakdown,
   currentStreak,
   studyDatesOf,
@@ -37,8 +41,38 @@ describe('progressPct', () => {
   });
 });
 
+// GROUP BY rows as Prisma returns them.
+const focus = (courseId, minutes) => ({ courseId, _sum: { minutes } });
+const counted = (courseId, status, n) => ({ courseId, status, _count: { _all: n } });
+
+describe('GROUP BY helpers', () => {
+  test('minutesByCourse skips free focus (courseId null); totalMinutes keeps it', () => {
+    const groups = [focus(2, 50), focus(1, 10), focus(null, 99)];
+    assert.deepEqual([...minutesByCourse(groups)], [[2, 50], [1, 10]]);
+    assert.equal(totalMinutes(groups), 159);
+  });
+
+  test('a null SUM (no non-null values) counts as 0', () => {
+    assert.equal(totalMinutes([focus(1, null)]), 0);
+    assert.equal(minutesByCourse([focus(1, null)]).get(1), 0);
+    assert.equal(totalMinutes([]), 0);
+  });
+
+  test('statusCountsByCourse: DONE is completed, every status is in the total', () => {
+    const counts = statusCountsByCourse([
+      counted(1, 'DONE', 3),
+      counted(1, 'TODO', 2),
+      counted(1, 'OVERDUE', 1),
+      counted(2, 'DOING', 4),
+    ]);
+    assert.deepEqual(counts.get(1), { completed: 3, total: 6 });
+    assert.deepEqual(counts.get(2), { completed: 0, total: 4 });
+    assert.equal(counts.get(3), undefined);
+  });
+});
+
 describe('courseBreakdown', () => {
-  test('one row per course, DONE topics + tasks over all topics + tasks, sorted by focus minutes', () => {
+  test('one row per course: topics + tasks progress, task-only progress, sorted by focus minutes', () => {
     const rows = courseBreakdown(
       [
         { id: 1, code: 'A', name: 'Algebra' },
@@ -46,33 +80,92 @@ describe('courseBreakdown', () => {
         { id: 3, code: null, name: 'Art' },
       ],
       {
-        sessions: [
-          { courseId: 2, minutes: 25 },
-          { courseId: 2, minutes: 25 },
-          { courseId: 1, minutes: 10 },
-          { courseId: null, minutes: 99 },
-        ],
-        topics: [
-          { courseId: 1, status: 'DONE' },
-          { courseId: 1, status: 'DOING' },
-          { courseId: 2, status: 'TODO' },
-        ],
-        tasks: [
-          { courseId: 1, status: 'DONE' },
-          { courseId: 1, status: 'OVERDUE' },
-          { courseId: 2, status: 'DONE' },
-        ],
+        minutes: minutesByCourse([focus(2, 50), focus(1, 10), focus(null, 99)]),
+        topicCounts: statusCountsByCourse([counted(1, 'DONE', 1), counted(1, 'DOING', 1), counted(2, 'TODO', 1)]),
+        taskCounts: statusCountsByCourse([counted(1, 'DONE', 1), counted(1, 'OVERDUE', 1), counted(2, 'DONE', 1)]),
       },
     );
+    const base = { completedTasks: 0, totalTasks: 0, taskProgressPct: 0 };
     assert.deepEqual(rows, [
-      { courseId: 2, courseCode: null, courseName: 'Biology', focusMinutes: 50, completedItems: 1, totalItems: 2, progressPct: 50 },
-      { courseId: 1, courseCode: 'A', courseName: 'Algebra', focusMinutes: 10, completedItems: 2, totalItems: 4, progressPct: 50 },
-      { courseId: 3, courseCode: null, courseName: 'Art', focusMinutes: 0, completedItems: 0, totalItems: 0, progressPct: 0 },
+      { courseId: 2, courseCode: null, courseName: 'Biology', focusMinutes: 50, completedItems: 1, totalItems: 2, progressPct: 50, ...base, completedTasks: 1, totalTasks: 1, taskProgressPct: 100 },
+      { courseId: 1, courseCode: 'A', courseName: 'Algebra', focusMinutes: 10, completedItems: 2, totalItems: 4, progressPct: 50, ...base, completedTasks: 1, totalTasks: 2, taskProgressPct: 50 },
+      { courseId: 3, courseCode: null, courseName: 'Art', focusMinutes: 0, completedItems: 0, totalItems: 0, progressPct: 0, ...base },
     ]);
   });
 
-  test('no courses -> empty array', () => {
-    assert.deepEqual(courseBreakdown([], { sessions: [{ courseId: null, minutes: 5 }], topics: [], tasks: [] }), []);
+  test('no courses -> empty array; no groups -> zeros', () => {
+    assert.deepEqual(courseBreakdown([], { minutes: minutesByCourse([focus(null, 5)]) }), []);
+    const [row] = courseBreakdown([{ id: 7, code: null, name: 'New' }]);
+    assert.equal(row.focusMinutes, 0);
+    assert.equal(row.progressPct, 0);
+    assert.equal(row.taskProgressPct, 0);
+  });
+});
+
+// WBS 4.1.3 test 2: progress maths on a large data set.
+describe('progress with large data (WBS 4.1.3)', () => {
+  // Deterministic pseudo-random generator so the data set is the same on every run.
+  function lcg(seed) {
+    let x = seed;
+    return () => (x = (x * 1103515245 + 12345) % 2147483648) / 2147483648;
+  }
+
+  test('taskProgressPct and progressPct are exact for 10,000 tasks and 5,000 topics over 40 courses', () => {
+    const rand = lcg(42);
+    const COURSES = 40;
+    const courses = Array.from({ length: COURSES }, (_, i) => ({ id: i + 1, code: `C${i + 1}`, name: `Course ${String(i + 1).padStart(2, '0')}` }));
+    const statuses = ['TODO', 'DOING', 'DONE', 'OVERDUE'];
+    // Course 40 has no tasks at all; course 39 has only DONE tasks.
+    const tasks = Array.from({ length: 10000 }, () => {
+      const courseId = 1 + Math.floor(rand() * (COURSES - 1));
+      return { courseId, status: courseId === 39 ? 'DONE' : statuses[Math.floor(rand() * 4)] };
+    });
+    const topics = Array.from({ length: 5000 }, () => ({
+      courseId: 1 + Math.floor(rand() * COURSES),
+      status: statuses[Math.floor(rand() * 3)],
+    }));
+
+    // What GROUP BY course_id, status returns.
+    const group = (rows) => {
+      const m = new Map();
+      for (const r of rows) {
+        const k = `${r.courseId}|${r.status}`;
+        m.set(k, (m.get(k) ?? 0) + 1);
+      }
+      return [...m].map(([k, n]) => counted(Number(k.split('|')[0]), k.split('|')[1], n));
+    };
+    const rows = courseBreakdown(courses, {
+      topicCounts: statusCountsByCourse(group(topics)),
+      taskCounts: statusCountsByCourse(group(tasks)),
+    });
+
+    assert.equal(rows.length, COURSES);
+    for (const row of rows) {
+      const myTasks = tasks.filter((t) => t.courseId === row.courseId);
+      const myTopics = topics.filter((t) => t.courseId === row.courseId);
+      const doneTasks = myTasks.filter((t) => t.status === 'DONE').length;
+      const doneItems = doneTasks + myTopics.filter((t) => t.status === 'DONE').length;
+
+      assert.equal(row.totalTasks, myTasks.length);
+      assert.equal(row.completedTasks, doneTasks);
+      assert.equal(row.totalItems, myTasks.length + myTopics.length);
+      assert.equal(row.completedItems, doneItems);
+      // Reference: integer floor without floating point.
+      const ref = (done, total) => (total === 0 ? 0 : (done * 100 - ((done * 100) % total)) / total);
+      assert.equal(row.taskProgressPct, ref(doneTasks, myTasks.length), `course ${row.courseId}`);
+      assert.equal(row.progressPct, ref(doneItems, myTasks.length + myTopics.length), `course ${row.courseId}`);
+      assert.ok(Number.isInteger(row.taskProgressPct) && row.taskProgressPct >= 0 && row.taskProgressPct <= 100);
+    }
+    assert.equal(rows.reduce((s, r) => s + r.totalTasks, 0), 10000);
+    assert.equal(rows.find((r) => r.courseId === 40).taskProgressPct, 0); // no tasks: 0, not NaN
+    assert.equal(rows.find((r) => r.courseId === 39).taskProgressPct, 100);
+  });
+
+  test('never reaches 100 until every task is done, even with huge counts', () => {
+    assert.equal(progressPct(999999, 1000000), 99);
+    assert.equal(progressPct(1000000, 1000000), 100);
+    assert.equal(progressPct(1, 1000000), 0);
+    assert.equal(progressPct(570000, 1000000), 57);
   });
 });
 

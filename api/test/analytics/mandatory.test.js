@@ -81,6 +81,20 @@ describe('3.4.3 case 2: multi-course aggregation', () => {
         { courseId: empty.id, focusMinutes: 0, completedItems: 0, totalItems: 0, progressPct: 0 },
       ],
     );
+    // WBS 4.1.1: task-only progress per course (7 of 10 tasks done in DSA; Databases and Ethics have no tasks).
+    assert.deepEqual(
+      week.courseBreakdown.map(({ courseId, completedTasks, totalTasks, taskProgressPct }) => ({
+        courseId,
+        completedTasks,
+        totalTasks,
+        taskProgressPct,
+      })),
+      [
+        { courseId: dsa.id, completedTasks: 7, totalTasks: 10, taskProgressPct: 70 },
+        { courseId: db.id, completedTasks: 0, totalTasks: 0, taskProgressPct: 0 },
+        { courseId: empty.id, completedTasks: 0, totalTasks: 0, taskProgressPct: 0 },
+      ],
+    );
     assert.equal(week.courseBreakdown[0].courseName, 'Data Structures & Algorithms');
     assert.equal(week.courseBreakdown[0].courseCode, 'CS201');
 
@@ -150,6 +164,8 @@ describe('3.4.3 case 4: tenant isolation', () => {
     assert.equal(a.currentStreakDays, 1);
     assert.deepEqual(a.courseBreakdown.map((c) => c.courseId), [aliceCourse.id]);
     assert.equal(a.courseBreakdown[0].progressPct, 50);
+    assert.equal(a.courseBreakdown[0].totalTasks, 0);
+    assert.equal(a.courseBreakdown[0].taskProgressPct, 0);
 
     const days = (await alice.get('/api/analytics/daily-activity')).body.data.days;
     assert.equal(days.reduce((s, d) => s + d.focusMinutes, 0), 25);
@@ -159,6 +175,9 @@ describe('3.4.3 case 4: tenant isolation', () => {
     assert.equal(b.totalFocusMinutes, 500);
     assert.equal(b.currentStreakDays, 5);
     assert.deepEqual(b.courseBreakdown.map((c) => c.courseId), [bobCourse.id]);
+    assert.equal(b.courseBreakdown[0].completedTasks, 1);
+    assert.equal(b.courseBreakdown[0].totalTasks, 2);
+    assert.equal(b.courseBreakdown[0].taskProgressPct, 50);
   });
 
   test('there is no way to ask for another user: user-ish query params are rejected or ignored', async () => {
@@ -172,7 +191,7 @@ describe('3.4.3 case 4: tenant isolation', () => {
 
   test('analytics require a bearer token', async () => {
     const request = require('supertest');
-    for (const path of ['/api/analytics/overview', '/api/analytics/daily-activity']) {
+    for (const path of ['/api/analytics/overview', '/api/analytics/daily-activity', '/api/analytics/chart-activity']) {
       const res = await request(ctx.app).get(path);
       assert.equal(res.status, 401);
       assert.equal(res.body.error.code, 'UNAUTHORIZED');

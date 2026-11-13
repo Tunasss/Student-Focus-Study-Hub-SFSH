@@ -67,6 +67,32 @@ function createFakePrisma() {
     return out;
   }
 
+  // Prisma groupBy: one group per distinct `by` tuple among the matching rows (null is a group of its own).
+  // _sum.<field> is null when the group has no non-null values, like SQL SUM; _count._all counts rows.
+  function groupBy(rows, { by, where, _sum, _count }) {
+    const groups = new Map();
+    for (const row of rows.filter((r) => matchesWhere(r, where))) {
+      const key = JSON.stringify(by.map((f) => row[f] ?? null));
+      if (!groups.has(key)) groups.set(key, { keys: Object.fromEntries(by.map((f) => [f, row[f] ?? null])), rows: [] });
+      groups.get(key).rows.push(row);
+    }
+    return [...groups.values()].map(({ keys, rows: members }) => {
+      const out = { ...keys };
+      if (_sum) {
+        out._sum = Object.fromEntries(
+          Object.keys(_sum).map((f) => {
+            const values = members.map((r) => r[f]).filter((v) => v !== null && v !== undefined);
+            return [f, values.length ? values.reduce((a, b) => a + b, 0) : null];
+          }),
+        );
+      }
+      if (_count) out._count = { _all: members.length };
+      return out;
+    });
+  }
+
+  const count = (rows, { where } = {}) => rows.filter((r) => matchesWhere(r, where)).length;
+
   function sortBy(rows, orderBy = []) {
     const keys = Array.isArray(orderBy) ? orderBy : [orderBy];
     return [...rows].sort((a, b) => {
@@ -185,6 +211,9 @@ function createFakePrisma() {
         }
         return { count: before - topics.length };
       },
+      async groupBy(args) {
+        return groupBy(topics, args);
+      },
     },
     task: {
       async findMany({ where, include, orderBy, take, select }) {
@@ -210,10 +239,22 @@ function createFakePrisma() {
         if (index === -1) throw recordNotFound();
         return tasks.splice(index, 1)[0];
       },
+      async groupBy(args) {
+        return groupBy(tasks, args);
+      },
+      async count(args) {
+        return count(tasks, args);
+      },
     },
     studySession: {
       async findMany({ where, orderBy, take, select }) {
         return query(sessions, { where, orderBy, take, select });
+      },
+      async groupBy(args) {
+        return groupBy(sessions, args);
+      },
+      async count(args) {
+        return count(sessions, args);
       },
       async create({ data }) {
         const session = { id: ids.session++, courseId: null, topicId: null, taskId: null, ...data };

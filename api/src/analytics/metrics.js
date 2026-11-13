@@ -1,6 +1,6 @@
-// WBS 3.4.1 — pure aggregation math for study analytics (no I/O, easy to unit test).
+// WBS 3.4.1 / 4.1.1 — pure aggregation math for study analytics (no I/O, easy to unit test).
 //
-// Inputs are rows already scoped to one user by analyticsRepo.js (Rule 06).
+// Inputs are rows and GROUP BY results already scoped to one user by analyticsRepo.js (Rule 06).
 
 const { localDate, addDays, lastNDays } = require('./dates');
 
@@ -11,49 +11,61 @@ function progressPct(completed, total) {
   return Math.floor((completed * 100) / total);
 }
 
-const sumMinutes = (sessions) => sessions.reduce((sum, s) => sum + s.minutes, 0);
+// Total minutes over focus groups (see minutesByCourse), including the group without a course.
+const totalMinutes = (groups) => groups.reduce((sum, g) => sum + (g._sum?.minutes ?? 0), 0);
 
-// Map courseId -> focus minutes. Sessions without a course (free focus) are skipped here;
-// they still count towards the user's total.
-function focusMinutesByCourse(sessions) {
+// Rows of studySession.groupBy({ by: ['courseId'], _sum: { minutes } }) -> Map courseId -> minutes.
+// The group with courseId null (free focus) is skipped: it counts towards the user's total only.
+function minutesByCourse(groups) {
   const byCourse = new Map();
-  for (const s of sessions) {
-    if (s.courseId === null || s.courseId === undefined) continue;
-    byCourse.set(s.courseId, (byCourse.get(s.courseId) ?? 0) + s.minutes);
+  for (const g of groups) {
+    if (g.courseId === null || g.courseId === undefined) continue;
+    byCourse.set(g.courseId, (byCourse.get(g.courseId) ?? 0) + (g._sum?.minutes ?? 0));
   }
   return byCourse;
 }
 
-// Map courseId -> { completed, total } over the course's topics and tasks (DONE = completed).
-function itemCountsByCourse(topics, tasks) {
+// Rows of <topic|task>.groupBy({ by: ['courseId', 'status'], _count: { _all } })
+//   -> Map courseId -> { completed, total }, where status DONE is completed.
+function statusCountsByCourse(groups) {
   const counts = new Map();
-  const bump = (courseId, done) => {
-    const c = counts.get(courseId) ?? { completed: 0, total: 0 };
-    c.total += 1;
-    if (done) c.completed += 1;
-    counts.set(courseId, c);
-  };
-  for (const t of topics) bump(t.courseId, t.status === 'DONE');
-  for (const t of tasks) bump(t.courseId, t.status === 'DONE');
+  for (const g of groups) {
+    const n = g._count?._all ?? 0;
+    const c = counts.get(g.courseId) ?? { completed: 0, total: 0 };
+    c.total += n;
+    if (g.status === 'DONE') c.completed += n;
+    counts.set(g.courseId, c);
+  }
   return counts;
 }
 
+const NO_ITEMS = Object.freeze({ completed: 0, total: 0 });
+
 // One row per course: focus minutes in the range + all-time progress.
+//   minutes:     Map courseId -> focus minutes (minutesByCourse)
+//   topicCounts: Map courseId -> { completed, total } over topics (statusCountsByCourse)
+//   taskCounts:  Map courseId -> { completed, total } over tasks
+// progressPct covers topics + tasks (what the dashboard shows); taskProgressPct covers tasks only
+// (WBS 4.1.1: completed tasks / assigned tasks per course).
 // Sorted by focus minutes (desc), then name, then id so the order is stable.
-function courseBreakdown(courses, { sessions, topics, tasks }) {
-  const minutes = focusMinutesByCourse(sessions);
-  const items = itemCountsByCourse(topics, tasks);
+function courseBreakdown(courses, { minutes = new Map(), topicCounts = new Map(), taskCounts = new Map() } = {}) {
   return courses
     .map((course) => {
-      const { completed, total } = items.get(course.id) ?? { completed: 0, total: 0 };
+      const topic = topicCounts.get(course.id) ?? NO_ITEMS;
+      const task = taskCounts.get(course.id) ?? NO_ITEMS;
+      const completedItems = topic.completed + task.completed;
+      const totalItems = topic.total + task.total;
       return {
         courseId: course.id,
         courseCode: course.code ?? null,
         courseName: course.name,
         focusMinutes: minutes.get(course.id) ?? 0,
-        completedItems: completed,
-        totalItems: total,
-        progressPct: progressPct(completed, total),
+        completedItems,
+        totalItems,
+        progressPct: progressPct(completedItems, totalItems),
+        completedTasks: task.completed,
+        totalTasks: task.total,
+        taskProgressPct: progressPct(task.completed, task.total),
       };
     })
     .sort((a, b) => b.focusMinutes - a.focusMinutes || a.courseName.localeCompare(b.courseName) || a.courseId - b.courseId);
@@ -97,9 +109,9 @@ function dailySeries({ sessions, completedTasks, today, days, tz }) {
 
 module.exports = {
   progressPct,
-  sumMinutes,
-  focusMinutesByCourse,
-  itemCountsByCourse,
+  totalMinutes,
+  minutesByCourse,
+  statusCountsByCourse,
   courseBreakdown,
   currentStreak,
   studyDatesOf,

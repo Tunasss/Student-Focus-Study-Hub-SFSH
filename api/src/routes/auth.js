@@ -50,7 +50,26 @@ function authRouter({ prisma }) {
       throw new ApiError(401, 'INVALID_CREDENTIALS', 'Email or password is incorrect');
     }
 
-    res.json(ok({ token: signToken(user), user: publicUser(user) }));
+    let authenticatedUser = user;
+    const demoEmail = (process.env.SEED_USER_EMAIL || 'student@sfsh.dev').toLowerCase();
+    if (email.toLowerCase() === demoEmail && typeof prisma.topic?.count === 'function') {
+      try {
+        const subCount = await prisma.topic.count({
+          where: { course: { userId: user.id }, parentId: { not: null } },
+        });
+        if (subCount === 0) {
+          const { seedDemoUser } = require('../../prisma/seed');
+          const seeded = await seedDemoUser(prisma, { email });
+          if (seeded?.user) {
+            authenticatedUser = seeded.user;
+          }
+        }
+      } catch (err) {
+        console.error('[auth] Auto-seed demo check failed:', err.message);
+      }
+    }
+
+    res.json(ok({ token: signToken(authenticatedUser), user: publicUser(authenticatedUser) }));
   });
 
   router.get('/me', requireAuth, async (req, res) => {

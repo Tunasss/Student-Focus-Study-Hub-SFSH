@@ -7,7 +7,7 @@ services:
     rootDir: api
     plan: free
     region: singapore
-    buildCommand: npm ci && npx prisma generate && npx prisma db push --skip-generate
+    buildCommand: npm ci && npx prisma generate && npx prisma db push --skip-generate && (node prisma/seed.js || true)
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:

@@ -531,10 +531,6 @@ export function DeepFocusPage() {
         ? (t.taskMarkedDone ? t.taskMarkedDone(item.title) : `Marked "${item.title}" as DONE! 🎉`)
         : t.topicMarkedDone(item.title)
     );
-    setGenreSwitchNotification({
-      title: t.topicMarkedDone ? t.topicMarkedDone(item.title) : `Marked "${item.title}" as DONE! 🎉`,
-      icon: '✓',
-    });
 
     if (type === 'subtopic' && item) {
       setCourseTopics((prev) =>
@@ -596,10 +592,6 @@ export function DeepFocusPage() {
       audioMixer.playCompletionChime();
       const title = subTopicToComplete.title || 'Sub-chapter';
       setSessionLogNotice(t.topicMarkedDone ? t.topicMarkedDone(title) : `Marked "${title}" as DONE! 🎉`);
-      setGenreSwitchNotification({
-        title: t.topicMarkedDone ? t.topicMarkedDone(title) : `Marked "${title}" as DONE! 🎉`,
-        icon: '✓',
-      });
 
       const updatedList = courseTopics.map((tp) =>
         String(tp.id) === String(subTopicToComplete.id) ? { ...tp, status: 'DONE' } : tp

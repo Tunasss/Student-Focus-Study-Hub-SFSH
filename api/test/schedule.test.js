@@ -75,6 +75,45 @@ describe('POST /api/schedule/import', () => {
     assert.equal(prisma.schedules.length, 6);
   });
 
+  test('imports Vietnamese university timetable merging theory and lab sections', async () => {
+    const uitIcs = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//UIT Portal//Lich giang day//VI',
+      'BEGIN:VEVENT',
+      'UID:uit-theory-1@portal.uit.edu.vn',
+      'DTSTART:20260910T073000',
+      'DTEND:20260910T104500',
+      'RRULE:FREQ=WEEKLY;INTERVAL=1;UNTIL=20261128T235959',
+      'SUMMARY:Các hệ cơ sở dữ liệu phân tán (CS5433.R11.CTTT)',
+      'LOCATION:C206',
+      'END:VEVENT',
+      'BEGIN:VEVENT',
+      'UID:uit-lab-1@portal.uit.edu.vn',
+      'DTSTART:20261001T130000',
+      'DTEND:20261001T170000',
+      'RRULE:FREQ=WEEKLY;INTERVAL=2;UNTIL=20261212T235959',
+      'SUMMARY:Các hệ cơ sở dữ liệu phân tán (CS5433.R11.CTTT.1)',
+      'LOCATION:B5.04',
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+
+    const res = await request(app)
+      .post('/api/schedule/import?replace=true')
+      .set('Authorization', 'Bearer ' + token)
+      .attach('file', Buffer.from(uitIcs), 'TKB_HK1_2026-2027.ics');
+
+    assert.equal(res.status, 201);
+    assert.equal(res.body.data.eventsRead, 2);
+    // Theory and lab merged into 1 course with 2 schedules
+    assert.equal(res.body.data.coursesCreated, 1);
+    assert.equal(res.body.data.schedulesImported, 2);
+    assert.equal(res.body.data.courses[0].code, 'CS5433');
+    assert.equal(res.body.data.courses[0].name, 'Các hệ cơ sở dữ liệu phân tán');
+    assert.equal(res.body.data.courses[0].schedules, 2);
+  });
+
   test('each user gets their own courses (Rule 06)', async () => {
     await importIcs();
     const res = await importIcs(SAMPLE, 'sample-timetable.ics', otherToken);

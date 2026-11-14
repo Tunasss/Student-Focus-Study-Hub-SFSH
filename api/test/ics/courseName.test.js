@@ -38,3 +38,24 @@ test('identical SUMMARY values share one course key', () => {
     parseCourseSummary('CS101 Introduction to Programming').key,
   );
 });
+
+test('parses Vietnamese university course naming formats (e.g. UIT)', () => {
+  const lecture = parseCourseSummary('Các hệ cơ sở dữ liệu phân tán (CS5433.R11.CTTT)');
+  assert.equal(lecture.code, 'CS5433');
+  assert.equal(lecture.name, 'Các hệ cơ sở dữ liệu phân tán');
+
+  const lab = parseCourseSummary('Các hệ cơ sở dữ liệu phân tán (CS5433.R11.CTTT.1)');
+  assert.equal(lab.code, 'CS5433');
+  assert.equal(lab.name, 'Các hệ cơ sở dữ liệu phân tán');
+
+  // Both lecture and lab share the exact same course key to merge under one course
+  assert.equal(lecture.key, lab.key);
+  assert.equal(lecture.key, 'cs5433 các hệ cơ sở dữ liệu phân tán');
+});
+
+test('parses leading bracketed course code', () => {
+  const res = parseCourseSummary('[CS101] Web Application Development');
+  assert.equal(res.code, 'CS101');
+  assert.equal(res.name, 'Web Application Development');
+  assert.equal(res.key, 'cs101 web application development');
+});

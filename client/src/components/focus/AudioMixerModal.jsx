@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLanguage } from '../../i18n/languageContext';
 import { LOFI_GENRES, audioMixer } from '../../utils/audioMixer';
+import { GenreIcon, AudioTrackIcon, RadioIcon, MusicNoteIcon, LeafIcon } from '../icons/AppIcons';
 
 export function AudioMixerModal({ isOpen, onClose }) {
   const { lang } = useLanguage();
@@ -144,7 +145,7 @@ export function AudioMixerModal({ isOpen, onClose }) {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-sm">📻</span>
+                <RadioIcon className="w-4 h-4 text-primary" />
                 <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-primary">
                   {t.lofiSection}
                 </h3>
@@ -182,8 +183,10 @@ export function AudioMixerModal({ isOpen, onClose }) {
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{genre.icon}</span>
+                      <div className="flex items-center gap-2.5">
+                        <div className={`p-1.5 rounded-lg shrink-0 ${isSelected ? 'bg-primary/25 text-primary' : 'bg-surface-2 text-muted'}`}>
+                          <GenreIcon genreId={genre.id} className="w-5 h-5 text-current" />
+                        </div>
                         <div>
                           <p className="text-xs font-bold text-text leading-tight">{genre.name}</p>
                           <p className="text-[10px] text-muted">{genre.genre}</p>
@@ -211,7 +214,10 @@ export function AudioMixerModal({ isOpen, onClose }) {
 
             {/* Music Volume Slider */}
             <div className="flex items-center gap-3 pt-1 px-1">
-              <span className="text-xs text-muted">🎵 {t.musicVolume}:</span>
+              <span className="text-xs text-muted flex items-center gap-1.5">
+                <MusicNoteIcon className="w-3.5 h-3.5 text-primary" />
+                <span>{t.musicVolume}:</span>
+              </span>
               <input
                 type="range"
                 min="0"
@@ -233,7 +239,7 @@ export function AudioMixerModal({ isOpen, onClose }) {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-sm">🌿</span>
+                <LeafIcon className="w-4 h-4 text-primary" />
                 <div>
                   <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-primary">
                     {t.ambientSection}
@@ -269,11 +275,11 @@ export function AudioMixerModal({ isOpen, onClose }) {
                           onClick={() => handleToggleTrack(track.id)}
                           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border text-sm transition-all cursor-pointer ${
                             isPlaying
-                              ? 'border-primary bg-primary text-primary-fg shadow-xs scale-105'
+                              ? 'border-primary bg-primary text-black dark:text-black shadow-xs scale-105'
                               : 'border-border bg-surface text-muted hover:border-primary/40 hover:text-text'
                           }`}
                         >
-                          {track.icon}
+                          <AudioTrackIcon trackId={track.id} className="w-4.5 h-4.5" />
                         </button>
 
                         <div className="min-w-0">

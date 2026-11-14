@@ -488,6 +488,30 @@ export function createAudioMixer() {
       }
     },
 
+    randomizeGenre: function () {
+      const randomIdx = Math.floor(Math.random() * GENRE_ORDER.length);
+      const chosenGenre = GENRE_ORDER[randomIdx];
+      state.activeMusicId = chosenGenre;
+      state.currentTrackIndex = 0;
+      if (musicAudio) {
+        try {
+          musicAudio.pause();
+        } catch {
+          // ignore
+        }
+        musicAudio = null;
+      }
+      persist();
+      trackChangeListeners.forEach((listener) => {
+        try {
+          listener(state);
+        } catch {
+          // ignore
+        }
+      });
+      return chosenGenre;
+    },
+
     playMusic: function () {
       if (!musicAudio) {
         const src = getTrackSrc(state.activeMusicId, state.currentTrackIndex);
@@ -518,6 +542,10 @@ export function createAudioMixer() {
       }
       state.isMusicPlaying = false;
       persist();
+    },
+
+    isMusicPlaying: function () {
+      return !!state.isMusicPlaying;
     },
 
     setMusicVolume: function (vol) {

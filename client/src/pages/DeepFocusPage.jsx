@@ -208,6 +208,11 @@ export function DeepFocusPage() {
 
   // Sync active audio tracks indicator & subscribe to events (Pure reactive, zero polling intervals)
   useEffect(() => {
+    // Randomize initial Lo-Fi genre on launch if music is not already playing
+    if (!audioMixer.getState().isMusicPlaying) {
+      audioMixer.randomizeGenre();
+    }
+
     function updateMixer() {
       const state = audioMixer.getState();
       setMixerState(state);

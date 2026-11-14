@@ -3,6 +3,7 @@ import { useLanguage } from '../../i18n/languageContext';
 import { syllabusApi } from '../../lib/api';
 import { formatCourseInfo } from '../../utils/courseFormat';
 import { sortFilesNaturally, sortChaptersNaturally, extractChapterNumber } from '../../utils/chapterOrder';
+import { FileTextIcon, AlertTriangleIcon } from '../icons/AppIcons';
 
 export function SyllabusUploadModal({
   isOpen,
@@ -502,7 +503,7 @@ export function SyllabusUploadModal({
         <div className="p-6 overflow-y-auto space-y-5 grow">
           {error && (
             <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
-              <span>⚠️</span>
+              <AlertTriangleIcon className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
@@ -530,8 +531,8 @@ export function SyllabusUploadModal({
                   className="hidden"
                 />
 
-                <div className="w-16 h-16 rounded-2xl bg-primary/15 border border-primary/30 flex items-center justify-center text-3xl shadow-inner">
-                  📄
+                <div className="w-16 h-16 rounded-2xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary shadow-inner">
+                  <FileTextIcon className="w-8 h-8" />
                 </div>
 
                 <div className="space-y-1">
@@ -567,7 +568,7 @@ export function SyllabusUploadModal({
                         className="p-3 rounded-2xl bg-surface/80 border border-border/80 flex items-center justify-between gap-3 shadow-xs"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <span className="text-xl shrink-0">📑</span>
+                          <FileTextIcon className="w-4 h-4 text-primary shrink-0" />
                           <div className="truncate">
                             <p className="text-xs font-bold text-text truncate">{f.name}</p>
                             <p className="text-[10px] text-muted font-mono">
@@ -615,8 +616,9 @@ export function SyllabusUploadModal({
               {/* Dynamic real file progress bar */}
               <div className="w-full max-w-sm space-y-2">
                 <div className="flex items-center justify-between text-[11px] font-mono text-muted">
-                  <span className="truncate max-w-[240px] text-left">
-                    📄 {fileProgress.fileName || files[0]?.name || ''}
+                  <span className="truncate max-w-[240px] text-left flex items-center gap-1.5">
+                    <FileTextIcon className="w-3.5 h-3.5 text-muted shrink-0" />
+                    <span className="truncate">{fileProgress.fileName || files[0]?.name || ''}</span>
                   </span>
                   <span className="font-bold text-primary">{fileProgress.percent}%</span>
                 </div>
@@ -687,8 +689,9 @@ export function SyllabusUploadModal({
                             {t.chapterBadge} {ch.chapterNumber || ch.sortOrder || (chIdx + 1)}
                           </span>
                           {ch.sourceFile && (
-                            <span className="px-2 py-0.5 rounded-md bg-surface border border-border/70 text-[10px] text-muted font-mono truncate max-w-xs">
-                              📄 {ch.sourceFile}
+                            <span className="px-2 py-0.5 rounded-md bg-surface border border-border/70 text-[10px] text-muted font-mono truncate max-w-xs flex items-center gap-1">
+                              <FileTextIcon className="w-3 h-3 text-muted shrink-0" />
+                              <span className="truncate">{ch.sourceFile}</span>
                             </span>
                           )}
                         </div>

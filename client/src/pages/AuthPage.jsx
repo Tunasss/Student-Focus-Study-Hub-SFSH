@@ -6,6 +6,7 @@ import { useLanguage } from '../i18n/languageContext';
 import { LanguageToggle } from '../i18n/LanguageToggle';
 import { ThemeToggle } from '../theme/ThemeToggle';
 import { LotusIcon } from '../components/AppShell';
+import { ZapIcon, LeafIcon } from '../components/icons/AppIcons';
 
 const PASSWORD_MIN_LENGTH = 8;
 
@@ -193,7 +194,7 @@ export function AuthPage({ mode }) {
           <div className="pt-2 flex flex-wrap gap-3.5">
             <div className="auth-badge-pill glass-card rounded-2xl p-3.5 flex items-center gap-3 shadow-md">
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 text-primary">
-                ⚡
+                <ZapIcon className="w-4 h-4 text-primary" />
               </span>
               <div>
                 <p className="text-xs font-bold text-text">{dict.pill1Title}</p>
@@ -203,7 +204,7 @@ export function AuthPage({ mode }) {
 
             <div className="auth-badge-pill glass-card rounded-2xl p-3.5 flex items-center gap-3 shadow-md">
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-300">
-                🌿
+                <LeafIcon className="w-4 h-4 text-emerald-500" />
               </span>
               <div>
                 <p className="text-xs font-bold text-text">{dict.pill2Title}</p>

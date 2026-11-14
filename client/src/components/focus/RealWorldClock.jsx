@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLanguage } from '../../i18n/languageContext';
+import { CalendarIcon } from '../icons/AppIcons';
 
 export function RealWorldClock({ className = '' }) {
   const { lang } = useLanguage();
@@ -55,7 +56,7 @@ export function RealWorldClock({ className = '' }) {
 
       {/* Localized Date */}
       <p className="text-xs sm:text-sm font-semibold text-muted capitalize mt-1.5 flex items-center gap-1.5">
-        <span>📅</span>
+        <CalendarIcon className="w-3.5 h-3.5 text-primary shrink-0" />
         <span>{dateStr}</span>
       </p>
     </div>

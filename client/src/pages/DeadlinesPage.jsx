@@ -5,6 +5,7 @@ import { TaskCard } from '../components/deadlines/TaskCard';
 import { TaskFormModal } from '../components/deadlines/TaskFormModal';
 import { RecommendationBanner } from '../components/RecommendationBanner';
 import { ToastNotification } from '../components/syllabus/ToastNotification';
+import { CalendarIcon, CheckCircleIcon } from '../components/icons/AppIcons';
 import { useLanguage } from '../i18n/languageContext';
 import { scheduleApi, tasksApi } from '../lib/api';
 import { deduplicateSyllabusCourses, formatCourseInfo } from '../utils/courseFormat';
@@ -486,8 +487,8 @@ export function DeadlinesPage() {
         </div>
       ) : selectableCourses.length === 0 && tasks.length === 0 ? (
         <div className="glass-card rounded-3xl p-8 sm:p-12 border border-border/80 text-center space-y-4">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-xl">
-            📅
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-primary">
+            <CalendarIcon className="w-6 h-6" />
           </div>
           <div className="space-y-1.5">
             <h2 className="text-lg font-bold text-text">{t.noCoursesTitle}</h2>
@@ -502,8 +503,8 @@ export function DeadlinesPage() {
         </div>
       ) : tasks.length === 0 ? (
         <div className="glass-card rounded-3xl p-8 sm:p-12 border border-border/80 text-center space-y-4">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-xl">
-            ✓
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-primary">
+            <CheckCircleIcon className="w-6 h-6" />
           </div>
           <div className="space-y-1.5">
             <h2 className="text-lg font-bold text-text">{t.emptyTasksTitle}</h2>

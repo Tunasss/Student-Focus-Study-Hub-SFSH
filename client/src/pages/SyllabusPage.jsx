@@ -8,6 +8,7 @@ import { AddTopicModal } from '../components/syllabus/AddTopicModal';
 import { SyllabusUploadModal } from '../components/syllabus/SyllabusUploadModal';
 import { ToastNotification } from '../components/syllabus/ToastNotification';
 import { TaskFormModal } from '../components/deadlines/TaskFormModal';
+import { CalendarIcon, LightbulbIcon, BookOpenIcon, TrashIcon, FileTextIcon } from '../components/icons/AppIcons';
 import { useLanguage } from '../i18n/languageContext';
 import { scheduleApi, syllabusApi, tasksApi } from '../lib/api';
 import { deduplicateSyllabusCourses } from '../utils/courseFormat';
@@ -63,7 +64,7 @@ export function SyllabusPage() {
       reqTitle: 'No Enrolled Courses Found in Timetable',
       reqSubtitle:
         'The Syllabus module is synchronized directly with your weekly class schedule. You must have an active timetable imported to track curriculum topics and course mastery.',
-      reqAction: '📅 Open Timetable & Import (.ICS)',
+      reqAction: 'Open Timetable & Import (.ICS)',
       reqTip: 'Import your Google Calendar (.ics) file in the Timetable tab to automatically link your university courses.',
     },
     vi: {
@@ -91,7 +92,7 @@ export function SyllabusPage() {
       reqTitle: 'Chưa có môn học nào từ Thời khóa biểu',
       reqSubtitle:
         'Mô-đun Giáo trình được liên kết trực tiếp với Thời khóa biểu tuần của bạn. Bạn bắt buộc phải có thời khóa biểu để hệ thống tự động nhận diện và theo dõi tiến độ các môn học.',
-      reqAction: '📅 Mở Thời khóa biểu & Nhập file (.ICS)',
+      reqAction: 'Mở Thời khóa biểu & Nhập file (.ICS)',
       reqTip: 'Nhập file lịch học Google Calendar (.ics) bên trang Thời khóa biểu để tự động đồng bộ danh sách môn học.',
     },
   }[lang] || {
@@ -117,7 +118,7 @@ export function SyllabusPage() {
     reqBadge: 'TIMETABLE REQUIRED',
     reqTitle: 'No Courses in Timetable',
     reqSubtitle: 'Import a timetable to track syllabus topics.',
-    reqAction: '📅 Open Timetable',
+    reqAction: 'Open Timetable',
     reqTip: 'Import an .ics file to begin.',
   };
 
@@ -463,8 +464,8 @@ export function SyllabusPage() {
           {/* Subtle radiant background glow */}
           <div className="pointer-events-none absolute -top-20 -right-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
 
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/15 border border-primary/30 text-3xl shadow-inner">
-            📅
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/15 border border-primary/30 text-primary shadow-inner">
+            <CalendarIcon className="w-10 h-10 text-primary" />
           </div>
 
           <div className="space-y-2 max-w-lg mx-auto">
@@ -481,13 +482,15 @@ export function SyllabusPage() {
               to="/timetable"
               className="inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3 text-xs sm:text-sm font-bold text-primary-fg shadow-lg hover:opacity-90 transition-all cursor-pointer"
             >
+              <CalendarIcon className="w-4 h-4" />
               <span>{t.reqAction}</span>
             </Link>
           </div>
 
-          <p className="text-[11px] text-muted/80 max-w-sm mx-auto pt-2 border-t border-border/40">
-            💡 {t.reqTip}
-          </p>
+          <div className="text-[11px] text-muted/80 max-w-sm mx-auto pt-2 border-t border-border/40 flex items-center justify-center gap-1.5">
+            <LightbulbIcon className="w-3.5 h-3.5 text-primary shrink-0" />
+            <span>{t.reqTip}</span>
+          </div>
         </div>
       </div>
     );
@@ -552,8 +555,8 @@ export function SyllabusPage() {
           </div>
         ) : topics.length === 0 ? (
           <div className="glass-card rounded-3xl p-10 text-center space-y-3 border border-border/60">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary text-xl">
-              📖
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <BookOpenIcon className="w-6 h-6" />
             </div>
             <h4 className="text-base font-bold text-text">{t.noTopicsTitle}</h4>
             <p className="text-xs text-muted max-w-md mx-auto">{t.noTopicsDesc}</p>
@@ -631,16 +634,17 @@ export function SyllabusPage() {
         >
           <div className="glass-card border border-border/90 rounded-3xl p-6 sm:p-8 max-w-md w-full space-y-5 shadow-2xl relative">
             <div className="flex items-center gap-3.5">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-lg">
-                🗑️
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400">
+                <TrashIcon className="w-5 h-5" />
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="text-base sm:text-lg font-bold text-text truncate">
                   {t.deleteModalTitle}
                 </h3>
                 {chapterToDelete.sourceFile && (
-                  <p className="text-[11px] text-muted font-mono truncate">
-                    📄 {chapterToDelete.sourceFile}
+                  <p className="text-[11px] text-muted font-mono truncate flex items-center gap-1.5 mt-0.5">
+                    <FileTextIcon className="w-3.5 h-3.5 text-muted shrink-0" />
+                    <span>{chapterToDelete.sourceFile}</span>
                   </p>
                 )}
               </div>

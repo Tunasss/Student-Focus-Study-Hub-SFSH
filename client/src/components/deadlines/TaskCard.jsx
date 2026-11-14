@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../../i18n/languageContext';
 import { formatCourseInfo } from '../../utils/courseFormat';
 import { formatDaysLeftLabel, formatDeadlineDate, getUrgencyConfig } from '../../utils/deadlines';
+import { BookOpenIcon } from '../icons/AppIcons';
 
 export function TaskCard({
   task,
@@ -102,9 +103,9 @@ export function TaskCard({
             {task?.topic && (
               <Link
                 to="/syllabus"
-                className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/20 transition-colors truncate max-w-xs"
+                className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/20 transition-colors truncate max-w-xs"
               >
-                <span>📖</span>
+                <BookOpenIcon className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">{task.topic.title}</span>
               </Link>
             )}

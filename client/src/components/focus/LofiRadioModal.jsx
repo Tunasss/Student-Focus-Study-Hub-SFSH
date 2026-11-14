@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLanguage } from '../../i18n/languageContext';
 import { LOFI_GENRES, audioMixer } from '../../utils/audioMixer';
+import { GenreIcon, ZapIcon } from '../icons/AppIcons';
 
 export function LofiRadioModal({ isOpen, onClose }) {
   const { lang } = useLanguage();
@@ -137,7 +138,9 @@ export function LofiRadioModal({ isOpen, onClose }) {
                         : 'border-border/70 bg-surface/60 text-muted hover:text-white hover:border-primary/40'
                     }`}
                   >
-                    <span className="text-2xl mb-1">{genre.icon}</span>
+                    <div className={`p-2 rounded-xl mb-1.5 transition-colors ${isActive ? 'bg-primary/30 text-primary' : 'bg-surface-2 text-muted'}`}>
+                      <GenreIcon genreId={genreId} className="w-5 h-5 text-current" />
+                    </div>
                     <span className="text-xs font-bold truncate max-w-full leading-tight">
                       {genre.name}
                     </span>
@@ -156,12 +159,12 @@ export function LofiRadioModal({ isOpen, onClose }) {
               <div className="flex items-center gap-3.5 min-w-0">
                 {/* Vinyl / Album Art Animation */}
                 <div
-                  className={`relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-primary/50 bg-primary/20 dark:bg-[#1c2904] shadow-md ${
+                  className={`relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-primary/50 bg-primary/20 dark:bg-[#1c2904] text-primary shadow-md ${
                     mixerState.isMusicPlaying ? 'animate-spin-slow' : ''
                   }`}
                   style={{ animationDuration: '10s' }}
                 >
-                  <span className="text-2xl">{currentGenre.icon}</span>
+                  <GenreIcon genreId={currentGenre.id} className="w-7 h-7 text-primary" />
                   <div className="absolute inset-0 rounded-2xl border border-white/10 pointer-events-none" />
                 </div>
 
@@ -218,8 +221,8 @@ export function LofiRadioModal({ isOpen, onClose }) {
 
             {/* Auto-Advance Rule Note */}
             <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between text-[11px] text-muted font-mono">
-              <span className="flex items-center gap-1 text-primary">
-                <span>⚡</span>
+              <span className="flex items-center gap-1.5 text-primary">
+                <ZapIcon className="w-3.5 h-3.5 text-primary shrink-0" />
                 <span>
                   {isVi
                     ? 'Hết 10 bài sẽ tự động đổi sang thể loại tiếp theo'

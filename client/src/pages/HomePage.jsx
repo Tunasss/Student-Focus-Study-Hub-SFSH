@@ -6,6 +6,7 @@ import { useLanguage } from '../i18n/languageContext';
 import { LanguageToggle } from '../i18n/LanguageToggle';
 import { ThemeToggle } from '../theme/ThemeToggle';
 import { LotusIcon } from '../components/AppShell';
+import { HomeToolIcon, CalendarIcon, ClockIcon, TargetIcon, BookOpenIcon, ZapIcon, MapPinIcon, FileTextIcon } from '../components/icons/AppIcons';
 
 if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
   gsap.registerPlugin(ScrollTrigger);
@@ -115,14 +116,14 @@ const HOME_COPY = {
       tag: 'ACADEMIC IMPACT',
       title: 'More Study Done. Less Chaos to Manage.',
       callouts: {
-        topLeftTitle: '⚡ .ICS Auto-Parser',
+        topLeftTitle: '.ICS Auto-Parser',
         topLeftSub: '0.18s Sync · 11 Classes Mapped',
         topRightVal: '24.5 hrs',
         topRightLabel: 'Focused study time / week.',
         topRightBadge: '↑ +18% Flow',
-        midLeftTitle: '📅 Active Hours Engine',
+        midLeftTitle: 'Active Hours Engine',
         midLeftSub: '08:00 – 17:00 Protected',
-        midRightTitle: '🎧 432Hz Focus Studio',
+        midRightTitle: '432Hz Focus Studio',
         midRightSub: 'Pomodoro 25/5 Active',
         bottomLeftVal: '3.2x',
         bottomLeftLabel: 'Faster Schedule Organization',
@@ -159,7 +160,6 @@ const HOME_COPY = {
         {
           id: 'timetable',
           label: 'Weekly Classes',
-          icon: '📅',
           topStatTitle: "Today's Schedule",
           topStatNum: '5 Classes',
           topStatSub: 'Mapped',
@@ -185,7 +185,6 @@ const HOME_COPY = {
         {
           id: 'focus',
           label: 'Focus Studio',
-          icon: '⏱️',
           topStatTitle: 'Current Sprint',
           topStatNum: '25:00',
           topStatSub: 'Flow Mode',
@@ -211,7 +210,6 @@ const HOME_COPY = {
         {
           id: 'deadlines',
           label: 'Deadlines',
-          icon: '🎯',
           topStatTitle: 'Priority Queue',
           topStatNum: '3 Tasks',
           topStatSub: 'On Track',
@@ -237,7 +235,6 @@ const HOME_COPY = {
         {
           id: 'syllabus',
           label: 'Syllabus',
-          icon: '📚',
           topStatTitle: 'Course Modules',
           topStatNum: '15 Weeks',
           topStatSub: 'Structured',
@@ -420,14 +417,14 @@ const HOME_COPY = {
       tag: 'HIỆU QUẢ THỰC TẾ',
       title: 'Học tập Hiệu quả hơn. Giảm thiểu Rối loạn Lịch trình.',
       callouts: {
-        topLeftTitle: '⚡ Bộ Quét .ICS Tự Động',
+        topLeftTitle: 'Bộ Quét .ICS Tự Động',
         topLeftSub: '0.18s Đồng bộ · 11 Ca học',
         topRightVal: '24.5 giờ',
         topRightLabel: 'Giờ học tập trung / tuần.',
         topRightBadge: '↑ +18% Hiệu suất',
-        midLeftTitle: '📅 Khung Giờ Hoạt Động',
+        midLeftTitle: 'Khung Giờ Hoạt Động',
         midLeftSub: '08:00 – 17:00 Tối ưu hóa',
-        midRightTitle: '🎧 Sóng Âm 432Hz Focus',
+        midRightTitle: 'Sóng Âm 432Hz Focus',
         midRightSub: 'Pomodoro 25/5 Đang chạy',
         bottomLeftVal: '3.2x',
         bottomLeftLabel: 'Tốc độ Sắp xếp Lịch học',
@@ -464,7 +461,6 @@ const HOME_COPY = {
         {
           id: 'timetable',
           label: 'Lịch học Tuần',
-          icon: '📅',
           topStatTitle: 'Lịch học Hôm nay',
           topStatNum: '5 Ca học',
           topStatSub: 'Đã xếp lịch',
@@ -490,7 +486,6 @@ const HOME_COPY = {
         {
           id: 'focus',
           label: 'Phòng Focus',
-          icon: '⏱️',
           topStatTitle: 'Phiên Hiện tại',
           topStatNum: '25:00',
           topStatSub: 'Trạng thái Flow',
@@ -516,7 +511,6 @@ const HOME_COPY = {
         {
           id: 'deadlines',
           label: 'Hạn nộp bài',
-          icon: '🎯',
           topStatTitle: 'Hàng đợi Ưu tiên',
           topStatNum: '3 Bài tập',
           topStatSub: 'Đúng tiến độ',
@@ -542,7 +536,6 @@ const HOME_COPY = {
         {
           id: 'syllabus',
           label: 'Đề cương',
-          icon: '📚',
           topStatTitle: 'Tiến trình Học kỳ',
           topStatNum: '15 Tuần',
           topStatSub: 'Đã cấu trúc',
@@ -625,12 +618,12 @@ const HOME_COPY = {
 };
 
 const MARQUEE_PARTNERS = [
-  { icon: '📅', name: 'Google Calendar .ICS' },
-  { icon: '🏛️', name: 'University Portal Sync' },
-  { icon: '⏱️', name: 'Pomodoro 25/5 Studio' },
-  { icon: '📚', name: 'Syllabus Tracker' },
-  { icon: '🎯', name: 'Deadline Priority Radar' },
-  { icon: '⚡', name: 'Active Hours Engine' },
+  { iconType: 'calendar', name: 'Google Calendar .ICS' },
+  { iconType: 'building', name: 'University Portal Sync' },
+  { iconType: 'clock', name: 'Pomodoro 25/5 Studio' },
+  { iconType: 'book', name: 'Syllabus Tracker' },
+  { iconType: 'target', name: 'Deadline Priority Radar' },
+  { iconType: 'zap', name: 'Active Hours Engine' },
 ];
 
 const MINI_TIMETABLE_SLOTS = [
@@ -1009,8 +1002,9 @@ export function HomePage() {
                       <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
                         {t.hero.profileCard.coursesLabel}
                       </p>
-                      <span className="text-[11px] font-mono font-bold text-primary transition-all">
-                        📍 {activeCourseObj.room}
+                      <span className="text-[11px] font-mono font-bold text-primary transition-all inline-flex items-center gap-1">
+                        <MapPinIcon className="w-3 h-3 text-primary" />
+                        <span>{activeCourseObj.room}</span>
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -1044,10 +1038,10 @@ export function HomePage() {
                     </div>
                     <div className="flex items-center gap-2.5">
                       {[
-                        { icon: '📅', label: 'ICS Sync', bg: 'bg-primary/20 border-primary/40 text-primary' },
-                        { icon: '⏱️', label: 'Pomodoro', bg: 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' },
-                        { icon: '🎯', label: 'Deadlines', bg: 'bg-amber-500/20 border-amber-500/40 text-amber-400' },
-                        { icon: '📚', label: 'Syllabus', bg: 'bg-sky-500/20 border-sky-500/40 text-sky-400' },
+                        { iconType: 'calendar', label: 'ICS Sync', bg: 'bg-primary/20 border-primary/40 text-primary' },
+                        { iconType: 'clock', label: 'Pomodoro', bg: 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' },
+                        { iconType: 'target', label: 'Deadlines', bg: 'bg-amber-500/20 border-amber-500/40 text-amber-400' },
+                        { iconType: 'book', label: 'Syllabus', bg: 'bg-sky-500/20 border-sky-500/40 text-sky-400' },
                       ].map((tool, i) => (
                         <span
                           key={tool.label}
@@ -1056,7 +1050,7 @@ export function HomePage() {
                             pulseStep % 4 === i ? 'scale-115 ring-2 ring-primary/50' : ''
                           } ${tool.bg}`}
                         >
-                          {tool.icon}
+                          <HomeToolIcon type={tool.iconType} className="w-4 h-4" />
                         </span>
                       ))}
                     </div>
@@ -1079,7 +1073,7 @@ export function HomePage() {
                     pulseStep === idx ? 'text-primary' : 'text-muted/80 hover:text-text'
                   }`}
                 >
-                  <span>{item.icon}</span>
+                  <HomeToolIcon type={item.iconType} className="w-4 h-4 text-primary shrink-0" />
                   <span>{item.name}</span>
                 </div>
               ))}
@@ -1140,7 +1134,10 @@ export function HomePage() {
                               <p className="text-[10px] font-extrabold text-text truncate mt-0.5">
                                 {slot.code}
                               </p>
-                              <p className="text-[9px] opacity-80">📍 {slot.room}</p>
+                              <p className="text-[9px] opacity-80 inline-flex items-center gap-1">
+                                <MapPinIcon className="w-2.5 h-2.5 text-primary" />
+                                <span>{slot.room}</span>
+                              </p>
                             </div>
                           );
                         })}
@@ -1376,7 +1373,10 @@ export function HomePage() {
                         }`}
                       >
                         <div className="flex items-center justify-between gap-2 text-xs font-bold">
-                          <span className="truncate text-text">📄 {file.name}</span>
+                          <span className="truncate text-text inline-flex items-center gap-1.5">
+                            <FileTextIcon className="w-3.5 h-3.5 text-muted shrink-0" />
+                            <span className="truncate">{file.name}</span>
+                          </span>
                           <span className="shrink-0 text-[10px] font-mono text-primary">
                             {file.status}
                           </span>
@@ -1451,7 +1451,7 @@ export function HomePage() {
                         : 'border-border bg-bg text-text'
                     }`}
                   >
-                    <span>⏱️</span>
+                    <ClockIcon className="w-3.5 h-3.5 text-primary" />
                     <span>{t.bentoSection.card3.target1}</span>
                     <span className="ml-1 rounded bg-primary/20 px-1.5 py-0.5 text-[9px] font-mono text-primary">
                       25m
@@ -1464,7 +1464,7 @@ export function HomePage() {
                         : 'border-border bg-bg text-text'
                     }`}
                   >
-                    <span>🎯</span>
+                    <TargetIcon className="w-3.5 h-3.5 text-emerald-400" />
                     <span>{t.bentoSection.card3.target2}</span>
                     <span className="ml-1 rounded bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-mono text-emerald-400">
                       94%
@@ -1553,8 +1553,11 @@ export function HomePage() {
             {/* 1. Top-Left Floating Info Bar */}
             <div className="float-callout-a gpu-layer absolute top-4 left-2 sm:left-10 z-20 glass-card rounded-2xl px-4 py-3 border border-primary/35 text-left shadow-lg max-w-[210px]">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-extrabold text-text">{t.impactSection.callouts.topLeftTitle}</p>
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <ZapIcon className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <p className="text-xs font-extrabold text-text truncate">{t.impactSection.callouts.topLeftTitle}</p>
+                </div>
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
               </div>
               <p className="text-[10px] font-semibold text-muted mt-0.5">{t.impactSection.callouts.topLeftSub}</p>
               <div className="mt-2 h-1 w-full rounded-full bg-border overflow-hidden">
@@ -1576,7 +1579,7 @@ export function HomePage() {
             {/* 3. Mid-Left Floating Info Bar */}
             <div className="float-callout-b gpu-layer hidden md:flex absolute top-1/2 -translate-y-1/2 left-2 lg:left-6 z-20 glass-card rounded-2xl px-4 py-2.5 border border-border items-center gap-3 text-left shadow-md">
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/15 text-primary text-xs font-bold">
-                📅
+                <CalendarIcon className="w-4 h-4 text-primary" />
               </span>
               <div>
                 <p className="text-xs font-extrabold text-text">{t.impactSection.callouts.midLeftTitle}</p>
@@ -1650,8 +1653,14 @@ export function HomePage() {
                 key={pillar.title}
                 className="gsap-reveal-item glass-card rounded-3xl p-6 text-left space-y-3 border border-border"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-surface-2 text-primary font-bold">
-                  {i === 0 ? '⚡' : i === 1 ? '🎯' : '🔄'}
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-surface-2 text-primary">
+                  {i === 0 ? (
+                    <ZapIcon className="w-5 h-5 text-primary" />
+                  ) : i === 1 ? (
+                    <TargetIcon className="w-5 h-5 text-primary" />
+                  ) : (
+                    <ClockIcon className="w-5 h-5 text-primary" />
+                  )}
                 </div>
                 <h3 className="text-base sm:text-lg font-extrabold text-text">{pillar.title}</h3>
                 <p className="text-xs sm:text-sm text-muted leading-relaxed">{pillar.desc}</p>
@@ -1691,7 +1700,15 @@ export function HomePage() {
                       : 'border border-border bg-surface/50 text-muted hover:text-text'
                   }`}
                 >
-                  <span>{tab.icon}</span>
+                  {tab.id === 'timetable' ? (
+                    <CalendarIcon className="w-3.5 h-3.5 text-primary" />
+                  ) : tab.id === 'focus' ? (
+                    <ClockIcon className="w-3.5 h-3.5 text-primary" />
+                  ) : tab.id === 'deadlines' ? (
+                    <TargetIcon className="w-3.5 h-3.5 text-primary" />
+                  ) : (
+                    <BookOpenIcon className="w-3.5 h-3.5 text-primary" />
+                  )}
                   <span>{tab.label}</span>
                 </button>
               );

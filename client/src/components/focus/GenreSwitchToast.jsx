@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLanguage } from '../../i18n/languageContext';
+import { MusicNoteIcon } from '../icons/AppIcons';
 
 export function GenreSwitchToast({ notification, onDismiss, onOpenRadio }) {
   const { lang } = useLanguage();
@@ -42,8 +43,8 @@ export function GenreSwitchToast({ notification, onDismiss, onOpenRadio }) {
 
         <div className="flex items-start gap-3 relative z-10">
           {/* Animated music icon badge */}
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary border border-primary/40 shadow-sm text-lg">
-            <span className="animate-bounce">🎵</span>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary border border-primary/40 shadow-sm">
+            <MusicNoteIcon className="w-5 h-5 animate-pulse" />
           </div>
 
           <div className="flex-1 min-w-0 pr-2">

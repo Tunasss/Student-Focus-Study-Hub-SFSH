@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLanguage } from '../../i18n/languageContext';
 import { audioMixer } from '../../utils/audioMixer';
+import { AudioTrackIcon } from '../icons/AppIcons';
 
 export function AmbientMixerModal({ isOpen, onClose }) {
   const { lang } = useLanguage();
@@ -122,7 +123,9 @@ export function AmbientMixerModal({ isOpen, onClose }) {
               >
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-2xl shrink-0">{track.icon}</span>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-2 text-primary border border-border/80">
+                      <AudioTrackIcon trackId={track.id} className="w-5 h-5 text-current" />
+                    </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-text dark:text-white truncate">

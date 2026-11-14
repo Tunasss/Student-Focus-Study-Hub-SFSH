@@ -7,6 +7,7 @@ import { scheduleApi } from '../lib/api';
 import { getCoursePalette, getWeekDates, getWeekRangeStrings } from '../utils/timetable';
 import { TimetableGrid } from '../components/timetable/TimetableGrid';
 import { IcsUploadModal } from '../components/timetable/IcsUploadModal';
+import { TrashIcon } from '../components/icons/AppIcons';
 
 gsap.registerPlugin(useGSAP);
 
@@ -374,8 +375,8 @@ export function TimetablePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="glass-card rounded-3xl p-6 sm:p-7 max-w-md w-full space-y-4 border border-border shadow-2xl">
             <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-danger/15 text-danger text-xl">
-                🗑️
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-danger/15 text-danger">
+                <TrashIcon className="w-5 h-5" />
               </span>
               <div>
                 <h3 className="text-base font-bold text-text">{t.confirmClearTitle}</h3>

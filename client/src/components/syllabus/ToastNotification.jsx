@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { AlertTriangleIcon, CheckCircleIcon } from '../icons/AppIcons';
 
 export function ToastNotification({ message, type = 'error', onClose, duration = 4000 }) {
   useEffect(() => {
@@ -22,7 +23,11 @@ export function ToastNotification({ message, type = 'error', onClose, duration =
         borderColor: isError ? 'rgba(239, 68, 68, 0.4)' : 'rgba(34, 197, 94, 0.4)',
       }}
     >
-      <span className="text-base">{isError ? '⚠️' : '✅'}</span>
+      {isError ? (
+        <AlertTriangleIcon className="w-5 h-5 text-rose-400 shrink-0" />
+      ) : (
+        <CheckCircleIcon className="w-5 h-5 text-emerald-400 shrink-0" />
+      )}
       <p className={`text-xs sm:text-sm font-semibold ${isError ? 'text-rose-400' : 'text-emerald-400'}`}>
         {message}
       </p>

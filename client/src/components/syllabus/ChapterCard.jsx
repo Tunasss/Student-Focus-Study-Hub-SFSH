@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLanguage } from '../../i18n/languageContext';
 import { extractChapterNumber } from '../../utils/chapterOrder';
+import { FileTextIcon } from '../icons/AppIcons';
 
 export function ChapterCard({
   chapter,
@@ -121,8 +122,9 @@ export function ChapterCard({
             </span>
 
             {chapter?.sourceFile && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-border/80 bg-surface/80 px-2.5 py-0.5 text-[11px] font-mono text-muted truncate max-w-xs">
-                📄 {chapter.sourceFile}
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-surface/80 px-2.5 py-0.5 text-[11px] font-mono text-muted truncate max-w-xs">
+                <FileTextIcon className="w-3 h-3 text-muted shrink-0" />
+                <span className="truncate">{chapter.sourceFile}</span>
               </span>
             )}
 

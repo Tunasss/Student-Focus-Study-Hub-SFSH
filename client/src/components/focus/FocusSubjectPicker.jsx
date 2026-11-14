@@ -216,6 +216,19 @@ export function FocusSubjectPicker({
     }
   }
 
+  // Determine active subtopic within the current chapter if hierarchical
+  const currentSubTopic = currentTopic?.subtopics?.length > 0
+    ? (currentTopic.subtopics.find((s) => String(s.id) === String(activeSubTopicId))
+      || currentTopic.subtopics.find((s) => s.status !== 'DONE')
+      || currentTopic.subtopics[0])
+    : null;
+
+  const isCurrentTopicDone = currentTopic
+    ? (currentTopic.subtopics?.length > 0
+        ? currentTopic.subtopics.every((s) => s.status === 'DONE')
+        : currentTopic.status === 'DONE')
+    : false;
+
   const currentUrgency = currentTask
     ? getUrgencyConfig(currentTask.urgencyBadge, currentTask.status, lang)
     : null;
@@ -253,26 +266,70 @@ export function FocusSubjectPicker({
     }
   }
 
-  async function handleCompleteTopic(topicToComplete) {
-    if (!topicToComplete || completingAction) return;
+  async function handleCompleteTopic() {
+    if (!currentTopic || completingAction) return;
     setCompletingAction(true);
     try {
-      await syllabusApi.updateTopicStatus(topicToComplete.id, 'DONE');
-      const updatedList = topics.map((tp) =>
-        tp.id === topicToComplete.id ? { ...tp, status: 'DONE' } : tp
-      );
-      setTopics(updatedList);
-      onTopicsLoaded?.(updatedList);
-      const updatedTree = buildTopicTree(updatedList);
-      const nextTopic = updatedTree.find((tp) => tp.id !== topicToComplete.id && tp.status !== 'DONE') || null;
-      if (nextTopic) {
-        const nextSub = nextTopic.subtopics?.find((s) => s.status !== 'DONE') || nextTopic.subtopics?.[0] || null;
-        onSelectTopic?.(nextTopic.id, nextSub?.id || null);
-        onSelectTask?.(null);
+      if (currentTopic.subtopics?.length > 0 && currentSubTopic) {
+        // Mark the active SUB-CHAPTER as completed!
+        await syllabusApi.updateTopicStatus(currentSubTopic.id, 'DONE');
+        const updatedList = topics.map((tp) =>
+          tp.id === currentSubTopic.id ? { ...tp, status: 'DONE' } : tp
+        );
+        setTopics(updatedList);
+        onTopicsLoaded?.(updatedList);
+
+        const updatedTree = buildTopicTree(updatedList);
+        const updatedCh = updatedTree.find((ch) => String(ch.id) === String(currentTopic.id));
+        const remainingSubs = updatedCh?.subtopics?.filter((s) => s.id !== currentSubTopic.id && s.status !== 'DONE') || [];
+
+        if (remainingSubs.length > 0) {
+          const nextSub = remainingSubs[0];
+          onSelectTopic?.(currentTopic.id, nextSub.id);
+          onCompleteAction?.({ type: 'subtopic', item: currentSubTopic, nextItem: nextSub });
+        } else {
+          // All subtopics in this chapter are finished! Mark the parent chapter as DONE
+          try {
+            await syllabusApi.updateTopicStatus(currentTopic.id, 'DONE');
+          } catch {
+            // Ignore if already updated
+          }
+          const fullyUpdatedList = updatedList.map((tp) =>
+            tp.id === currentTopic.id ? { ...tp, status: 'DONE' } : tp
+          );
+          setTopics(fullyUpdatedList);
+          onTopicsLoaded?.(fullyUpdatedList);
+
+          const fullyUpdatedTree = buildTopicTree(fullyUpdatedList);
+          const nextCh = fullyUpdatedTree.find((ch) => ch.id !== currentTopic.id && ch.status !== 'DONE') || null;
+          if (nextCh) {
+            const nextSub = nextCh.subtopics?.find((s) => s.status !== 'DONE') || nextCh.subtopics?.[0] || null;
+            onSelectTopic?.(nextCh.id, nextSub?.id || null);
+            onCompleteAction?.({ type: 'subtopic', item: currentSubTopic, nextItem: nextCh });
+          } else {
+            onSelectTopic?.(null, null);
+            onCompleteAction?.({ type: 'subtopic', item: currentSubTopic, nextItem: null });
+          }
+        }
       } else {
-        onSelectTopic?.(null, null);
+        // Flat chapter without subtopics
+        await syllabusApi.updateTopicStatus(currentTopic.id, 'DONE');
+        const updatedList = topics.map((tp) =>
+          tp.id === currentTopic.id ? { ...tp, status: 'DONE' } : tp
+        );
+        setTopics(updatedList);
+        onTopicsLoaded?.(updatedList);
+        const updatedTree = buildTopicTree(updatedList);
+        const nextTopic = updatedTree.find((tp) => tp.id !== currentTopic.id && tp.status !== 'DONE') || null;
+        if (nextTopic) {
+          const nextSub = nextTopic.subtopics?.find((s) => s.status !== 'DONE') || nextTopic.subtopics?.[0] || null;
+          onSelectTopic?.(nextTopic.id, nextSub?.id || null);
+          onSelectTask?.(null);
+        } else {
+          onSelectTopic?.(null, null);
+        }
+        onCompleteAction?.({ type: 'topic', item: currentTopic, nextItem: nextTopic });
       }
-      onCompleteAction?.({ type: 'topic', item: topicToComplete, nextItem: nextTopic });
     } catch {
       // ignore
     } finally {
@@ -370,12 +427,12 @@ export function FocusSubjectPicker({
               <span>{completingAction ? '...' : t.markDoneBtn}</span>
             </button>
           </div>
-        ) : targetType === 'topic' && currentTopic && currentTopic.status !== 'DONE' ? (
+        ) : targetType === 'topic' && currentTopic && !isCurrentTopicDone ? (
           <div className="pt-2.5 mt-2 border-t border-border/60 flex items-center justify-between gap-2 z-10">
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="h-2 w-2 rounded-full bg-primary animate-pulse shrink-0" />
               <span className="text-[11px] font-mono font-bold text-muted truncate">
-                {currentTopic.status === 'DOING' ? t.statusDoing : t.statusTodo}
+                {(currentSubTopic || currentTopic).status === 'DOING' ? t.statusDoing : t.statusTodo}
               </span>
             </div>
             <button
@@ -384,10 +441,10 @@ export function FocusSubjectPicker({
               data-testid="mark-topic-done-btn"
               onClick={(e) => {
                 e.stopPropagation();
-                handleCompleteTopic(currentTopic);
+                handleCompleteTopic();
               }}
               className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-primary text-black font-extrabold text-[11px] hover:bg-primary/90 transition-all shadow-xs cursor-pointer active:scale-95 disabled:opacity-50 shrink-0"
-              title={t.markTopicDone}
+              title={currentSubTopic ? `${t.markDoneBtn}: ${currentSubTopic.title}` : t.markTopicDone}
             >
               <span>✓</span>
               <span>{completingAction ? '...' : t.markDoneBtn}</span>

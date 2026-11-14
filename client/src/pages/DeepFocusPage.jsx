@@ -531,16 +531,51 @@ export function DeepFocusPage() {
         ? (t.taskMarkedDone ? t.taskMarkedDone(item.title) : `Marked "${item.title}" as DONE! 🎉`)
         : t.topicMarkedDone(item.title)
     );
+    setGenreSwitchNotification({
+      title: t.topicMarkedDone ? t.topicMarkedDone(item.title) : `Marked "${item.title}" as DONE! 🎉`,
+      icon: '✓',
+    });
     // When marked complete proactively:
-    // 1. Advance to next task or topic
+    // 1. Advance to next task or topic/subtopic
     // 2. Reset timer back to 0/standard duration
     // 3. Reset sprint progression to Sprint 01
     setSession((s) => {
       const reset = restartPomodoroCycle(s, settings);
+      let nextTopicId = s.activeTopicId;
+      let nextSubTopicId = s.activeSubTopicId;
+
+      if (type === 'task') {
+        return {
+          ...reset,
+          activeTaskId: nextItem?.id || null,
+          activeTopicId: null,
+          activeSubTopicId: null,
+        };
+      }
+
+      if (type === 'subtopic') {
+        if (nextItem) {
+          if (nextItem.parentId != null) {
+            nextSubTopicId = nextItem.id;
+            nextTopicId = nextItem.parentId;
+          } else {
+            nextTopicId = nextItem.id;
+            nextSubTopicId = nextItem.subtopics?.find((sub) => sub.status !== 'DONE')?.id || nextItem.subtopics?.[0]?.id || null;
+          }
+        } else {
+          nextTopicId = null;
+          nextSubTopicId = null;
+        }
+      } else if (type === 'topic') {
+        nextTopicId = nextItem?.id || null;
+        nextSubTopicId = nextItem?.subtopics?.find((sub) => sub.status !== 'DONE')?.id || nextItem?.subtopics?.[0]?.id || null;
+      }
+
       const next = {
         ...reset,
-        activeTaskId: type === 'task' ? (nextItem?.id || null) : null,
-        activeTopicId: type === 'topic' ? (nextItem?.id || null) : null,
+        activeTaskId: null,
+        activeTopicId: nextTopicId,
+        activeSubTopicId: nextSubTopicId,
       };
       persistSession(next);
       return next;

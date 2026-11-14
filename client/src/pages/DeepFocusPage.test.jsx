@@ -377,4 +377,55 @@ describe('DeepFocusPage Integration Tests', () => {
       expect(screen.getByTestId('active-subchapter-title')).toHaveTextContent('1.1 AND/OR Gates');
     });
   });
+
+  test('clicking mark done completes active subtopic (1.1) and advances to next subtopic (1.2)', async () => {
+    const mockTopics = [
+      { id: 10, courseId: 1, parentId: null, sortOrder: 1, title: 'Chapter 1: Logic Gates', status: 'DOING' },
+      { id: 101, courseId: 1, parentId: 10, sortOrder: 1, title: '1.1 AND/OR Gates', status: 'DOING' },
+      { id: 102, courseId: 1, parentId: 10, sortOrder: 2, title: '1.2 XOR Gate', status: 'TODO' },
+    ];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((url, opts) => {
+        const u = String(url);
+        if (opts?.method === 'PATCH') {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, data: { topic: { id: 101, status: 'DONE' } } }),
+          });
+        }
+        if (u.includes('/topics')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, data: { topics: mockTopics } }),
+          });
+        }
+        if (u.includes('/api/courses')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, data: { courses: [{ id: 1, code: 'CS101', name: 'Digital Logic' }] } }),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ success: true, data: {} }),
+        });
+      })
+    );
+
+    await renderDeepFocus();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mark-topic-done-btn')).toBeInTheDocument();
+      expect(screen.getByTestId('active-subchapter-title')).toHaveTextContent('1.1 AND/OR Gates');
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('mark-topic-done-btn'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('active-subchapter-title')).toHaveTextContent('1.2 XOR Gate');
+    });
+  });
 });

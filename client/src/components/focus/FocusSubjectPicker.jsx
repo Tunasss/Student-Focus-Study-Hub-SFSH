@@ -481,75 +481,44 @@ export function FocusSubjectPicker({
             </div>
           )}
 
-          {/* 3. Curriculum Chapters & Sub-chapters */}
+          {/* 3. Curriculum Chapters (Chapters only) */}
           {chapterTree.length > 0 && (
             <div className="pt-2 border-t border-border/40">
               <p className="text-[11px] font-bold text-muted uppercase tracking-wider mb-2">
                 {t.topicsHeader}
               </p>
-              <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+              <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
                 {chapterTree.map((ch) => {
                   const isChapterSelected = targetType === 'topic' && String(ch.id) === String(currentTopic?.id);
                   const subCount = ch.subtopics?.length || 0;
                   const doneSubCount = ch.subtopics?.filter((s) => s.status === 'DONE').length || 0;
+                  const isAllDone = subCount > 0 ? doneSubCount === subCount : ch.status === 'DONE';
                   return (
-                    <div key={ch.id} className="space-y-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const firstIncompleteSub = ch.subtopics?.find((s) => s.status !== 'DONE') || ch.subtopics?.[0] || null;
-                          onSelectTopic?.(ch.id, firstIncompleteSub?.id || null);
-                          setIsOpen(false);
-                        }}
-                        className={`w-full text-left rounded-xl px-3 py-1.5 flex items-center justify-between text-xs transition-colors cursor-pointer font-semibold ${
-                          isChapterSelected
-                            ? 'bg-primary/20 text-primary font-bold border border-primary/40'
-                            : 'hover:bg-surface-2 text-text'
-                        }`}
-                      >
-                        <span className="truncate">{ch.title}</span>
-                        {subCount > 0 ? (
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-2 border border-border text-muted shrink-0">
-                            {doneSubCount}/{subCount}
-                          </span>
-                        ) : ch.status === 'DONE' ? (
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
-                            {t.doneChip}
-                          </span>
-                        ) : null}
-                      </button>
-
-                      {/* Render nested sub-chapters */}
-                      {subCount > 0 && (
-                        <div className="pl-3.5 space-y-0.5 border-l-2 border-border/60 ml-2.5">
-                          {ch.subtopics.map((sub) => {
-                            const isSubSelected = isChapterSelected && String(sub.id) === String(activeSubTopicId);
-                            return (
-                              <button
-                                key={sub.id}
-                                type="button"
-                                onClick={() => {
-                                  onSelectTopic?.(ch.id, sub.id);
-                                  setIsOpen(false);
-                                }}
-                                className={`w-full text-left rounded-lg px-2 py-1 flex items-center justify-between text-[11px] transition-colors cursor-pointer ${
-                                  isSubSelected
-                                    ? 'bg-primary/25 text-primary font-bold border border-primary/30'
-                                    : 'hover:bg-surface-2/60 text-muted hover:text-text'
-                                }`}
-                              >
-                                <span className="truncate">↳ {sub.title}</span>
-                                {sub.status === 'DONE' && (
-                                  <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
-                                    {t.doneChip}
-                                  </span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
+                    <button
+                      key={ch.id}
+                      type="button"
+                      onClick={() => {
+                        const firstIncompleteSub = ch.subtopics?.find((s) => s.status !== 'DONE') || ch.subtopics?.[0] || null;
+                        onSelectTopic?.(ch.id, firstIncompleteSub?.id || null);
+                        setIsOpen(false);
+                      }}
+                      className={`w-full text-left rounded-xl px-3 py-2 flex items-center justify-between text-xs transition-colors cursor-pointer font-semibold ${
+                        isChapterSelected
+                          ? 'bg-primary/20 text-primary font-bold border border-primary/40'
+                          : 'hover:bg-surface-2 text-text'
+                      }`}
+                    >
+                      <span className="truncate">{ch.title}</span>
+                      {isAllDone ? (
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
+                          {t.doneChip}
+                        </span>
+                      ) : subCount > 0 ? (
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-2 border border-border text-muted shrink-0">
+                          {doneSubCount}/{subCount}
+                        </span>
+                      ) : null}
+                    </button>
                   );
                 })}
               </div>

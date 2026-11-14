@@ -24,7 +24,7 @@ function renderComponent(props) {
 }
 
 describe('FocusSubChapterCard', () => {
-  test('renders sub-chapter card with active subtopic and 2/4 progress', () => {
+  test('renders sub-chapter card with active subtopic and 2/4 progress without redundant mark done button', () => {
     renderComponent({
       activeChapter: mockChapterWithSubs,
       activeSubTopicId: 103,
@@ -36,7 +36,7 @@ describe('FocusSubChapterCard', () => {
       '2.3 Chi-square test & Levene\'s test'
     );
     expect(screen.getByText('Explore Chi-square test')).toBeInTheDocument();
-    expect(screen.getByTestId('mark-subchapter-done-btn')).toBeInTheDocument();
+    expect(screen.queryByTestId('mark-subchapter-done-btn')).not.toBeInTheDocument();
   });
 
   test('toggles dropdown and selects a different subtopic', () => {
@@ -57,18 +57,14 @@ describe('FocusSubChapterCard', () => {
     expect(onSelect).toHaveBeenCalledWith(104);
   });
 
-  test('clicking mark done triggers onCompleteSubTopic with current subtopic', () => {
-    const onComplete = vi.fn();
+  test('renders status strip correctly without mark done button', () => {
     renderComponent({
       activeChapter: mockChapterWithSubs,
       activeSubTopicId: 103,
-      onCompleteSubTopic: onComplete,
     });
 
-    const doneBtn = screen.getByTestId('mark-subchapter-done-btn');
-    fireEvent.click(doneBtn);
-
-    expect(onComplete).toHaveBeenCalledWith(mockChapterWithSubs.subtopics[2]);
+    expect(screen.getByText('In Progress')).toBeInTheDocument();
+    expect(screen.queryByTestId('mark-subchapter-done-btn')).not.toBeInTheDocument();
   });
 
   test('renders single chapter fallback when chapter has no subtopics', () => {

@@ -186,8 +186,8 @@ export function FocusSubChapterCard({
           )}
         </div>
 
-        {/* Action & Status Strip */}
-        <div className="pt-2.5 mt-2.5 border-t border-border/60 flex items-center justify-between gap-2 z-10">
+        {/* Status Strip (Mark Done button removed per user request) */}
+        <div className="pt-2 mt-2 border-t border-border/60 flex items-center justify-between gap-2 z-10">
           {allCompleted ? (
             <div className="flex items-center justify-between w-full text-[11px] text-emerald-400 font-mono font-bold">
               <span>🎉 {t.allSubChaptersDone}</span>
@@ -197,7 +197,7 @@ export function FocusSubChapterCard({
             </div>
           ) : currentSubTopic?.status === 'DONE' ? (
             <div className="flex items-center justify-between w-full text-[11px] text-emerald-400 font-mono font-bold">
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
                 <span>{t.statusDone}</span>
               </span>
@@ -206,7 +206,7 @@ export function FocusSubChapterCard({
               </span>
             </div>
           ) : (
-            <>
+            <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-1.5 min-w-0">
                 <span
                   className={`h-2 w-2 rounded-full shrink-0 ${
@@ -219,21 +219,7 @@ export function FocusSubChapterCard({
                   {currentSubTopic?.status === 'DOING' ? t.statusDoing : t.statusTodo}
                 </span>
               </div>
-              <button
-                type="button"
-                disabled={isCompleting}
-                data-testid="mark-subchapter-done-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleMarkDone();
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-primary text-black font-extrabold text-[11px] hover:bg-primary/90 transition-all shadow-xs cursor-pointer active:scale-95 disabled:opacity-50 shrink-0"
-                title={t.markSubDoneTitle}
-              >
-                <span>✓</span>
-                <span>{isCompleting ? '...' : t.markDoneBtn}</span>
-              </button>
-            </>
+            </div>
           )}
         </div>
       </div>

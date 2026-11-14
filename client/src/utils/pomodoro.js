@@ -62,6 +62,8 @@ export function getInitialPomodoroState(settings = DEFAULT_TIMER_SETTINGS) {
     cycleCount: 1, // Current cycle (1, 2, 3, 4...)
     activeCourseId: null,
     activeTopicId: null,
+    activeSubTopicId: null,
+    activeTaskId: null,
   };
 }
 

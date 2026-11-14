@@ -1,17 +1,20 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLanguage } from '../../i18n/languageContext';
 import { scheduleApi, syllabusApi, tasksApi } from '../../lib/api';
 import { deduplicateSyllabusCourses, formatCourseInfo } from '../../utils/courseFormat';
 import { formatDaysLeftLabel, getUrgencyConfig } from '../../utils/deadlines';
+import { buildTopicTree } from '../../utils/topicTree';
 
 export function FocusSubjectPicker({
   activeCourseId,
   activeTopicId,
   activeTaskId,
+  activeSubTopicId,
   onSelectCourse,
   onSelectTopic,
   onSelectTask,
   onCompleteAction,
+  onTopicsLoaded,
 }) {
   const { lang } = useLanguage();
   const [courses, setCourses] = useState([]);
@@ -102,12 +105,19 @@ export function FocusSubjectPicker({
         if (!cancelled) {
           const list = Array.isArray(fetched) ? fetched : fetched?.topics || [];
           setTopics(list);
+          onTopicsLoaded?.(list);
           if (list.length > 0 && !activeTopicId && !activeTaskId) {
-            onSelectTopic?.(list[0].id);
+            const tree = buildTopicTree(list);
+            const firstChapter = tree[0];
+            const firstSub = firstChapter?.subtopics?.find((s) => s.status !== 'DONE') || firstChapter?.subtopics?.[0] || null;
+            onSelectTopic?.(firstChapter?.id, firstSub?.id || null);
           }
         }
       } catch {
-        if (!cancelled) setTopics([]);
+        if (!cancelled) {
+          setTopics([]);
+          onTopicsLoaded?.([]);
+        }
       }
     }
     loadTopics();
@@ -162,6 +172,7 @@ export function FocusSubjectPicker({
   const currentCourse = courses.find((c) => String(c.id) === String(activeCourseId)) || courses[0];
   const currentTopics = activeCourseId ? topics : [];
   const courseInfo = currentCourse ? formatCourseInfo(currentCourse) : null;
+  const chapterTree = useMemo(() => buildTopicTree(currentTopics), [currentTopics]);
 
   // Determine active target: EITHER a Task OR a Chapter (mutually exclusive)
   let targetType = null;
@@ -176,18 +187,21 @@ export function FocusSubjectPicker({
   }
 
   if (!targetType && activeTopicId) {
-    currentTopic = currentTopics.find((tp) => String(tp.id) === String(activeTopicId)) || null;
+    currentTopic = chapterTree.find((ch) => String(ch.id) === String(activeTopicId))
+      || chapterTree.find((ch) => ch.subtopics?.some((s) => String(s.id) === String(activeTopicId)))
+      || currentTopics.find((tp) => String(tp.id) === String(activeTopicId))
+      || null;
     if (currentTopic) {
       targetType = 'topic';
     }
   }
 
-  // Fallback if neither explicitly chosen: default to first active topic if syllabus exists,
+  // Fallback if neither explicitly chosen: default to first active chapter if syllabus exists,
   // otherwise default to first pending task.
   if (!targetType) {
-    const firstActiveTopic = currentTopics.find((tp) => tp.status === 'DOING')
-      || currentTopics.find((tp) => tp.status !== 'DONE')
-      || currentTopics[0]
+    const firstActiveTopic = chapterTree.find((ch) => ch.status === 'DOING')
+      || chapterTree.find((ch) => ch.status !== 'DONE')
+      || chapterTree[0]
       || null;
 
     if (firstActiveTopic) {
@@ -248,12 +262,15 @@ export function FocusSubjectPicker({
         tp.id === topicToComplete.id ? { ...tp, status: 'DONE' } : tp
       );
       setTopics(updatedList);
-      const nextTopic = updatedList.find((tp) => tp.id !== topicToComplete.id && tp.status !== 'DONE') || null;
+      onTopicsLoaded?.(updatedList);
+      const updatedTree = buildTopicTree(updatedList);
+      const nextTopic = updatedTree.find((tp) => tp.id !== topicToComplete.id && tp.status !== 'DONE') || null;
       if (nextTopic) {
-        onSelectTopic?.(nextTopic.id);
+        const nextSub = nextTopic.subtopics?.find((s) => s.status !== 'DONE') || nextTopic.subtopics?.[0] || null;
+        onSelectTopic?.(nextTopic.id, nextSub?.id || null);
         onSelectTask?.(null);
       } else {
-        onSelectTopic?.(null);
+        onSelectTopic?.(null, null);
       }
       onCompleteAction?.({ type: 'topic', item: topicToComplete, nextItem: nextTopic });
     } catch {
@@ -464,39 +481,75 @@ export function FocusSubjectPicker({
             </div>
           )}
 
-          {/* 3. Curriculum Chapters */}
-          {currentTopics.length > 0 && (
+          {/* 3. Curriculum Chapters & Sub-chapters */}
+          {chapterTree.length > 0 && (
             <div className="pt-2 border-t border-border/40">
               <p className="text-[11px] font-bold text-muted uppercase tracking-wider mb-2">
                 {t.topicsHeader}
               </p>
-              <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
-                {currentTopics.map((tp) => {
-                  const isSelected = targetType === 'topic' && String(tp.id) === String(currentTopic?.id);
-                  const isChild = tp.parentId != null;
+              <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                {chapterTree.map((ch) => {
+                  const isChapterSelected = targetType === 'topic' && String(ch.id) === String(currentTopic?.id);
+                  const subCount = ch.subtopics?.length || 0;
+                  const doneSubCount = ch.subtopics?.filter((s) => s.status === 'DONE').length || 0;
                   return (
-                    <button
-                      key={tp.id}
-                      type="button"
-                      onClick={() => {
-                        onSelectTopic?.(tp.id);
-                        setIsOpen(false);
-                      }}
-                      className={`w-full text-left rounded-xl px-3 py-1.5 flex items-center justify-between text-xs transition-colors cursor-pointer ${
-                        isChild ? 'pl-6 text-[11px]' : 'font-semibold'
-                      } ${
-                        isSelected
-                          ? 'bg-primary/20 text-primary font-bold border border-primary/40'
-                          : 'hover:bg-surface-2 text-text'
-                      }`}
-                    >
-                      <span className="truncate">{isChild ? `↳ ${tp.title}` : tp.title}</span>
-                      {tp.status === 'DONE' && (
-                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
-                          {t.doneChip}
-                        </span>
+                    <div key={ch.id} className="space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const firstIncompleteSub = ch.subtopics?.find((s) => s.status !== 'DONE') || ch.subtopics?.[0] || null;
+                          onSelectTopic?.(ch.id, firstIncompleteSub?.id || null);
+                          setIsOpen(false);
+                        }}
+                        className={`w-full text-left rounded-xl px-3 py-1.5 flex items-center justify-between text-xs transition-colors cursor-pointer font-semibold ${
+                          isChapterSelected
+                            ? 'bg-primary/20 text-primary font-bold border border-primary/40'
+                            : 'hover:bg-surface-2 text-text'
+                        }`}
+                      >
+                        <span className="truncate">{ch.title}</span>
+                        {subCount > 0 ? (
+                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-2 border border-border text-muted shrink-0">
+                            {doneSubCount}/{subCount}
+                          </span>
+                        ) : ch.status === 'DONE' ? (
+                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
+                            {t.doneChip}
+                          </span>
+                        ) : null}
+                      </button>
+
+                      {/* Render nested sub-chapters */}
+                      {subCount > 0 && (
+                        <div className="pl-3.5 space-y-0.5 border-l-2 border-border/60 ml-2.5">
+                          {ch.subtopics.map((sub) => {
+                            const isSubSelected = isChapterSelected && String(sub.id) === String(activeSubTopicId);
+                            return (
+                              <button
+                                key={sub.id}
+                                type="button"
+                                onClick={() => {
+                                  onSelectTopic?.(ch.id, sub.id);
+                                  setIsOpen(false);
+                                }}
+                                className={`w-full text-left rounded-lg px-2 py-1 flex items-center justify-between text-[11px] transition-colors cursor-pointer ${
+                                  isSubSelected
+                                    ? 'bg-primary/25 text-primary font-bold border border-primary/30'
+                                    : 'hover:bg-surface-2/60 text-muted hover:text-text'
+                                }`}
+                              >
+                                <span className="truncate">↳ {sub.title}</span>
+                                {sub.status === 'DONE' && (
+                                  <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
+                                    {t.doneChip}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
                       )}
-                    </button>
+                    </div>
                   );
                 })}
               </div>

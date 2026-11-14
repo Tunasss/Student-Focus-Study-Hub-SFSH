@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { useLanguage } from '../i18n/languageContext';
@@ -10,6 +10,7 @@ import { AudioMixerModal } from '../components/focus/AudioMixerModal';
 import { GenreSwitchToast } from '../components/focus/GenreSwitchToast';
 import { TimerSettingsModal } from '../components/focus/TimerSettingsModal';
 import { FocusSubjectPicker } from '../components/focus/FocusSubjectPicker';
+import { FocusSubChapterCard } from '../components/focus/FocusSubChapterCard';
 import { TopicCompletionModal } from '../components/focus/TopicCompletionModal';
 import {
   DEFAULT_TIMER_SETTINGS,
@@ -29,6 +30,7 @@ import {
 import { audioMixer } from '../utils/audioMixer';
 import { sessionsApi, syllabusApi, tasksApi } from '../lib/api';
 import { formatFocusDuration, toIsoDateTimeWithOffset } from '../utils/analytics';
+import { buildTopicTree } from '../utils/topicTree';
 
 function countTodayFocusStats(sessions = []) {
   const now = new Date();
@@ -146,6 +148,16 @@ export function DeepFocusPage() {
   const [isAmbientOpen, setIsAmbientOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [topicPrompt, setTopicPrompt] = useState(null); // { topicId, topicTitle, courseCode }
+  const [courseTopics, setCourseTopics] = useState([]);
+  const chapterTree = useMemo(() => buildTopicTree(courseTopics), [courseTopics]);
+  const currentChapter = useMemo(() => {
+    if (!session.activeTopicId) return chapterTree[0] || null;
+    return (
+      chapterTree.find((ch) => String(ch.id) === String(session.activeTopicId)) ||
+      chapterTree.find((ch) => ch.subtopics?.some((s) => String(s.id) === String(session.activeTopicId))) ||
+      null
+    );
+  }, [chapterTree, session.activeTopicId]);
   const [isFullscreen, setIsFullscreen] = useState(
     () => typeof document !== 'undefined' && !!document.fullscreenElement
   );
@@ -325,13 +337,14 @@ export function DeepFocusPage() {
     lastLoggedSessionRef.current = key;
 
     const minutes = Math.min(240, Math.max(1, Math.round((session.durationSeconds || 1500) / 60)));
+    const targetTopicId = session.activeSubTopicId || session.activeTopicId || null;
     sessionsApi
       .logSession({
         startedAt: toIsoDateTimeWithOffset(session.startedAt),
         minutes,
         status: 'COMPLETED',
         courseId: session.activeCourseId || null,
-        topicId: session.activeTopicId || null,
+        topicId: targetTopicId,
       })
       .then(() => {
         setTodayFocusStats((prev) => ({
@@ -341,7 +354,7 @@ export function DeepFocusPage() {
         setSessionLogNotice(t.sessionSaved(minutes));
 
         // WBS 3.4 / Section 6.5: Prompt user for completion
-        // Check active task first, then active topic, then nearest pending task of course
+        // Check active task first, then active subtopic/topic, then nearest pending task of course
         if (session.activeTaskId) {
           tasksApi
             .listTasks({ courseId: session.activeCourseId })
@@ -356,12 +369,13 @@ export function DeepFocusPage() {
               }
             })
             .catch(() => {});
-        } else if (session.activeTopicId) {
+        } else if (session.activeSubTopicId || session.activeTopicId) {
+          const promptTopicId = session.activeSubTopicId || session.activeTopicId;
           syllabusApi
             .getCourseTopics(session.activeCourseId)
             .then((topics) => {
               const active = Array.isArray(topics)
-                ? topics.find((tp) => tp.id === session.activeTopicId)
+                ? topics.find((tp) => tp.id === promptTopicId)
                 : null;
               if (active && active.status !== 'DONE') {
                 setTopicPrompt({
@@ -533,6 +547,40 @@ export function DeepFocusPage() {
     });
   }
 
+  async function handleCompleteSubTopic(subTopicToComplete) {
+    if (!subTopicToComplete) return;
+    try {
+      await syllabusApi.updateTopicStatus(subTopicToComplete.id, 'DONE');
+      audioMixer.playCompletionChime();
+      const title = subTopicToComplete.title || 'Sub-chapter';
+      setSessionLogNotice(t.topicMarkedDone ? t.topicMarkedDone(title) : `Marked "${title}" as DONE! 🎉`);
+      setGenreSwitchNotification({
+        title: t.topicMarkedDone ? t.topicMarkedDone(title) : `Marked "${title}" as DONE! 🎉`,
+        icon: '✓',
+      });
+
+      const updatedList = courseTopics.map((tp) =>
+        tp.id === subTopicToComplete.id ? { ...tp, status: 'DONE' } : tp
+      );
+      setCourseTopics(updatedList);
+
+      const updatedTree = buildTopicTree(updatedList);
+      const activeCh = updatedTree.find((ch) => String(ch.id) === String(currentChapter?.id));
+      const nextSub = activeCh?.subtopics?.find((s) => s.id !== subTopicToComplete.id && s.status !== 'DONE') || null;
+
+      setSession((s) => {
+        const next = {
+          ...s,
+          activeSubTopicId: nextSub ? nextSub.id : null,
+        };
+        persistSession(next);
+        return next;
+      });
+    } catch (err) {
+      console.error('Failed to update subtopic status:', err);
+    }
+  }
+
   const progressPercent =
     session.durationSeconds > 0
       ? Math.min(
@@ -624,34 +672,51 @@ export function DeepFocusPage() {
 
       {/* Main Grid: Left Academic Widgets | Center Lotus Stage | Right Study Sprints */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch flex-1 min-h-0 py-2 z-10">
-        {/* Left Academic Widgets: Subject Picker + Live Real-World Clock (Per Hình 2) */}
+        {/* Left Academic Widgets: Subject Picker + Sub-Chapter Selector + Live Real-World Clock */}
         <div className="lg:col-span-3 flex flex-col justify-center gap-4 order-3 lg:order-1 relative z-30">
           <FocusSubjectPicker
             activeCourseId={session.activeCourseId}
             activeTopicId={session.activeTopicId}
             activeTaskId={session.activeTaskId}
+            activeSubTopicId={session.activeSubTopicId}
             onSelectCourse={(cid) =>
               setSession((s) => {
-                const next = { ...s, activeCourseId: cid, activeTopicId: null, activeTaskId: null };
+                const next = { ...s, activeCourseId: cid, activeTopicId: null, activeSubTopicId: null, activeTaskId: null };
                 persistSession(next);
                 return next;
               })
             }
-            onSelectTopic={(tid) =>
+            onSelectTopic={(tid, subId = null) =>
               setSession((s) => {
-                const next = { ...s, activeTopicId: tid, activeTaskId: null };
+                const next = { ...s, activeTopicId: tid, activeSubTopicId: subId, activeTaskId: null };
                 persistSession(next);
                 return next;
               })
             }
             onSelectTask={(taskId) =>
               setSession((s) => {
-                const next = { ...s, activeTaskId: taskId, activeTopicId: null };
+                const next = { ...s, activeTaskId: taskId, activeTopicId: null, activeSubTopicId: null };
                 persistSession(next);
                 return next;
               })
             }
             onCompleteAction={handleProactiveComplete}
+            onTopicsLoaded={setCourseTopics}
+          />
+
+          {/* Sub-Chapter Selector Box (Inserted between Change Target and Live Clock per user request) */}
+          <FocusSubChapterCard
+            activeChapter={currentChapter}
+            activeSubTopicId={session.activeSubTopicId}
+            onSelectSubTopic={(subId) => {
+              setSession((s) => {
+                const next = { ...s, activeSubTopicId: subId, activeTaskId: null };
+                persistSession(next);
+                return next;
+              });
+            }}
+            onCompleteSubTopic={handleCompleteSubTopic}
+            isTaskTarget={!!session.activeTaskId}
           />
 
           {/* Real World Live Clock Widget (Replaces static Flow Rate card per Hình 2) */}

@@ -339,4 +339,42 @@ describe('DeepFocusPage Integration Tests', () => {
     listSpy.mockRestore();
     logSpy.mockRestore();
   });
+
+  test('renders sub-chapter card and selects sub-chapters for hierarchical courses', async () => {
+    const mockTopics = [
+      { id: 10, courseId: 1, parentId: null, sortOrder: 1, title: 'Chapter 1: Logic Gates', status: 'DOING' },
+      { id: 101, courseId: 1, parentId: 10, sortOrder: 1, title: '1.1 AND/OR Gates', status: 'DOING' },
+      { id: 102, courseId: 1, parentId: 10, sortOrder: 2, title: '1.2 XOR Gate', status: 'TODO' },
+    ];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((url) => {
+        const u = String(url);
+        if (u.includes('/topics')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, data: { topics: mockTopics } }),
+          });
+        }
+        if (u.includes('/api/courses')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, data: { courses: [{ id: 1, code: 'CS101', name: 'Digital Logic' }] } }),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ success: true, data: {} }),
+        });
+      })
+    );
+
+    await renderDeepFocus();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('focus-subchapter-card')).toBeInTheDocument();
+      expect(screen.getByText('SUB-CHAPTER OBJECTIVE')).toBeInTheDocument();
+      expect(screen.getByTestId('active-subchapter-title')).toHaveTextContent('1.1 AND/OR Gates');
+    });
+  });
 });

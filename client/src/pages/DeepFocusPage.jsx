@@ -535,6 +535,13 @@ export function DeepFocusPage() {
       title: t.topicMarkedDone ? t.topicMarkedDone(item.title) : `Marked "${item.title}" as DONE! 🎉`,
       icon: '✓',
     });
+
+    if (type === 'subtopic' && item) {
+      setCourseTopics((prev) =>
+        prev.map((tp) => (String(tp.id) === String(item.id) ? { ...tp, status: 'DONE' } : tp))
+      );
+    }
+
     // When marked complete proactively:
     // 1. Advance to next task or topic/subtopic
     // 2. Reset timer back to 0/standard duration
@@ -557,7 +564,7 @@ export function DeepFocusPage() {
         if (nextItem) {
           if (nextItem.parentId != null) {
             nextSubTopicId = nextItem.id;
-            nextTopicId = nextItem.parentId;
+            nextTopicId = nextItem.parentId || s.activeTopicId;
           } else {
             nextTopicId = nextItem.id;
             nextSubTopicId = nextItem.subtopics?.find((sub) => sub.status !== 'DONE')?.id || nextItem.subtopics?.[0]?.id || null;
@@ -595,13 +602,13 @@ export function DeepFocusPage() {
       });
 
       const updatedList = courseTopics.map((tp) =>
-        tp.id === subTopicToComplete.id ? { ...tp, status: 'DONE' } : tp
+        String(tp.id) === String(subTopicToComplete.id) ? { ...tp, status: 'DONE' } : tp
       );
       setCourseTopics(updatedList);
 
       const updatedTree = buildTopicTree(updatedList);
       const activeCh = updatedTree.find((ch) => String(ch.id) === String(currentChapter?.id));
-      const nextSub = activeCh?.subtopics?.find((s) => s.id !== subTopicToComplete.id && s.status !== 'DONE') || null;
+      const nextSub = activeCh?.subtopics?.find((s) => String(s.id) !== String(subTopicToComplete.id) && s.status !== 'DONE') || null;
 
       setSession((s) => {
         const next = {

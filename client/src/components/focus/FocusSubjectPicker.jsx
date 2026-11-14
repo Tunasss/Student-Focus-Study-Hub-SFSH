@@ -217,14 +217,15 @@ export function FocusSubjectPicker({
   }
 
   // Determine active subtopic within the current chapter if hierarchical
-  const currentSubTopic = currentTopic?.subtopics?.length > 0
+  const hasSubtopics = Array.isArray(currentTopic?.subtopics) && currentTopic.subtopics.length > 0;
+  const currentSubTopic = hasSubtopics
     ? (currentTopic.subtopics.find((s) => String(s.id) === String(activeSubTopicId))
       || currentTopic.subtopics.find((s) => s.status !== 'DONE')
       || currentTopic.subtopics[0])
     : null;
 
   const isCurrentTopicDone = currentTopic
-    ? (currentTopic.subtopics?.length > 0
+    ? (hasSubtopics
         ? currentTopic.subtopics.every((s) => s.status === 'DONE')
         : currentTopic.status === 'DONE')
     : false;
@@ -242,10 +243,10 @@ export function FocusSubjectPicker({
     try {
       await tasksApi.updateTask(taskToComplete.id, { status: 'DONE' });
       const updatedList = tasks.map((tk) =>
-        tk.id === taskToComplete.id ? { ...tk, status: 'DONE' } : tk
+        String(tk.id) === String(taskToComplete.id) ? { ...tk, status: 'DONE' } : tk
       );
       setTasks(updatedList);
-      const nextTask = updatedList.find((tk) => tk.id !== taskToComplete.id && tk.status !== 'DONE') || null;
+      const nextTask = updatedList.find((tk) => String(tk.id) !== String(taskToComplete.id) && tk.status !== 'DONE') || null;
       if (nextTask) {
         onSelectTask?.(nextTask.id);
         onSelectTopic?.(null);
@@ -270,23 +271,31 @@ export function FocusSubjectPicker({
     if (!currentTopic || completingAction) return;
     setCompletingAction(true);
     try {
-      if (currentTopic.subtopics?.length > 0 && currentSubTopic) {
+      const isHierarchical = Array.isArray(currentTopic.subtopics) && currentTopic.subtopics.length > 0;
+      const targetSub = isHierarchical
+        ? (currentTopic.subtopics.find((s) => String(s.id) === String(activeSubTopicId))
+          || currentTopic.subtopics.find((s) => s.status !== 'DONE')
+          || currentTopic.subtopics[0])
+        : null;
+
+      if (isHierarchical && targetSub) {
         // Mark the active SUB-CHAPTER as completed!
-        await syllabusApi.updateTopicStatus(currentSubTopic.id, 'DONE');
+        await syllabusApi.updateTopicStatus(targetSub.id, 'DONE');
         const updatedList = topics.map((tp) =>
-          tp.id === currentSubTopic.id ? { ...tp, status: 'DONE' } : tp
+          String(tp.id) === String(targetSub.id) ? { ...tp, status: 'DONE' } : tp
         );
         setTopics(updatedList);
         onTopicsLoaded?.(updatedList);
 
         const updatedTree = buildTopicTree(updatedList);
         const updatedCh = updatedTree.find((ch) => String(ch.id) === String(currentTopic.id));
-        const remainingSubs = updatedCh?.subtopics?.filter((s) => s.id !== currentSubTopic.id && s.status !== 'DONE') || [];
+        const subList = updatedCh?.subtopics || [];
+        const remainingSubs = subList.filter((s) => String(s.id) !== String(targetSub.id) && s.status !== 'DONE');
 
         if (remainingSubs.length > 0) {
           const nextSub = remainingSubs[0];
           onSelectTopic?.(currentTopic.id, nextSub.id);
-          onCompleteAction?.({ type: 'subtopic', item: currentSubTopic, nextItem: nextSub });
+          onCompleteAction?.({ type: 'subtopic', item: targetSub, nextItem: nextSub });
         } else {
           // All subtopics in this chapter are finished! Mark the parent chapter as DONE
           try {
@@ -295,32 +304,32 @@ export function FocusSubjectPicker({
             // Ignore if already updated
           }
           const fullyUpdatedList = updatedList.map((tp) =>
-            tp.id === currentTopic.id ? { ...tp, status: 'DONE' } : tp
+            String(tp.id) === String(currentTopic.id) ? { ...tp, status: 'DONE' } : tp
           );
           setTopics(fullyUpdatedList);
           onTopicsLoaded?.(fullyUpdatedList);
 
           const fullyUpdatedTree = buildTopicTree(fullyUpdatedList);
-          const nextCh = fullyUpdatedTree.find((ch) => ch.id !== currentTopic.id && ch.status !== 'DONE') || null;
+          const nextCh = fullyUpdatedTree.find((ch) => String(ch.id) !== String(currentTopic.id) && ch.status !== 'DONE') || null;
           if (nextCh) {
             const nextSub = nextCh.subtopics?.find((s) => s.status !== 'DONE') || nextCh.subtopics?.[0] || null;
             onSelectTopic?.(nextCh.id, nextSub?.id || null);
-            onCompleteAction?.({ type: 'subtopic', item: currentSubTopic, nextItem: nextCh });
+            onCompleteAction?.({ type: 'subtopic', item: targetSub, nextItem: nextCh });
           } else {
             onSelectTopic?.(null, null);
-            onCompleteAction?.({ type: 'subtopic', item: currentSubTopic, nextItem: null });
+            onCompleteAction?.({ type: 'subtopic', item: targetSub, nextItem: null });
           }
         }
       } else {
         // Flat chapter without subtopics
         await syllabusApi.updateTopicStatus(currentTopic.id, 'DONE');
         const updatedList = topics.map((tp) =>
-          tp.id === currentTopic.id ? { ...tp, status: 'DONE' } : tp
+          String(tp.id) === String(currentTopic.id) ? { ...tp, status: 'DONE' } : tp
         );
         setTopics(updatedList);
         onTopicsLoaded?.(updatedList);
         const updatedTree = buildTopicTree(updatedList);
-        const nextTopic = updatedTree.find((tp) => tp.id !== currentTopic.id && tp.status !== 'DONE') || null;
+        const nextTopic = updatedTree.find((tp) => String(tp.id) !== String(currentTopic.id) && tp.status !== 'DONE') || null;
         if (nextTopic) {
           const nextSub = nextTopic.subtopics?.find((s) => s.status !== 'DONE') || nextTopic.subtopics?.[0] || null;
           onSelectTopic?.(nextTopic.id, nextSub?.id || null);

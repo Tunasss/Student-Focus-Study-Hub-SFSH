@@ -428,4 +428,59 @@ describe('DeepFocusPage Integration Tests', () => {
       expect(screen.getByTestId('active-subchapter-title')).toHaveTextContent('1.2 XOR Gate');
     });
   });
+
+  test('hierarchical chapter marked DONE in DB still shows active subtopic and allows completing remaining subtopic', async () => {
+    // Exact scenario: DB has Chapter status: DONE, but subtopic 1.2 is still TODO
+    const mockTopics = [
+      { id: 10, courseId: 1, parentId: null, sortOrder: 1, title: 'Chapter 1: Logic Gates', status: 'DONE' },
+      { id: 101, courseId: 1, parentId: 10, sortOrder: 1, title: '1.1 AND/OR Gates', status: 'DONE' },
+      { id: 102, courseId: 1, parentId: 10, sortOrder: 2, title: '1.2 XOR Gate', status: 'TODO' },
+    ];
+    const patchCalls = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((url, opts) => {
+        const u = String(url);
+        if (opts?.method === 'PATCH') {
+          patchCalls.push({ url: u, body: JSON.parse(opts.body) });
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, data: { topic: { id: 102, status: 'DONE' } } }),
+          });
+        }
+        if (u.includes('/topics')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, data: { topics: mockTopics } }),
+          });
+        }
+        if (u.includes('/api/courses')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, data: { courses: [{ id: 1, code: 'CS101', name: 'Digital Logic' }] } }),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ success: true, data: {} }),
+        });
+      })
+    );
+
+    await renderDeepFocus();
+
+    // Mark Done button MUST be available because subtopic 1.2 is still incomplete
+    await waitFor(() => {
+      expect(screen.getByTestId('mark-topic-done-btn')).toBeInTheDocument();
+      expect(screen.getByTestId('active-subchapter-title')).toHaveTextContent('1.2 XOR Gate');
+      expect(screen.queryByText(/Objectives up to date|Đã hoàn thành mọi mục tiêu/i)).not.toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('mark-topic-done-btn'));
+    });
+
+    // Subtopic 102 was patched first
+    expect(patchCalls[0].url).toContain('/102');
+  });
 });

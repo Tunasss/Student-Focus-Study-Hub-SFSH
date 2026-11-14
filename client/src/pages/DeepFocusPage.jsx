@@ -406,7 +406,7 @@ export function DeepFocusPage() {
       .catch(() => {
         // Timer UI remains responsive even if API logging fails
       });
-  }, [session.phase, session.status, session.startedAt, session.durationSeconds, session.activeCourseId, session.activeTopicId, session.activeTaskId, t]);
+  }, [session.phase, session.status, session.startedAt, session.durationSeconds, session.activeCourseId, session.activeTopicId, session.activeTaskId, session.activeSubTopicId, t]);
 
   function logAbandonedFocusIfElapsed(current) {
     if (

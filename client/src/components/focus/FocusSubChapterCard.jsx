@@ -5,12 +5,10 @@ export function FocusSubChapterCard({
   activeChapter,
   activeSubTopicId,
   onSelectSubTopic,
-  onCompleteSubTopic,
   isTaskTarget = false,
 }) {
   const { lang } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
-  const [isCompleting, setIsCompleting] = useState(false);
   const containerRef = useRef(null);
 
   const t = {
@@ -73,16 +71,6 @@ export function FocusSubChapterCard({
       || subtopics.find((s) => s.status !== 'DONE')
       || subtopics[0]
     : null;
-
-  async function handleMarkDone() {
-    if (!currentSubTopic || isCompleting) return;
-    setIsCompleting(true);
-    try {
-      await onCompleteSubTopic?.(currentSubTopic);
-    } finally {
-      setIsCompleting(false);
-    }
-  }
 
   // 1. Task Mode (User selected a specific task instead of a chapter)
   if (isTaskTarget) {

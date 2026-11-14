@@ -170,9 +170,9 @@ export function FocusSubjectPicker({
   }, [isOpen]);
 
   const currentCourse = courses.find((c) => String(c.id) === String(activeCourseId)) || courses[0];
-  const currentTopics = activeCourseId ? topics : [];
-  const courseInfo = currentCourse ? formatCourseInfo(currentCourse) : null;
+  const currentTopics = useMemo(() => (activeCourseId ? topics : []), [activeCourseId, topics]);
   const chapterTree = useMemo(() => buildTopicTree(currentTopics), [currentTopics]);
+  const courseInfo = currentCourse ? formatCourseInfo(currentCourse) : null;
 
   // Determine active target: EITHER a Task OR a Chapter (mutually exclusive)
   let targetType = null;

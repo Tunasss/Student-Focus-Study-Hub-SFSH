@@ -346,14 +346,14 @@ export function SyllabusPage() {
         (detectedNum && Number.isInteger(detectedNum) && detectedNum > 0 ? detectedNum : chIdx + 1);
 
       return {
-        title: ch.title,
-        description: ch.description || null,
-        sourceFile: ch.sourceFile || null,
+        title: String(ch.title || '').trim().slice(0, 255),
+        description: ch.description ? String(ch.description).trim().slice(0, 2000) : null,
+        sourceFile: ch.sourceFile ? String(ch.sourceFile).trim().slice(0, 255) : null,
         sortOrder: resolvedSortOrder,
         status: ch.status || 'TODO',
         subtopics: (ch.subtopics || []).map((sub, sIdx) => ({
-          title: sub.title,
-          description: sub.description || null,
+          title: String(sub.title || '').trim().slice(0, 255),
+          description: sub.description ? String(sub.description).trim().slice(0, 2000) : null,
           sortOrder: sub.sortOrder || sIdx + 1,
           status: sub.status || 'TODO',
         })),

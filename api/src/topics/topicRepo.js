@@ -98,68 +98,67 @@ async function saveHierarchicalTopics(prisma, userId, courseId, payload) {
   const isChapters = !Array.isArray(payload) && Array.isArray(payload.chapters) && payload.chapters.length > 0;
   const mode = payload.mode ?? (isChapters ? 'append' : 'replace');
 
-  return prisma.$transaction(async (tx) => {
-    const existing = await tx.topic.findMany({ where: byCourseOwner(userId, { courseId }) });
-    const statusByTitle = new Map(existing.map((t) => [t.title.trim().toLowerCase(), t.status]));
-    let replacedCount = 0;
+  return prisma.$transaction(
+    async (tx) => {
+      const existing = await tx.topic.findMany({ where: byCourseOwner(userId, { courseId }) });
+      const statusByTitle = new Map(existing.map((t) => [t.title.trim().toLowerCase(), t.status]));
+      let replacedCount = 0;
 
-    if (mode === 'replace') {
-      replacedCount = existing.length;
-      await tx.topic.deleteMany({ where: byCourseOwner(userId, { courseId }) });
-    }
+      if (mode === 'replace') {
+        replacedCount = existing.length;
+        await tx.topic.deleteMany({ where: byCourseOwner(userId, { courseId }) });
+      }
 
-    if (isChapters) {
-      const existingChapters = mode === 'append' ? existing.filter((t) => t.parentId === null) : [];
-      const takenOrders = new Set(existingChapters.map((ch) => ch.sortOrder));
-      let maxOrder = existingChapters.reduce((max, ch) => Math.max(max, ch.sortOrder), 0);
+      if (isChapters) {
+        const existingChapters = mode === 'append' ? existing.filter((t) => t.parentId === null) : [];
+        const takenOrders = new Set(existingChapters.map((ch) => ch.sortOrder));
+        let maxOrder = existingChapters.reduce((max, ch) => Math.max(max, ch.sortOrder), 0);
 
-      // Sort incoming chapters naturally before inserting so Chapter 4 is handled before Chapter 5 if both present
-      const sortedIncoming = [...payload.chapters].sort((a, b) => {
-        const numA = extractChapterNumber(a.title) ?? extractChapterNumber(a.sourceFile ?? a.source_file);
-        const numB = extractChapterNumber(b.title) ?? extractChapterNumber(b.sourceFile ?? b.source_file);
-        if (numA !== null && numB !== null) return numA - numB;
-        if (numA !== null) return -1;
-        if (numB !== null) return 1;
-        return (a.sortOrder ?? a.order ?? 0) - (b.sortOrder ?? b.order ?? 0);
-      });
-
-      for (let i = 0; i < sortedIncoming.length; i++) {
-        const ch = sortedIncoming[i];
-        const naturalNum = extractChapterNumber(ch.title) ?? extractChapterNumber(ch.sourceFile ?? ch.source_file);
-
-        let targetOrder;
-        if (naturalNum && Number.isInteger(naturalNum) && naturalNum > 0 && !takenOrders.has(naturalNum)) {
-          targetOrder = naturalNum;
-        } else if (ch.sortOrder && Number.isInteger(ch.sortOrder) && ch.sortOrder > 0 && !takenOrders.has(ch.sortOrder)) {
-          targetOrder = ch.sortOrder;
-        } else if (ch.order && Number.isInteger(ch.order) && ch.order > 0 && !takenOrders.has(ch.order)) {
-          targetOrder = ch.order;
-        } else {
-          maxOrder += 1;
-          while (takenOrders.has(maxOrder)) {
-            maxOrder += 1;
-          }
-          targetOrder = maxOrder;
-        }
-        takenOrders.add(targetOrder);
-
-        const createdChapter = await tx.topic.create({
-          data: {
-            courseId,
-            parentId: null,
-            sortOrder: targetOrder,
-            title: ch.title,
-            description: ch.description ?? null,
-            sourceFile: ch.sourceFile ?? null,
-            status: ch.status ?? statusByTitle.get(ch.title.trim().toLowerCase()) ?? 'TODO',
-          },
+        // Sort incoming chapters naturally before inserting so Chapter 4 is handled before Chapter 5 if both present
+        const sortedIncoming = [...payload.chapters].sort((a, b) => {
+          const numA = extractChapterNumber(a.title) ?? extractChapterNumber(a.sourceFile ?? a.source_file);
+          const numB = extractChapterNumber(b.title) ?? extractChapterNumber(b.sourceFile ?? b.source_file);
+          if (numA !== null && numB !== null) return numA - numB;
+          if (numA !== null) return -1;
+          if (numB !== null) return 1;
+          return (a.sortOrder ?? a.order ?? 0) - (b.sortOrder ?? b.order ?? 0);
         });
 
-        if (Array.isArray(ch.subtopics)) {
-          for (let j = 0; j < ch.subtopics.length; j++) {
-            const sub = ch.subtopics[j];
-            await tx.topic.create({
-              data: {
+        for (let i = 0; i < sortedIncoming.length; i++) {
+          const ch = sortedIncoming[i];
+          const naturalNum = extractChapterNumber(ch.title) ?? extractChapterNumber(ch.sourceFile ?? ch.source_file);
+
+          let targetOrder;
+          if (naturalNum && Number.isInteger(naturalNum) && naturalNum > 0 && !takenOrders.has(naturalNum)) {
+            targetOrder = naturalNum;
+          } else if (ch.sortOrder && Number.isInteger(ch.sortOrder) && ch.sortOrder > 0 && !takenOrders.has(ch.sortOrder)) {
+            targetOrder = ch.sortOrder;
+          } else if (ch.order && Number.isInteger(ch.order) && ch.order > 0 && !takenOrders.has(ch.order)) {
+            targetOrder = ch.order;
+          } else {
+            maxOrder += 1;
+            while (takenOrders.has(maxOrder)) {
+              maxOrder += 1;
+            }
+            targetOrder = maxOrder;
+          }
+          takenOrders.add(targetOrder);
+
+          const createdChapter = await tx.topic.create({
+            data: {
+              courseId,
+              parentId: null,
+              sortOrder: targetOrder,
+              title: ch.title,
+              description: ch.description ?? null,
+              sourceFile: ch.sourceFile ?? null,
+              status: ch.status ?? statusByTitle.get(ch.title.trim().toLowerCase()) ?? 'TODO',
+            },
+          });
+
+          if (Array.isArray(ch.subtopics) && ch.subtopics.length > 0) {
+            await tx.topic.createMany({
+              data: ch.subtopics.map((sub, j) => ({
                 courseId,
                 parentId: createdChapter.id,
                 sortOrder: j + 1,
@@ -167,39 +166,42 @@ async function saveHierarchicalTopics(prisma, userId, courseId, payload) {
                 description: sub.description ?? null,
                 sourceFile: ch.sourceFile ?? null,
                 status: sub.status ?? statusByTitle.get(sub.title.trim().toLowerCase()) ?? 'TODO',
-              },
+              })),
             });
           }
         }
+      } else {
+        const rows = normalizeBulkTopics(items);
+        const existingTop = mode === 'append' ? existing.filter((t) => t.parentId === null) : [];
+        let baseOrder = existingTop.reduce((max, ch) => Math.max(max, ch.sortOrder), 0);
+
+        if (rows.length > 0) {
+          await tx.topic.createMany({
+            data: rows.map((row) => {
+              baseOrder += 1;
+              return {
+                courseId,
+                parentId: row.parentId ?? null,
+                sortOrder: mode === 'append' ? baseOrder : row.sortOrder,
+                title: row.title,
+                description: row.description,
+                sourceFile: row.sourceFile ?? null,
+                status: row.status ?? statusByTitle.get(row.title.trim().toLowerCase()) ?? 'TODO',
+              };
+            }),
+          });
+        }
       }
-    } else {
-      const rows = normalizeBulkTopics(items);
-      const existingTop = mode === 'append' ? existing.filter((t) => t.parentId === null) : [];
-      let baseOrder = existingTop.reduce((max, ch) => Math.max(max, ch.sortOrder), 0);
 
-      for (const row of rows) {
-        baseOrder += 1;
-        await tx.topic.create({
-          data: {
-            courseId,
-            parentId: row.parentId ?? null,
-            sortOrder: mode === 'append' ? baseOrder : row.sortOrder,
-            title: row.title,
-            description: row.description,
-            sourceFile: row.sourceFile ?? null,
-            status: row.status ?? statusByTitle.get(row.title.trim().toLowerCase()) ?? 'TODO',
-          },
-        });
-      }
-    }
+      const topics = await tx.topic.findMany({
+        where: byCourseOwner(userId, { courseId }),
+        orderBy: [{ parentId: 'asc' }, { sortOrder: 'asc' }],
+      });
 
-    const topics = await tx.topic.findMany({
-      where: byCourseOwner(userId, { courseId }),
-      orderBy: [{ parentId: 'asc' }, { sortOrder: 'asc' }],
-    });
-
-    return { topics, replaced: replacedCount };
-  });
+      return { topics, replaced: replacedCount };
+    },
+    { maxWait: 10000, timeout: 30000 },
+  );
 }
 
 // Replaces the course's topic list with the confirmed one, in one transaction.

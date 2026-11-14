@@ -6,7 +6,7 @@
 const { z } = require('zod');
 
 const TOPIC_STATUSES = ['TODO', 'DOING', 'DONE'];
-const LIMITS = Object.freeze({ maxTopics: 100, maxChapters: 50, titleMax: 255, descriptionMax: 2000 });
+const LIMITS = Object.freeze({ maxTopics: 500, maxChapters: 200, titleMax: 255, descriptionMax: 2000 });
 
 const ID_MESSAGE = 'must be a positive integer id';
 const id = z.int({ error: ID_MESSAGE }).positive({ error: ID_MESSAGE });

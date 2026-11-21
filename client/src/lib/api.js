@@ -32,7 +32,30 @@ export function clearApiCache(filterKey) {
   }
 }
 
-export async function apiFetch(path, { method = 'GET', body, auth = true, cache = false } = {}) {
+const TRANSIENT_HTTP_STATUSES = new Set([502, 503, 504]);
+
+function isRetryableRequest(method, path) {
+  const upper = method.toUpperCase();
+  return upper === 'GET' || upper === 'HEAD' || path === '/api/auth/login';
+}
+
+function isTransientHttpFailure(status, envelope) {
+  if (!TRANSIENT_HTTP_STATUSES.has(status)) return false;
+  const code = envelope?.error?.code;
+  if (status === 503) {
+    return !envelope || code === 'SERVICE_UNAVAILABLE';
+  }
+  return code !== 'LLM_SCHEMA_INVALID';
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function apiFetch(
+  path,
+  { method = 'GET', body, auth = true, cache = false, retries, retryDelayMs } = {},
+) {
   const isGet = method.toUpperCase() === 'GET';
   const token = auth ? getToken() : null;
   const cacheKey = `${path}::${token || ''}`;
@@ -52,6 +75,9 @@ export async function apiFetch(path, { method = 'GET', body, auth = true, cache 
     return inFlightRequests.get(cacheKey);
   }
 
+  const maxRetries = retries ?? (isRetryableRequest(method, path) ? 2 : 0);
+  const baseDelayMs = retryDelayMs ?? (isTest ? 0 : 800);
+
   const executeRequest = async () => {
     const headers = { Accept: 'application/json' };
     const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
@@ -59,19 +85,35 @@ export async function apiFetch(path, { method = 'GET', body, auth = true, cache 
 
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    let res;
-    try {
-      res = await fetch(`${BASE_URL}${path}`, {
-        method,
-        headers,
-        body: body !== undefined ? (isFormData ? body : JSON.stringify(body)) : undefined,
-      });
-    } catch {
-      throw new ApiError(0, 'NETWORK_ERROR', 'Không kết nối được tới máy chủ');
-    }
+    const requestBody = body !== undefined ? (isFormData ? body : JSON.stringify(body)) : undefined;
 
-    // Every API response is the Rule 02 envelope: { success, data, error, timestamp }.
-    const envelope = res.status === 204 ? null : await res.json().catch(() => null);
+    let res;
+    let envelope;
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        res = await fetch(`${BASE_URL}${path}`, {
+          method,
+          headers,
+          body: requestBody,
+        });
+      } catch {
+        if (attempt < maxRetries) {
+          if (baseDelayMs > 0) await sleep(baseDelayMs * (attempt + 1));
+          continue;
+        }
+        throw new ApiError(0, 'NETWORK_ERROR', 'Không kết nối được tới máy chủ');
+      }
+
+      // Every API response is the Rule 02 envelope: { success, data, error, timestamp }.
+      envelope = res.status === 204 ? null : await res.json().catch(() => null);
+
+      if (!res.ok && isTransientHttpFailure(res.status, envelope) && attempt < maxRetries) {
+        if (baseDelayMs > 0) await sleep(baseDelayMs * (attempt + 1));
+        continue;
+      }
+
+      break;
+    }
 
     if (!res.ok || envelope?.success === false) {
       const code = envelope?.error?.code || 'HTTP_ERROR';

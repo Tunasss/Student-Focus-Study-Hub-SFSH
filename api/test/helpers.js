@@ -117,6 +117,9 @@ function createFakePrisma() {
     async $transaction(fn) {
       return fn(prisma);
     },
+    async $queryRaw() {
+      return [{ 1: 1 }];
+    },
     user: {
       async findUnique({ where }) {
         return users.find((u) => (where.id !== undefined ? u.id === where.id : u.email === where.email)) ?? null;

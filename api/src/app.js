@@ -2,7 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const { config } = require('./config');
 const { errorHandler, notFound } = require('./errors');
-const { ok } = require('./envelope');
+const { ok, fail } = require('./envelope');
+const { withDbRetry } = require('./db/retry');
 const { docsRouter } = require('./docs');
 const { authRouter } = require('./routes/auth');
 const { coursesRouter } = require('./routes/courses');
@@ -23,8 +24,16 @@ function createApp({ prisma, gemini = null }) {
   app.use(cors({ origin: config.corsOrigins }));
   app.use(express.json({ limit: '1mb' }));
 
-  app.get('/api/health', (req, res) => {
-    res.json(ok({ status: 'ok' }));
+  app.get('/api/health', async (req, res) => {
+    if (typeof prisma?.$queryRaw === 'function') {
+      try {
+        await withDbRetry(() => prisma.$queryRaw`SELECT 1`, { retries: 1, delayMs: 300 });
+      } catch (err) {
+        console.error('[health] Database ping failed:', err.message);
+        return res.status(503).json(fail('SERVICE_UNAVAILABLE', 'Database is temporarily unavailable'));
+      }
+    }
+    return res.json(ok({ status: 'ok' }));
   });
 
   app.use('/api-docs', docsRouter());

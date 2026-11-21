@@ -62,6 +62,59 @@ describe('apiFetch', () => {
     expect(init.headers['Content-Type']).toBeUndefined();
     expect(init.body).toBe(formData);
   });
+
+  test('retries GET requests on transient network error and resolves when backend recovers', async () => {
+    let attempts = 0;
+    const fn = vi.fn(async () => {
+      attempts += 1;
+      if (attempts === 1) throw new TypeError('Failed to fetch');
+      return new Response(JSON.stringify(ok({ user: { id: 1 } })), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    });
+    vi.stubGlobal('fetch', fn);
+
+    await expect(apiFetch('/api/auth/me')).resolves.toEqual({ user: { id: 1 } });
+    expect(fn).toHaveBeenCalledTimes(2);
+  });
+
+  test('retries GET and POST /api/auth/login on 503 SERVICE_UNAVAILABLE and 502', async () => {
+    let attempts = 0;
+    const fn = mockFetch(() => {
+      attempts += 1;
+      if (attempts === 1) return [503, fail('SERVICE_UNAVAILABLE', 'Database warming up')];
+      if (attempts === 2) return [502, {}];
+      return [200, ok({ token: 'jwt', user: { id: 1 } })];
+    });
+
+    await expect(
+      apiFetch('/api/auth/login', { method: 'POST', body: { email: 'a@b.co', password: 'Password123!' }, auth: false }),
+    ).resolves.toEqual({ token: 'jwt', user: { id: 1 } });
+    expect(fn).toHaveBeenCalledTimes(3);
+  });
+
+  test('does not retry non-idempotent POST mutations on network error', async () => {
+    const fn = vi.fn(async () => {
+      throw new TypeError('Failed to fetch');
+    });
+    vi.stubGlobal('fetch', fn);
+
+    await expect(
+      apiFetch('/api/tasks', { method: 'POST', body: { title: 'Lab 1' } }),
+    ).rejects.toMatchObject({ status: 0, code: 'NETWORK_ERROR' });
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not retry 503 LLM_UNAVAILABLE business error', async () => {
+    const fn = mockFetch(() => [503, fail('LLM_UNAVAILABLE', 'Out of quota')]);
+
+    await expect(apiFetch('/api/courses')).rejects.toMatchObject({
+      status: 503,
+      code: 'LLM_UNAVAILABLE',
+    });
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('scheduleApi', () => {

@@ -2,6 +2,7 @@
 //   { success: false, data: null, error: { code, message }, timestamp }
 
 const { fail } = require('./envelope');
+const { isTransientDbError } = require('./db/retry');
 
 class ApiError extends Error {
   constructor(status, code, message) {
@@ -18,6 +19,10 @@ function errorHandler(err, req, res, next) {
   }
   if (err.type === 'entity.parse.failed') {
     return res.status(400).json(fail('INVALID_JSON', 'Request body is not valid JSON'));
+  }
+  if (isTransientDbError(err)) {
+    console.error('[db] Transient database error:', err);
+    return res.status(503).json(fail('SERVICE_UNAVAILABLE', 'Database is temporarily unavailable. Please try again.'));
   }
   console.error(err);
   return res.status(500).json(fail('INTERNAL_ERROR', 'Something went wrong'));

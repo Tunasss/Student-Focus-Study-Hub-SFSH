@@ -47,6 +47,7 @@ info:
     | `NOT_FOUND` | 404 | No such route, or the task / course / topic linked to the request does not exist for this user |
     | `EMAIL_TAKEN` | 409 | An account with this email already exists |
     | `SORT_ORDER_TAKEN` | 409 | The course already has a topic at that `sortOrder` |
+    | `SERVICE_UNAVAILABLE` | 503 | The database is temporarily unreachable (e.g., serverless wake-up or transient connection drop) |
     | `INTERNAL_ERROR` | 500 | Unexpected server error |
 servers:
   - url: /
@@ -90,12 +91,12 @@ paths:
     get:
       tags: [System]
       summary: Health check
-      description: Public liveness probe used by the hosting platform.
+      description: Public liveness and database readiness probe used by the hosting platform and uptime monitors.
       operationId: getHealth
       security: []
       responses:
         '200':
-          description: The API is up.
+          description: The API and database are reachable.
           content:
             application/json:
               schema:
@@ -109,6 +110,12 @@ paths:
                         properties:
                           status:
                             const: ok
+        '503':
+          description: '`SERVICE_UNAVAILABLE` — database ping failed.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
 
   /api/auth/register:
     post:

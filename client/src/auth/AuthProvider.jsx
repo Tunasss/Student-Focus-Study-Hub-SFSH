@@ -19,7 +19,14 @@ export function AuthProvider({ children }) {
     let cancelled = false;
     apiFetch('/api/auth/me')
       .then(({ user }) => !cancelled && setUser(user))
-      .catch(() => !cancelled && logout())
+      .catch((err) => {
+        if (cancelled) return;
+        // Only wipe the stored session when the API explicitly rejects the token (401),
+        // not on transient network / Render / TiDB wake-up failures.
+        if (err?.status === 401) {
+          logout();
+        }
+      })
       .finally(() => !cancelled && setStatus('ready'));
     return () => {
       cancelled = true;

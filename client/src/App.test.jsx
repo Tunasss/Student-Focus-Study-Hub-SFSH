@@ -72,6 +72,15 @@ describe('auth flow & bilingual home', () => {
     await waitFor(() => expect(getToken()).toBeNull());
   });
 
+  test('preserves the stored token when /api/auth/me fails due to a transient server error', async () => {
+    setToken('valid-token');
+    mockFetch(() => [503, fail('SERVICE_UNAVAILABLE', 'Database warming up')]);
+    renderApp('/');
+
+    expect(await screen.findByRole('heading', { name: /One experience/i })).toBeInTheDocument();
+    expect(getToken()).toBe('valid-token');
+  });
+
   test('logout clears the token and returns to home page', async () => {
     setToken('stored-token');
     mockFetch(() => [200, ok({ user: USER })]);

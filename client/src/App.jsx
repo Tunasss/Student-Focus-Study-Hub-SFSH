@@ -39,8 +39,9 @@ export function App() {
   useEffect(() => {
     // Keep backend & DB warm immediately on mount and every 8 minutes to prevent Render/TiDB idle sleep.
     const isTest = typeof globalThis !== 'undefined' && globalThis.process?.env?.NODE_ENV === 'test';
-    const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
-    if (!apiBase || isTest) return undefined;
+    const rawApiBase = import.meta.env.VITE_API_URL;
+    if (!rawApiBase || isTest) return undefined;
+    const apiBase = rawApiBase.replace(/\/$/, '');
     const ping = () => fetch(`${apiBase}/api/health`).catch(() => {});
     ping();
     const timer = setInterval(ping, 8 * 60 * 1000);
